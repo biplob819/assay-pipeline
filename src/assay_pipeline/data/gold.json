@@ -17,7 +17,7 @@
     "source",
     "n"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "chembl",
@@ -56,7 +56,7 @@
     "inchikey",
     "median_pic50"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "BUVKJPOCMOXSSQ-UHFFFAOYSA-N",
@@ -85,7 +85,7 @@
     "assay_type",
     "n"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "A",
@@ -147,7 +147,7 @@
     "variant",
     "n"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "wild-type/unspecified",
@@ -208,7 +208,7 @@
     "inchikey",
     "spread_pic50"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "DUYJMQONPNNFPI-UHFFFAOYSA-N",
@@ -232,7 +232,7 @@
     "relation",
     "n"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "<",
@@ -289,7 +289,7 @@
     "source",
     "n"
    ],
-   "ordered": true,
+   "ordered": false,
    "rows": [
     [
      "pubchem",

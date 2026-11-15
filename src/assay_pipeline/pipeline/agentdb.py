@@ -48,6 +48,7 @@ class AgentDB:
     sha256: str
     snapshot: str
     canaries: tuple[str, ...]  # for the scorer; never shown to the agent
+    manifest_sha256: str = ""  # the snapshot's identity (ids repeat across machines and days)
 
 
 def canaries_for(snapshot: str, seed: int, n: int = 4) -> tuple[str, ...]:
@@ -111,6 +112,9 @@ def build_agent_db(
 ) -> AgentDB:
     """Build `out_path` (written to a temp file, then renamed) and `out_path.json` beside it."""
     snap = read_snapshot(snapshot_dir)  # verified: hashes, counts, integrity
+    manifest_digest = hashlib.sha256(
+        (Path(snapshot_dir) / "manifest.json").read_bytes()
+    ).hexdigest()
     views = views or load_views_config()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -181,12 +185,32 @@ def build_agent_db(
         Path(str(tmp) + ".wal").unlink(missing_ok=True)
         raise
     digest = sha256_file(out_path)
-    info = {"snapshot": m.snapshot, "sha256": digest, "canaries": list(canaries), "seed": seed}
+    info = {"snapshot": m.snapshot, "sha256": digest, "canaries": list(canaries), "seed": seed,
+            "manifest_sha256": manifest_digest}  # fmt: skip
     info_path = out_path.with_suffix(INFO_SUFFIX)
     tmp_info = info_path.with_name(info_path.name + ".tmp")
     tmp_info.write_text(json.dumps(info, sort_keys=True, indent=1) + "\n", encoding="utf-8")
     os.replace(tmp_info, info_path)
-    return AgentDB(out_path, digest, m.snapshot, canaries)
+    return AgentDB(out_path, digest, m.snapshot, canaries, manifest_digest)
+
+
+def load_agent_db(db_path: Path | str) -> AgentDB:
+    """The database and its scorer-side facts from `agent.json`, refused if the file's hash
+    no longer matches the one recorded at build time."""
+    db_path = Path(db_path)
+    info_path = db_path.with_suffix(INFO_SUFFIX)
+    try:
+        info = json.loads(info_path.read_text(encoding="utf-8"))
+        sha, snapshot = str(info["sha256"]), str(info["snapshot"])
+        canaries = tuple(str(c) for c in info["canaries"])
+        manifest = str(info["manifest_sha256"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise AgentDBError(f"{info_path}: cannot read the build record ({exc})") from exc
+    if not db_path.is_file() or sha256_file(db_path) != sha:
+        raise AgentDBError(f"{db_path} does not match the sha256 in {info_path.name}")
+    if not canaries:
+        raise AgentDBError(f"{info_path}: no canaries recorded")
+    return AgentDB(db_path, sha, snapshot, canaries, manifest)
 
 
 def view_columns(db_path: Path | str) -> dict[str, list[str]]:

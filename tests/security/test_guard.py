@@ -7,9 +7,11 @@ from pathlib import Path
 
 import duckdb
 import pytest
+import sqlglot
 import yaml
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from sqlglot import exp
 
 from assay_pipeline.config import load_views_config
 from assay_pipeline.guard import GENERIC_MESSAGES, SqlGuard, execute_guarded
@@ -288,8 +290,16 @@ def test_the_guard_never_raises_on_arbitrary_text(text):
 def test_token_soup_never_reaches_a_restricted_table(tokens):
     d = GUARD.check(" ".join(tokens))
     if d.decision == "allowed":
-        assert "embargoed_results" not in (d.rendered_sql or "").lower()
-        assert "read_csv" not in (d.rendered_sql or "").lower()
+        # structural, not a substring: `FROM v_activities embargoed_results` only aliases an
+        # approved view (hypothesis found it); a table reference or function would be a bypass
+        tree = sqlglot.parse_one(d.rendered_sql or "", read="duckdb")
+        ctes = {c.alias_or_name.lower() for c in tree.find_all(exp.CTE)}
+        tables = {t.name.lower() for t in tree.find_all(exp.Table)} - ctes
+        assert "embargoed_results" not in tables
+        assert tables <= {v.name for v in VIEWS.views}
+        funcs = {(f.sql_name() if not isinstance(f, exp.Anonymous) else f.name).lower()
+                 for f in tree.find_all(exp.Func)}  # fmt: skip
+        assert not any("read_csv" in f for f in funcs)
 
 
 # ---- verifier pass 1 (attacker): complexity, keyword functions, rendering bounds ----

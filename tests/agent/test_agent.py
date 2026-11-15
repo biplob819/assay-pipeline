@@ -286,7 +286,17 @@ def test_malformed_and_unknown_tool_calls_are_recorded_and_never_run(db, tmp_pat
     result, audit = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", replay))
     kinds = [(s.kind, s.violation) for s in result.trajectory.steps]
     assert kinds == [("malformed", False), ("tool_call", True)]
+    assert result.trajectory.steps[1].tool == "shell"  # EvalKit sees a disallowed tool (A4.2)
     assert not any(x["event"] == "query" for x in lines(audit.path))
+
+
+def test_text_beside_tool_calls_is_kept_for_the_scorer(db, tmp_path):
+    odd = {"type": "tool_use", "id": "toolu_7", "name": "run shell\nnow", "input": {}}
+    replay = Replay([msg([text("Let me look."), tool_use(COUNT_SQL), odd]),
+                     msg([text("16")], "end_turn")])  # fmt: skip
+    result, _ = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", replay))
+    assert result.turn_texts == ("Let me look.",) and result.answer == "16"
+    assert result.trajectory.steps[1].tool == "run_shell_now"
 
 
 def test_every_trial_leaves_question_queries_and_answer_in_a_verified_log(db, tmp_path):

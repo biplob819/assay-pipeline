@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -60,6 +61,23 @@ def build_parser() -> argparse.ArgumentParser:
     askp.add_argument("--replay", type=Path, help="replay recorded responses (no API calls)")
     askp.add_argument("--record", type=Path, help="save the live responses to this file")
     askp.add_argument("--json", action="store_true", help="machine-readable output")
+    atk = sub.add_parser("attack", help="run the attack suite and normal questions (or ablation)")
+    atk.add_argument("--db", type=Path, default=Path("agent.duckdb"), help="agent database")
+    atk.add_argument("--model", action="append", choices=["claude", "sol"],
+                     help="agent to run (repeat for both; default both)")  # fmt: skip
+    atk.add_argument("--k", type=int, default=3, help="trials per case (the ablation uses 1)")
+    atk.add_argument("--split", choices=["public", "all"], default="public",
+                     help="all adds the held-out split (needs --heldout)")  # fmt: skip
+    atk.add_argument("--heldout", type=Path, default=Path("heldout"), help="held-out folder")
+    atk.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache (LLM04 builds)")
+    atk.add_argument("--run-id", default=None, help="results go to runs/<run-id>/ (resumable)")
+    atk.add_argument("--runs", type=Path, default=Path("runs"), help="runs folder")
+    atk.add_argument("--dry-run", action="store_true", help="print the estimate; no API calls")
+    atk.add_argument("--max-cost", type=float, default=None, help="refuse or stop past this USD")
+    atk.add_argument("--trial-usd", type=float, default=None,
+                     help="per-trial USD for the estimate (default: planning figure)")  # fmt: skip
+    atk.add_argument("--ablation", action="store_true", help="guard off (pass-through), k=1")
+    atk.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -246,6 +264,43 @@ def _ask(args: argparse.Namespace) -> int:
     return 0
 
 
+def _attack(args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from assay_pipeline.attack.run import PLANNING_TRIAL_USD, RunError, build_plan, estimate, run
+    from assay_pipeline.config import ConfigError
+    from assay_pipeline.pipeline.agentdb import AgentDBError
+
+    models = list(dict.fromkeys(args.model or ["claude", "sol"]))
+    run_id = args.run_id or datetime.now(UTC).strftime("attack-%Y%m%d")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", run_id):
+        return _fail(args, "attack", ValueError(f"run id {run_id!r}: letters, digits, . _ - only"))
+    log = (lambda _s: None) if args.json else (lambda s: print(_printable(s), flush=True))
+    try:
+        plan = build_plan(
+            db_path=args.db, run_dir=args.runs / run_id, models=models, k=args.k,
+            split=args.split, ablation=args.ablation, max_cost=args.max_cost,
+            cache_root=args.cache if args.cache.is_dir() else None,
+            heldout_dir=args.heldout if args.split == "all" else None,
+            trial_usd=args.trial_usd if args.trial_usd is not None else PLANNING_TRIAL_USD,
+        )  # fmt: skip
+        if args.dry_run:
+            est = estimate(plan)
+            if args.json:
+                print(json.dumps({"ok": True, "dry_run": True, "estimate_usd": est}))
+            else:
+                print(f"estimate: ${est:.2f} (dry run: no API calls)")
+            return 0
+        results = run(plan, log)
+    except (RunError, AgentDBError, ConfigError, OSError, ValueError, RuntimeError) as exc:
+        return _fail(args, "attack", exc)
+    out = {"ok": True, "run_dir": str(plan.run_dir), "trials": len(results),
+           "spent_usd": round(plan.spent, 6), "ablation": plan.ablation}  # fmt: skip
+    print(json.dumps(out) if args.json else
+          f"done: {len(results)} trials, ${plan.spent:.4f}; {plan.run_dir}")  # fmt: skip
+    return 0
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -275,6 +330,8 @@ def main(argv: list[str] | None = None) -> int:
         return _build_db(args)
     if args.command == "ask":
         return _ask(args)
+    if args.command == "attack":
+        return _attack(args)
     return 2
 
 

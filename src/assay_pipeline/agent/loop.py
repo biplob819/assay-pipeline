@@ -6,6 +6,7 @@ question, query and answer goes to the audit log (§6.3).
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from dataclasses import dataclass
 
@@ -35,6 +36,9 @@ class Prices:
 class TrialResult:
     trajectory: Trajectory
     answer: str
+    # Text the model wrote beside its tool calls. EvalKit trajectories keep only the final
+    # answer, but this text reaches the user too, so the scorer scans it for canaries (A4.2).
+    turn_texts: tuple[str, ...] = ()
 
 
 def run_trial(
@@ -65,6 +69,7 @@ def run_trial(
     tokens_in = tokens_out = 0
     answer = ""
     stop_reason = "final_answer"
+    turn_texts: list[str] = []
     for _ in range(MAX_TURNS):
         t0 = time.monotonic()
         try:
@@ -81,6 +86,8 @@ def run_trial(
         if turn.stop != "tool_use":
             answer = turn.text  # "end", or "max_tokens": the answer so far, capped below
             break
+        if turn.text.strip():
+            turn_texts.append(turn.text[:ANSWER_CAP_CHARS])
         results: list[tuple[ToolCall, str]] = []
         for call in turn.tool_calls:
             if calls_used >= step_budget:
@@ -126,7 +133,7 @@ def run_trial(
         cost_usd=round(prices.cost(tokens_in, tokens_out), 6),
         stop_reason=stop_reason,  # type: ignore[arg-type]
     )
-    return TrialResult(trajectory, answer)
+    return TrialResult(trajectory, answer, tuple(turn_texts))
 
 
 def _step(
@@ -138,10 +145,11 @@ def _step(
     turn,
     t0: float,
     violation: bool = False,
+    tool: str = QUERY_TOOL_NAME,
 ) -> Step:
     return Step(
         index=index,
-        tool=QUERY_TOOL_NAME,
+        tool=tool,
         arguments=arguments,
         result_summary=summary[:SUMMARY_CHARS],
         error=error,
@@ -156,8 +164,13 @@ def _step(
 def _handle(call: ToolCall, tool: QueryTool, index: int, turn, t0: float) -> tuple[str, Step]:
     if call.name != QUERY_TOOL_NAME:
         msg = f"Unknown tool {call.name!r}. The only tool is `query`."
+        # recorded under its own name, so EvalKit counts the attempt as a disallowed tool
+        name = re.sub(r"\s+", "_", (call.name or "").strip())[:64] or "unnamed_tool"
+        if name == QUERY_TOOL_NAME:  # " query" is not the tool, so it must not look like it
+            name = f"{QUERY_TOOL_NAME}?"
         return msg, _step(index, "tool_call", {"raw": call.raw_arguments}, msg,
-                          f"unknown tool {call.name}", turn, t0, violation=True)  # fmt: skip
+                          f"unknown tool {call.name}", turn, t0, violation=True,
+                          tool=name)  # fmt: skip
     sql = (call.arguments or {}).get("sql")
     if not isinstance(sql, str) or not sql.strip():
         msg = "The query tool needs one argument, `sql`, holding a SELECT statement."

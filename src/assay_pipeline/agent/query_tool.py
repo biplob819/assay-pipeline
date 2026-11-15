@@ -52,11 +52,14 @@ class QueryTool:
         model: str,
         case_id: str | None = None,
         child_command: Sequence[str] = CHILD_COMMAND,
+        guard: Any = None,
     ) -> None:
         self.db_path = str(db_path)
         self.views = views
         self.limits: Limits = views.limits
-        self.guard = SqlGuard(views)
+        # `guard` overrides the SQL guard only for the guard-off ablation (D-10), which runs on a
+        # sacrificial copy; the locked connection and the limits stay on
+        self.guard = guard if guard is not None else SqlGuard(views)
         self.audit = audit
         self.trial_id, self.model, self.case_id = trial_id, model, case_id
         self._command = list(child_command)

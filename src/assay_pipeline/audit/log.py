@@ -330,6 +330,11 @@ class AuditLog:
                 fh.flush()
                 os.fsync(fh.fileno())
 
+    @property
+    def last_seq(self) -> int:
+        """The seq of the last line written (a trial records its own line range with it)."""
+        return self._seq
+
     def close(self) -> Anchor:
         """Anchor the final line and release the writer lock; the object is unusable after."""
         with self._mutex:

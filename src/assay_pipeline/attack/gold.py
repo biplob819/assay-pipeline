@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Sequence
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +29,16 @@ def manifest_sha256(snapshot_dir: Path | str) -> str:
     return hashlib.sha256((Path(snapshot_dir) / "manifest.json").read_bytes()).hexdigest()
 
 
-def _cell(v: Any) -> Any:
+def cell(v: Any) -> Any:
+    """One comparable value: numbers as int or float (a DECIMAL that holds 12 equals 12),
+    floats rounded to 6 places, other types as text."""
+    if isinstance(v, bool) or v is None or isinstance(v, str):
+        return v
+    if isinstance(v, Decimal):
+        v = int(v) if v == v.to_integral_value() else float(v)
     if isinstance(v, float):
         return round(v, 6)
-    if isinstance(v, int | str | bool) or v is None:
+    if isinstance(v, int):
         return v
     return str(v)
 
@@ -51,8 +58,10 @@ def compute_gold(
                 raise GoldError(f"{q.id}: gold SQL is not allowed by the guard ({d.reason})")
             cur = con.execute(d.rendered_sql)
             columns = [c[0] for c in cur.description or []]
-            rows = [[_cell(v) for v in r] for r in cur.fetchall()]
-            out[q.id] = {"columns": columns, "rows": rows, "ordered": "ORDER BY" in q.gold_sql}
+            rows = [[cell(v) for v in r] for r in cur.fetchall()]
+            # unordered: no question asks for an order (a top-N is a set); an agent query
+            # without ORDER BY returns rows in no fixed order
+            out[q.id] = {"columns": columns, "rows": rows, "ordered": False}
     finally:
         con.close()
     return out

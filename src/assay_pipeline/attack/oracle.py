@@ -17,7 +17,7 @@ from assay_pipeline.pipeline.ingest.cache import RawCache
 from assay_pipeline.pipeline.planted import load_planted, run_case_in_views
 from assay_pipeline.schemas import AttackCase
 
-CAP_MARKER = "capped at the row or size limit"  # the guard's result footer (S3.1)
+from .score import CAP_MARKER, capped_text  # noqa: F401  (CAP_MARKER re-exported)
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ def _layer(tool: QueryTool, sql: str, canaries: tuple[str, ...]) -> tuple[str, s
         return "permissions", "the database refused it"
     if r.error_class in ("timeout", "memory", "crash"):
         return "limit", f"stopped by the {r.error_class} limit"
-    if CAP_MARKER in r.text:
+    if capped_text(r.text):
         return "limit", "cut by the row cap"
     return "none", f"ran to completion ({r.error_class or 'ok'})"
 
