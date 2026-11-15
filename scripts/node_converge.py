@@ -236,7 +236,12 @@ def _tool_gate(cmd: list[str], root: Path, label: str) -> Result:
 
 
 def gate_ruff(ctx: Ctx) -> Result:
-    return _tool_gate([sys.executable, "-m", "ruff", "check", "."], ctx.root, "ruff clean")
+    lint = _tool_gate([sys.executable, "-m", "ruff", "check", "."], ctx.root, "ruff clean")
+    if lint.status != "PASS":
+        return lint
+    # CI also runs the formatter check; a file edited after formatting fails there (L-38)
+    fmt = _tool_gate([sys.executable, "-m", "ruff", "format", "--check", "."], ctx.root, "")
+    return fmt if fmt.status != "PASS" else Result("PASS", "ruff clean and formatted")
 
 
 PYRIGHT_PLATFORMS = ("Linux", "Darwin", "Windows")  # CI runs all three (L-23)

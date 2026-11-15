@@ -74,7 +74,7 @@ def run_checks(
             "python",
             "ok" if v in SUPPORTED else "fail",
             f"{v[0]}.{v[1]} ({'supported' if v in SUPPORTED else 'use 3.11 to 3.13'})",
-        )
+        ),
     ]
     for key, use in KEYS:
         is_set = bool(env.get(key, "").strip())
