@@ -1,0 +1,359 @@
+{
+ "AssaySummaries": {
+  "AssaySummary": [
+   {
+    "AID": 1622,
+    "SourceName": "Thermo Scientific Dharmacon RNAi Technologies",
+    "SourceID": "luo_rgi_pilot",
+    "Name": "RNAi Global Initiative pilot viability screen of human kinase and cell cycle genes",
+    "Description": [
+     "An RNAi-based silencing screen using SMARTpool siRNA silencing reagents (Thermo Fisher Scientific, Lafayette, CO, USA) targeting each of 859 human kinase and cell cycle genes that, when knocked down, induced apoptosis in HeLa cells (ATCC, CCL-2) was performed by the Luo lab at the Eppley Institute for Cancer Research, an RNAi Global Initiative member.  The assay for viability was performed using the CellTiter-Blue Cell Viability Assay (Promega, Madison, WI, USA), according to the manufacturer's protocol with slight modifications (See Technical Bulletin #TB317; www.promega.com/tbs/tb317/tb317.html). Genes whose knock-down was observed to either significantly induce or inhibit apoptosis were identified and are reported as active genes in this screen."
+    ],
+    "Protocol": [
+     "For more details, please see a MIARE-compliant summary of the complete screen at www.rnaiglobal.org .",
+     "",
+     "Cell Culture Growth Conditions: Propagation Medium was prepared by adding 100 mL FBS, 10 mL L-Glutamine and 10 mL MEM/NEAA to 880 mL of DMEM/HIGH. The total volume was 1 L (10% FBS, 2 mM L-Glutamine, and 0.1 mM NEAA). Medium was mixed thoroughly and store at 4 degrees C.  Cells were propagated (4-5 days pre-transfection).  125 mL of warm (37 degrees C) Propagation Medium was measured into an appropriate container.  Thawed HeLa cells were added into the Propagation Medium and mixed well.  The cell suspension was distributed into (5) T175 flasks at 25 mL per flask. Flasks were incubated at 37 degrees C in a 5% CO2 incubator. Medium was replaced with fresh Propagation Medium after 16-24 hours to remove any traces of DMSO that is present in freezing medium. Incubation was continued for 5 days, at which point the plates were approximately 75-80% confluent.",
+     "",
+     "Transfection: The kinase and cell cycle SMARTpool siRNA silencing reagents used in this study were designed and synthesized by Thermo Scientific, Lafayette, CO, USA. Each SMARTpool siRNA was complexed with DharmaFECT 1 transfection reagent (Thermo Fisher Scientific, Lafayette, CO, USA) for a final concentration of 50 nM per well in a 96-well plate format.  Briefly, 0.75 mL DharmaFECT 1 was diluted in 74.25 mL HBSS for a total volume of diluted DharmaFECT 1 of 75 mL. Using a Multidrop Liquid Dispenser, 60.0 microL of diluted DharmaFECT 1 was dispensed into each well of 11 master screening plates in triplicate.  The total volume in each well was 80.0 microL. Mixing was achieved by pipetting three times carefully up and down with a Biomek F/X liquid handling station. The mixture was incubated for 20-30 minutes at room temperature. Each target gene was evaluated by assessing cell viability using the CellTiter-Blue Cell Viability Assay according to the manufacturer's protocol with slight modifications (See Technical Bulletin #TB317; www.promega.com/tbs/tb317/tb317.html).",
+     "",
+     "Delivery: To prepare cells for delivery, Propagation Medium was removed from each flask and adherent cells were washed once with 5 mL 1X PBS/flask. 2 mL of 1X trypsin was added to each flask and incubated at room temperature until cells detached from surface.  Propagation Medium (8 ml) was added to each flask and the cells resuspended by gently pipetting the solution up and down. Resuspended cells from all five flasks were combined, mixed, counted, and diluted with Propagation Medium to a concentration of 1.25x105 cells/ml.  Using a Biomek F/X liquid handler, 20 microL aliquots of the SMARTpool siRNA:DharmaFECT 1 complex was transferred from each master plate well into corresponding wells of each of three 96-well cell culture plates. Using a Multidrop dispenser, 80.0 microL cell suspension was added into each well. The total volume was 100 microL. The plates were incubated at 37 degrees C in 5% CO2 for 48 hours.",
+     "",
+     "Viability Assay: Cell viability was assessed 48 hours after transfection with the CellTiter-Blue Cell Viability Assay, according to the manufacturer's protocol with slight modifications (See Technical Bulletin #TB317; www.promega.com/tbs/tb317/tb317.html).  The 96-well cell culture plates were removed from the incubator and 5.0 microL of CellTiter-Blue reagent was added to each well. The total volume in each well was 105 microL. Plates were gently shaken and returned to the incubator for 2 hours. Plates were removed from the incubator and fluorescence measured at 544/590 nm using a FLUOstar Optima plate reader. Each 96-well assay plate took approximately 2 min for placement, file creation, and fluorescence determinations.  Each plate measurement was made sequentially by plate set and order within a plate set."
+    ],
+    "Comment": [
+     "This screening data was contributed by the RNAi Global Initiative. For a MIARE-compliant summary of the complete screen, please visit www.rnaiglobal.org. ",
+     "",
+     "HeLa cells were obtained from ATCC (CCL-2).  The following were used as controls in the viability screen:",
+     "Positive controls: PLK1 SMARTpool siRNA. ",
+     "Negative controls: MOCK, GAPDH SMARTpool siRNA, siCONTROL RISC-free siRNA, siCONTROL Non-Targeting siRNA pool",
+     "Active genes were identified as falling three or more standard deviations away from the sample mean. Genes falling between two and three standard deviations away from the sample mean were identified as inconclusive; all other genes were identified as inactive.",
+     "",
+     "Activity scores were calculated by taking the average of the CtbZscore and the DuplicateCtbZscore (if the latter existed), multiplying by 100, and taking the absolute value of the resulting output.  "
+    ],
+    "NumberOfTIDs": 10,
+    "HasScore": true,
+    "Method": "screening",
+    "Version": 1,
+    "Revision": 2,
+    "LastDataChange": {
+     "Year": 2011,
+     "Month": 5,
+     "Day": 10
+    },
+    "SIDCountAll": 840,
+    "SIDCountActive": 5,
+    "SIDCountInactive": 817,
+    "SIDCountInconclusive": 18,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 0,
+    "CIDCountActive": 0,
+    "CIDCountInactive": 0,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 32559,
+    "SourceName": "ChEMBL",
+    "SourceID": "CHEMBL636888",
+    "Name": "Inhibition of Abl kinase",
+    "Description": [
+     "Title: 7-Alkoxy-4-phenylamino-3-quinolinecar-bonitriles as dual inhibitors of Src and Abl kinases.",
+     "",
+     "Abstract: We previously reported that several 7-alkoxy-4-phenylamino-3-quinolinecarbonitriles were potent inhibitors of Src kinase activity. We disclose here a new highly efficient and versatile route to these compounds, which are also potent inhibitors of Abl kinase."
+    ],
+    "Comment": [
+     "Compounds with activity <= 10uM or explicitly reported as active by ChEMBL are flagged as active in this PubChem assay presentation.",
+     "",
+     "Journal: J Med Chem",
+     "Year: 2004",
+     "Volume: 47",
+     "Issue: 7",
+     "First Page: 1599",
+     "Last Page: 1601",
+     "DOI: 10.1021/jm0499458",
+     "",
+     "Target ChEMBL ID: CHEMBL2111414",
+     "ChEMBL Target Name: Tyrosine-protein kinase ABL",
+     "ChEMBL Target Type: PROTEIN FAMILY - Target is a group of closely related proteins",
+     "Relationship Type: H - Homologous protein target assigned",
+     "Confidence: Multiple homologous protein targets may be assigned"
+    ],
+    "NumberOfTIDs": 5,
+    "HasScore": false,
+    "Method": "confirmatory",
+    "Target": [
+     {
+      "Accession": "P00519",
+      "Name": "Tyrosine-protein kinase ABL1"
+     },
+     {
+      "Accession": "P42684",
+      "Name": "Tyrosine-protein kinase ABL2"
+     }
+    ],
+    "Version": 8,
+    "Revision": 3,
+    "LastDataChange": {
+     "Year": 2022,
+     "Month": 8,
+     "Day": 30
+    },
+    "SIDCountAll": 14,
+    "SIDCountActive": 14,
+    "SIDCountInactive": 0,
+    "SIDCountInconclusive": 0,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 14,
+    "CIDCountActive": 14,
+    "CIDCountInactive": 0,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 493040,
+    "SourceName": "Abbott Labs",
+    "SourceID": "Navigating the Kinome",
+    "Name": "Navigating the Kinome",
+    "Description": [
+     "Dataset from the manuscript:",
+     "",
+     "Navigating the Kinome",
+     "",
+     "James T. Metz, Eric F. Johnson, Niru B. Soni, Philip J. Merta, Lemma Kifle, Philip J. Hajduk",
+     "",
+     "Abstract:",
+     "",
+     "While it is increasingly being recognized that drug-target interaction networks can be powerful tools for the interrogation of systems biology and the rational design of multi-targeted drugs, there is no generalized, statistically validated approach to harmonizing sequence-dependent and pharmacology-dependent networks.  Here we demonstrate the creation of a comprehensive kinome interaction network based not only on sequence comparisons but also on multiple pharmacology parameters derived from activity profiling data.  The framework described for statistical interpretation of these network connections also enables rigorous investigation of chemotype-specific interaction networks, which is critical for multi-targeted drug design."
+    ],
+    "Protocol": [
+     "In vitro kinase assays.  Recombinant protein kinases were either commercially obtained or expressed using the FastBac bacculovirus expression system (GIBCO BRL, Gaithersburg, MD) and purified using either nickel (his-tag) or glutathione (GST) affinity chromatography (see table in supplemental material).  Kinase assays were conducted in 24l volumes on 384-well microplates using TECAN liquid-handling automation.  Ser/Thr-kinase assays were performed using a radioactive FlashPlate-based assay platform (Luo Y, Smith RA, Guan R, et al. Pseudosubstrate peptides inhibit Akt and induce cell growth inhibition. Biochemistry 2004;43:1254-63.).   In this format, biotinylated substrate peptide (2M), -[33P]-ATP (5M, 2mCi/mol), inhibitors (3-10,000nM in 2% DMSO), and enzyme were incubated for 1hr in buffer containing  25mM Hepes pH 7.5, 1mM DTT, 10mM MgCl2 100M Na3VO4, and 0.075mg/ml Triton X-100, stopped with 80l stop buffer containing 100mM EDTA and 4M NaCl, transferred to streptavidin-coated 384-well FlashPlates (Perkin Elmer, Boston, Massachusetts) which were then washed 3 times and read using a TopCount microplate reader (Perkin Elmer).  Tyr kinase reactions were performed using a time-resolved fluorescence (HTRF) platform.  In this format, biotinylated substrate peptide (0.5M), ATP (10M-1mM), inhibitors (3-10,000nM in 2% DMSO), and enzyme were incubated for 1hr in buffer containing 50mM Hepes pH 7.4, 1mM DTT, 10mM MgCl2 2mM MnCl2, 100M Na3VO4, and 0.01% BSA.  Reactions were stopped with 50ul revelation buffer containing (final concentrations) of Eu-conjugated anti-pY-PT66-antibody  (0.05ug/ml) (CisBio), PycolLink Streptaviding-APC (0.001ug/ml) (Prozyme), and 60mM EDTA in a buffer containing 25mM Hepes, pH 7.4, 250mM KF, 0.005% Tween-20, and 0.05% BSA.  Following 60min incubation with revelation buffer, the reactions were read using an Envision fluorescence microplate reader (Perkin Elmer) with 615nm excitation and 665nm emission."
+    ],
+    "NumberOfTIDs": 5,
+    "HasScore": false,
+    "Method": "other",
+    "Version": 1,
+    "Revision": 2,
+    "LastDataChange": {
+     "Year": 2011,
+     "Month": 12,
+     "Day": 2
+    },
+    "SIDCountAll": 1497,
+    "SIDCountActive": 1497,
+    "SIDCountInactive": 1221,
+    "SIDCountInconclusive": 0,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 1458,
+    "CIDCountActive": 1458,
+    "CIDCountInactive": 1187,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 1796923,
+    "SourceName": "BindingDB",
+    "SourceID": "BindingDB_1609_1",
+    "Name": "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+    "Description": [
+     "The biochemical assays were carried out using the non-phosphorylated kinase domain of c-Abl, Bcr-Abl in Ba/F3 cells is in the phosphorylated state."
+    ],
+    "Comment": [
+     "Compounds with any of Ki, IC50, Kd, or EC50 activity value <= 10uM are labeled as \"Active\".",
+     "If multiple measurements are available for a given compound, it is labeled as \"Active\" if any of the measurements meet the criterion. Activity values are checked in the order of Ki, IC50, Kd, and EC50. The first entry that meets the above activity threshold is used to determine \"Standard Type\", \"Standard Relation\", and \"PubChem Standard Value\". Otherwise, the first non-empty entry will be used to set those values."
+    ],
+    "NumberOfTIDs": 8,
+    "HasScore": false,
+    "Method": "confirmatory",
+    "Target": [
+     {
+      "Accession": "P00519",
+      "Name": "Tyrosine-protein kinase ABL1"
+     },
+     {
+      "Accession": "P12931",
+      "Name": "Proto-oncogene tyrosine-protein kinase Src"
+     }
+    ],
+    "Version": 2,
+    "Revision": 2,
+    "LastDataChange": {
+     "Year": 2026,
+     "Month": 10,
+     "Day": 22
+    },
+    "SIDCountAll": 9,
+    "SIDCountActive": 9,
+    "SIDCountInactive": 2,
+    "SIDCountInconclusive": 0,
+    "SIDCountUnspecified": 1,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 9,
+    "CIDCountActive": 9,
+    "CIDCountInactive": 2,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 1,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 1799577,
+    "SourceName": "BindingDB",
+    "SourceID": "BindingDB_4678_1",
+    "Name": "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+    "Description": [
+     "Inhibition of wild-type Abl and Abl T315I kinase activity was measured in a homogeneous time-resolved fluorescence resonance energy transfer (TR-FRET) assay using purified recombinant human wild-type Abl purchased from Invitrogen and Abl T315I mutant purchased from Upstate Biotechnology Inc."
+    ],
+    "Comment": [
+     "Compounds with any of Ki, IC50, Kd, or EC50 activity value <= 10uM are labeled as \"Active\".",
+     "If multiple measurements are available for a given compound, it is labeled as \"Active\" if any of the measurements meet the criterion. Activity values are checked in the order of Ki, IC50, Kd, and EC50. The first entry that meets the above activity threshold is used to determine \"Standard Type\", \"Standard Relation\", and \"PubChem Standard Value\". Otherwise, the first non-empty entry will be used to set those values."
+    ],
+    "NumberOfTIDs": 8,
+    "HasScore": false,
+    "Method": "confirmatory",
+    "Target": [
+     {
+      "Accession": "P00519",
+      "Name": "Tyrosine-protein kinase ABL1"
+     }
+    ],
+    "Version": 3,
+    "Revision": 1,
+    "LastDataChange": {
+     "Year": 2024,
+     "Month": 11,
+     "Day": 12
+    },
+    "SIDCountAll": 6,
+    "SIDCountActive": 6,
+    "SIDCountInactive": 1,
+    "SIDCountInconclusive": 0,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 6,
+    "CIDCountActive": 6,
+    "CIDCountInactive": 1,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 1806059,
+    "SourceName": "BindingDB",
+    "SourceID": "BindingDB_10267_2",
+    "Name": "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+    "Description": [
+     "IC50 against Abelson kinase ABL1 was determined by Life Technologies corporation though the Z&#8242;-LITE biochemical assay."
+    ],
+    "Comment": [
+     "Compounds with any of Ki, IC50, Kd, or EC50 activity value <= 10uM are labeled as \"Active\".",
+     "If multiple measurements are available for a given compound, it is labeled as \"Active\" if any of the measurements meet the criterion. Activity values are checked in the order of Ki, IC50, Kd, and EC50. The first entry that meets the above activity threshold is used to determine \"Standard Type\", \"Standard Relation\", and \"PubChem Standard Value\". Otherwise, the first non-empty entry will be used to set those values."
+    ],
+    "NumberOfTIDs": 6,
+    "HasScore": false,
+    "Method": "confirmatory",
+    "Target": [
+     {
+      "Accession": "P00519",
+      "Name": "Tyrosine-protein kinase ABL1"
+     }
+    ],
+    "Version": 3,
+    "Revision": 2,
+    "LastDataChange": {
+     "Year": 2026,
+     "Month": 10,
+     "Day": 22
+    },
+    "SIDCountAll": 9,
+    "SIDCountActive": 9,
+    "SIDCountInactive": 0,
+    "SIDCountInconclusive": 0,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 9,
+    "CIDCountActive": 9,
+    "CIDCountInactive": 0,
+    "CIDCountInconclusive": 0,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   },
+   {
+    "AID": 1963317,
+    "SourceName": "NCGC",
+    "SourceID": "adst_SDR_ABL-KGP",
+    "Name": "ABL1 kinase (ABL1-N-HiBiT) enzymatic inhibition screen -  Functional assay",
+    "Description": [
+     "PI: James Inglese Ph.D.",
+     "National Center for Advancing Translational Sciences (NCATS),",
+     "National Institute of Health (NIH), Maryland ",
+     "",
+     "Discovery and optimization of novel protein-binding ligands underlies many of the methods and applications of biology, drug discovery, clinical diagnostics, and environmental toxicology.  Assays for detecting the interaction of, for example, a molecule with a macromolecular target also referred to here as the target of interest (TOI) is dependent on a compatible output technology. Depending on the nature and knowledge surrounding the TOI, whether a receptor, enzyme, regulatory subunit or scaffold, or a sequence-defined nucleic acid folded into a complex tertiary structure, assay strategies can vary widely.",
+     "Here we exploit ligand-biased changes in the structural dynamics of the target protein to control reporter alpha complementation allowing a non-competitive, non-functional, non-separation measure of ligand-target interaction. Demonstrating the surprising generality of the method we prepared proteins containing an 11 amino acid HiBiT terminal sequence for several targets allowing for ligand-dependent bioluminescence detection when reconstituted with a complementary omega-component, here the LgBiT NLuc fragment (1). ",
+     "Using a chemical library of >1,200 compounds enriched for scaffolds known to be associated with the inhibition of firefly luciferase (FLuc) activity (PubChem AIDs 2309) we first illustrate and compare the Structural Dynamics Response (SDR) assay vs. the standard functional FLuc enzyme assay (2).  Secondly, we show the specificity and sensitivity of the SDR for the Abelson tyrosine kinase (ABL1) compared to the serine/threonine protein kinase A, using an enriched chemical library of 128 compounds selected, in part, for activity annotated with ABL1 kinase activity using the Pharos database (3).",
+     "",
+     "References:",
+     "(1) A. S. Dixon et al., NanoLuc Complementation Reporter Optimized for Accurate Measurement of Protein Interactions in Cells. ACS Chem Biol 11, 400-408 (2016).\t",
+     "(2) N. Thorne, M. Shen M, W.A. Lea, A. Simeonov, S. Lovell, D. S. Auld, J. Inglese J Firefly luciferase in chemical biology:  A compendium of inhibitors, mechanistic evaluation of chemotypes, and suggested use as a reporter. Chemistry & Biology, 19, 1060 - 1072  (2012).",
+     "(3) K. J. Kelleher et al., Pharos 2023: an integrated resource for the understudied human proteome. Nucleic Acids Res 51, D1405-D1416 (2023)."
+    ],
+    "Protocol": [
+     "PROTOCOL TABLE (as described by Inglese J, Shamu CE and Guy RK. 2007)",
+     "SEQUENCE No. (e.g., 1, 2, 3, etc.); PARAMETER (e.g., C. elegans, Compounds, Incubation, Read, etc.); VALUE and DESCRIPTION. ",
+     "",
+     "1.  Reagent.  Dispense 4 uL ABL1-N-HiBiT enzyme per well at a final enzyme concentration of 10 nM in buffer with 87.5 uM ATP (functional assay) into columns 2-48 of four replicate Greiner 1536-well white, solid bottom high base, medium plates per assay.  Dispense respective buffer without enzyme at 4 uL/well in column 1 of assay plates using BioRaptr 2.",
+     "2.  Compounds.  Library compounds added at 23 nL/well by pin transfer. DMSO neutral control and imatinib positive control added at 25 nL/well, transfer by Mosquito dispenser.   ",
+     "3.  Incubation.  Incubate enzyme and compounds at room temperature for 30 min, protected from light.",
+     "4.  Reagent. (Functional assay) Transfer 25 nL of abltide peptide substrate to each well of four replicate kinase assay plates with Mosquito dispenser.",
+     "5.  Incubation. (Functional assay) Kinase enzyme incubated with peptide substrate for 3 h at room temperature, protected from light. ",
+     "6.  Reagent.  (Functional assay) Add 4 uL/well of Kinase-Glo Plus reagent (Promega) to kinase activity assay plates, in the presence of ATP.",
+     "7.  Detector. (Functional assay) Luminescence measured using CCD-based camera (ViewLux) with settings as follows: Exposure, 1 sec; Gain, High; Speed, Slow; Binning, 2X.",
+     "",
+     "REFERENCES:",
+     "Inglese J, Shamu CE and Guy RK, Reporting data from high throughput screening of small molecule libraries, Nature Chemical Biology, 2007, 3(8): 438-441. doi.org/10.1038/nchembio0807-438."
+    ],
+    "Comment": [
+     "Disclaimer:",
+     "Although all reasonable efforts have been made to ensure the accuracy and reliability of the data, caution should be exercised when interpreting the results as artifacts are possible from nonspecific effects such as assay signal interference. The curve fitting and activity calls presented here are based on the NCATS analysis methods. ",
+     "",
+     "Compound Ranking:",
+     "1. Compounds are first classified as having full titration curves, partial modulation, partial curve (weaker actives), single point activity (at highest concentration only), or inactive. For this assay, apparent inhibitors are ranked higher than compounds that showed apparent activation.",
+     "2.  For each assay repeat, all inactive compounds, with a ratio activity curve class of 4, activity score is 0. For all active compounds, a score range was given for each curve class type given above. Active compounds have activity score between 40 and 100. For a ratio activity curve class = -1.1, score = 80+abs((log_ac50+4.5)*inf_activity/20). For ratio.curve_class == -1.2 && abs(ratio.max_response) > 6*10, score = 60+abs((log_ac50+4.5)*inf_activity/20). For ratio.curve_class == -2.1 || ( ratio.curve_class==-2.2 && abs(ratio.max_response) > 6*10), score = 40+abs((log_ac50+4.5)*inf_activity/20). For ratio.curve_class == -1.2 || ratio.curve_class == -2.2, score = 20+abs((log_ac50+4.5)*inf_activity/20). Inconclusive compounds, with a donor curve class other than 4, have activity score of 10. Inconclusive compounds have activity score between 1 and 39.",
+     "3.  PUBCHEM_ACTIVITY_SCORE of a compounds is based on the result of the assay repeat panel. If 3 or 4 replicates are active, PUBCHEM_SCORE = 100. If 1 or 2 replicates are active, PUBCHEM_SCORE = 30. If no replicates are active, PUBCHEM_SCORE = 0."
+    ],
+    "NumberOfTIDs": 160,
+    "HasScore": true,
+    "Method": "confirmatory",
+    "Target": [
+     {
+      "Accession": "P00519",
+      "Name": "Tyrosine-protein kinase ABL1"
+     }
+    ],
+    "Version": 1,
+    "Revision": 2,
+    "LastDataChange": {
+     "Year": 2025,
+     "Month": 5,
+     "Day": 4
+    },
+    "SIDCountAll": 128,
+    "SIDCountActive": 47,
+    "SIDCountInactive": 63,
+    "SIDCountInconclusive": 18,
+    "SIDCountUnspecified": 0,
+    "SIDCountProbe": 0,
+    "CIDCountAll": 128,
+    "CIDCountActive": 47,
+    "CIDCountInactive": 63,
+    "CIDCountInconclusive": 18,
+    "CIDCountUnspecified": 0,
+    "CIDCountProbe": 0
+   }
+  ]
+ }
+}

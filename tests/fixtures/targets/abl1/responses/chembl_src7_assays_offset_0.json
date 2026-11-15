@@ -1,0 +1,15 @@
+{
+ "assays": [
+  {
+   "assay_chembl_id": "CHEMBL1963785",
+   "src_assay_id": "493040_170"
+  }
+ ],
+ "page_meta": {
+  "limit": 1000,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total_count": 1
+ }
+}

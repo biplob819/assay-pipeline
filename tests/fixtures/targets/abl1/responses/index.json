@@ -1,0 +1,64 @@
+{
+ "responses": [
+  {
+   "request": "[\"GET\",\"www.ebi.ac.uk\",\"/chembl/api/data/activity.json\",[[\"limit\",\"5\"],[\"offset\",\"0\"],[\"order_by\",\"activity_id\"],[\"standard_type\",\"IC50\"],[\"target_chembl_id\",\"CHEMBL1862\"]]]",
+   "file": "chembl_activity_offset_0.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:44 GMT"
+  },
+  {
+   "request": "[\"GET\",\"www.ebi.ac.uk\",\"/chembl/api/data/activity.json\",[[\"limit\",\"5\"],[\"offset\",\"5\"],[\"order_by\",\"activity_id\"],[\"standard_type\",\"IC50\"],[\"target_chembl_id\",\"CHEMBL1862\"]]]",
+   "file": "chembl_activity_offset_5.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:44 GMT"
+  },
+  {
+   "request": "[\"GET\",\"www.ebi.ac.uk\",\"/chembl/api/data/assay.json\",[[\"limit\",\"1000\"],[\"offset\",\"0\"],[\"only\",\"assay_chembl_id,src_assay_id\"],[\"order_by\",\"assay_chembl_id\"],[\"src_id\",\"7\"],[\"target_chembl_id\",\"CHEMBL1862\"]]]",
+   "file": "chembl_src7_assays_offset_0.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:48 GMT"
+  },
+  {
+   "request": "[\"GET\",\"www.ebi.ac.uk\",\"/chembl/api/data/status.json\",[]]",
+   "file": "chembl_status.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:43 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/assay/target/genesymbol/ABL1/aids/JSON\",[]]",
+   "file": "pubchem_aids.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:46 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/assay/aid/1796923/concise/JSON\",[]]",
+   "file": "pubchem_concise_1796923.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:49 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/assay/aid/1799577/concise/JSON\",[]]",
+   "file": "pubchem_concise_1799577.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:50 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/assay/aid/1806059/concise/JSON\",[]]",
+   "file": "pubchem_concise_1806059.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:51 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/compound/cid/5291,3062316,5494449,16750094,23625310,23625458,132185776,132185777,132185778,148829152,150550785,151963907,152572733,153299810,153299814/property/SMILES,InChIKey/JSON\",[]]",
+   "file": "pubchem_properties.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:52 GMT"
+  },
+  {
+   "request": "[\"GET\",\"pubchem.ncbi.nlm.nih.gov\",\"/rest/pug/assay/aid/1622,32559,493040,1796923,1799577,1806059,1963317/summary/JSON\",[]]",
+   "file": "pubchem_summary.json",
+   "status": 200,
+   "date": "Sun, 15 Nov 2026 21:14:47 GMT"
+  }
+ ]
+}

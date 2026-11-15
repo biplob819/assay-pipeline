@@ -1,0 +1,486 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1796923",
+     "384577411",
+     "134294500",
+     "Active",
+     "P00519",
+     "25",
+     "0.001",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577411",
+     "134294500",
+     "Active",
+     "P12931",
+     "6714",
+     "0.036",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577412",
+     "134294497",
+     "Active",
+     "P00519",
+     "25",
+     "0.001",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577412",
+     "134294497",
+     "Active",
+     "P12931",
+     "6714",
+     "0.028",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577413",
+     "134294508",
+     "Active",
+     "P00519",
+     "25",
+     "0.001",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577413",
+     "134294508",
+     "Active",
+     "P12931",
+     "6714",
+     "0.12",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577414",
+     "134297858",
+     "Active",
+     "P00519",
+     "25",
+     "0.0017",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577414",
+     "134297858",
+     "Active",
+     "P00519",
+     "25",
+     "0.0021",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577414",
+     "134297858",
+     "Active",
+     "P00519",
+     "25",
+     "0.05",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577414",
+     "134297858",
+     "Active",
+     "P12931",
+     "6714",
+     "4.5",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577415",
+     "134294499",
+     "Active",
+     "P00519",
+     "25",
+     "0.001",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577415",
+     "134294499",
+     "Active",
+     "P12931",
+     "6714",
+     "0.216",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577416",
+     "134294504",
+     "Active",
+     "P00519",
+     "25",
+     "0.002",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577416",
+     "134294504",
+     "Active",
+     "P00519",
+     "25",
+     "0.004",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577416",
+     "134294504",
+     "Active",
+     "P00519",
+     "25",
+     "0.0062",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577416",
+     "134294504",
+     "Inactive",
+     "P12931",
+     "6714",
+     "12",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577417",
+     "134294502",
+     "Active",
+     "P00519",
+     "25",
+     "0.119",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577417",
+     "134294502",
+     "Active",
+     "P00519",
+     "25",
+     "0.155",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577417",
+     "134294502",
+     "Inactive",
+     "P12931",
+     "6714",
+     "27",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577417",
+     "134294502",
+     "Unspecified",
+     "P00519",
+     "25",
+     "9",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577418",
+     "134294498",
+     "Active",
+     "P00519",
+     "25",
+     "0.00096",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577418",
+     "134294498",
+     "Active",
+     "P00519",
+     "25",
+     "0.0034",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577418",
+     "134294498",
+     "Active",
+     "P12931",
+     "6714",
+     "0.518",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P00519",
+     "25",
+     "0.00064",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P00519",
+     "25",
+     "0.0025",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P00519",
+     "25",
+     "0.0033",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P00519",
+     "25",
+     "0.0076",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P12931",
+     "6714",
+     "0.143",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1796923",
+     "384577419",
+     "134294503",
+     "Active",
+     "P12931",
+     "6714",
+     "0.345",
+     "Ki",
+     "In Vitro Biochemical Assay from US Patent US10196378B2: \"Inhibitors of BCR-ABL mutants and use thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   }
+  ]
+ }
+}

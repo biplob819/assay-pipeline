@@ -330,7 +330,7 @@ def run_case(case: str, model: str, *, mode: Literal["replay", "live"]) -> Conso
 | `make verify-audit` / `assay verify-audit` | Re-hashes the log, checks anchors, exits 1 naming the first broken line | No |
 | `assay oracle` | Model-free: pushes every attack's `attacker_sql` through guard, permissions and limits | No |
 | `assay attack --model all --k 3 --split public` | Runs attacks and normal questions; `--dry-run` prints the estimate; `--max-cost` caps spend | Yes |
-| `assay attack --guard off` | Ablation on a sacrificial copy; refuses unless the target DB is a temp copy | Yes |
+| `assay attack --ablation` (specified as `--guard off`) | Ablation on a sacrificial copy; refuses unless the target DB is a temp copy | Yes |
 | `assay ask "…" --model sonnet` | One question through the full path, for manual checks | Yes |
 | `assay doctor` | Checks Python, which provider keys are set (never printed), network reach to ChEMBL and PubChem, and the raw cache (D-26) | No |
 | `assay report` | Builds the CISO dashboard from the latest run | No |

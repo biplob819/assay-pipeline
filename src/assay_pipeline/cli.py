@@ -102,6 +102,12 @@ def build_parser() -> argparse.ArgumentParser:
                      help="compound explorer page, written with --run "
                           "(default: explorer.html beside --html, which links to it)")  # fmt: skip
     rep.add_argument("--json", action="store_true", help="machine-readable output")
+    doc = sub.add_parser("doctor", help="check Python, keys, network reach and local state")
+    doc.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
+    doc.add_argument("--snapshots", type=Path, default=Path("snapshots"), help="snapshots root")
+    doc.add_argument("--db", type=Path, default=Path("agent.duckdb"), help="agent database")
+    doc.add_argument("--offline", action="store_true", help="skip the network checks")
+    doc.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -388,6 +394,21 @@ def _report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _doctor(args: argparse.Namespace) -> int:
+    from assay_pipeline.doctor import as_json, run_checks
+
+    checks = run_checks(cache=args.cache, snapshots=args.snapshots, db=args.db,
+                        offline=args.offline)  # fmt: skip
+    report = as_json(checks)
+    if args.json:
+        print(json.dumps(report))
+    else:
+        mark = {"ok": "ok  ", "warn": "warn", "fail": "FAIL"}
+        for c in checks:
+            print(f"{mark[c.status]}  {c.name:<18} {_printable(c.detail)}")
+    return 0 if report["ok"] else 1
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -423,6 +444,8 @@ def main(argv: list[str] | None = None) -> int:
         return _behaviour(args)
     if args.command == "report":
         return _report(args)
+    if args.command == "doctor":
+        return _doctor(args)
     return 2
 
 

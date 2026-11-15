@@ -1,0 +1,22 @@
+# Second-target build configuration (OSS-06): ABL1 IC50, as in docs/configuring-a-target.md.
+# A copy of the shipped defaults/build.yaml with only the `target` block changed, plus a small
+# ChEMBL page size so the recorded fixture stays a few pages long.
+target:
+  name: ABL1
+  chembl_target_id: CHEMBL1862
+  uniprot: P00519
+  gene_symbol: ABL1
+  activity_type: IC50
+chembl:
+  base_url: https://www.ebi.ac.uk/chembl/api/data
+  page_size: 5
+  max_requests_per_second: 4
+pubchem:
+  base_url: https://pubchem.ncbi.nlm.nih.gov/rest/pug
+  max_requests_per_second: 4
+  exclude_depositors: [ChEMBL]
+quality:  # QC3 range; the QC2 conflict spread (1.0) and pIC50 rounding (4 dp) are fixed in the schemas
+  pic50_min: 3.0
+  pic50_max: 12.0
+rounding:
+  value_nm_significant_figures: 6

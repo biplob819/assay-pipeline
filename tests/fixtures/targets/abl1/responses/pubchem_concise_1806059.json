@@ -1,0 +1,166 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1806059",
+     "461688445",
+     "132185776",
+     "Active",
+     "P00519",
+     "25",
+     "0.0175",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688446",
+     "153299814",
+     "Active",
+     "P00519",
+     "25",
+     "0.0187",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688447",
+     "132185777",
+     "Active",
+     "P00519",
+     "25",
+     "0.00213",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688448",
+     "132185778",
+     "Active",
+     "P00519",
+     "25",
+     "0.0426",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688449",
+     "153299810",
+     "Active",
+     "P00519",
+     "25",
+     "0.0161",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688450",
+     "151963907",
+     "Active",
+     "P00519",
+     "25",
+     "0.0157",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688451",
+     "148829152",
+     "Active",
+     "P00519",
+     "25",
+     "0.00351",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688452",
+     "150550785",
+     "Active",
+     "P00519",
+     "25",
+     "0.00127",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1806059",
+     "461688453",
+     "152572733",
+     "Active",
+     "P00519",
+     "25",
+     "0.00209",
+     "IC50",
+     "Z&#39;-LITE biochemical assay from US Patent US11136333B2: \"Functionalized pyrano[2,3-D]pyrimidin-7-one derivatives and methods for their preparation and use\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   }
+  ]
+ }
+}

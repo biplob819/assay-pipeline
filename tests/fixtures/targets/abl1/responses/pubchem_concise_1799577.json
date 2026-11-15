@@ -1,0 +1,198 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1799577",
+     "46513626",
+     "3062316",
+     "Active",
+     "P00519",
+     "25",
+     "0.0002",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "46513626",
+     "3062316",
+     "Active",
+     "P00519",
+     "25",
+     "0.7",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "46513626",
+     "3062316",
+     "Inactive",
+     "P00519",
+     "25",
+     "30",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "46513933",
+     "5291",
+     "Active",
+     "P00519",
+     "25",
+     "1.9",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "46513935",
+     "5494449",
+     "Active",
+     "P00519",
+     "25",
+     "0.16",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342308",
+     "16750094",
+     "Active",
+     "P00519",
+     "25",
+     "0.009",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342308",
+     "16750094",
+     "Active",
+     "P00519",
+     "25",
+     "0.02",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342309",
+     "23625310",
+     "Active",
+     "P00519",
+     "25",
+     "0.007",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342309",
+     "23625310",
+     "Active",
+     "P00519",
+     "25",
+     "0.009",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342310",
+     "23625458",
+     "Active",
+     "P00519",
+     "25",
+     "0.041",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1799577",
+     "131342310",
+     "23625458",
+     "Active",
+     "P00519",
+     "25",
+     "0.11",
+     "IC50",
+     "Kinase Assay from Article 10.1111/j.1747-0285.2007.00556.x: \"Crystal structure of the T315I mutant of AbI kinase.\"",
+     "Confirmatory",
+     "17718712",
+     ""
+    ]
+   }
+  ]
+ }
+}

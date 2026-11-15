@@ -1,0 +1,38 @@
+{
+ "checked_at": "2026-11-16",
+ "logs": {
+  "ablation-audit.jsonl": {
+   "anchors": 82,
+   "anchors_file": "ablation-audit.anchors.jsonl",
+   "anchors_sha256": "917c80022fb48ab1509fbff12754c2f7eaf5d511bac43d87f5a42fc85a956288",
+   "first_broken_seq": null,
+   "last_anchor": {
+    "hash": "0683ff2c5e21eca9be0c80066f6e0f2bf4cd0388cf2575bb42e09c54e653574e",
+    "seq": 178
+   },
+   "lines": 179,
+   "log_sha256": "21b9084d40ab09bb52c0a71b7792657ed0d93163ca71b96738b9110d97e1804e",
+   "ok": true,
+   "reason": null,
+   "unanchored_tail": 0
+  },
+  "audit.jsonl": {
+   "anchors": 494,
+   "anchors_file": "audit.anchors.jsonl",
+   "anchors_sha256": "adad474888bc5510166c870520b5f472da357fff1a99eeec6ad627c57e5a57f2",
+   "first_broken_seq": null,
+   "last_anchor": {
+    "hash": "5567591b65f5b88742c4b28131a4a6aad5f7d9f389adf61e041c1b483d411034",
+    "seq": 1376
+   },
+   "lines": 1377,
+   "log_sha256": "f04602b78f326235cc998a379ee137955d92769c600176ecdceba60266162a85",
+   "ok": true,
+   "reason": null,
+   "unanchored_tail": 0
+  }
+ },
+ "note": "The audit logs stay local (they hold held-out case text); the anchors published here let anyone check a copy of a log against the chain heads recorded during the run.",
+ "run": "main-2026-11-16",
+ "tool": "assay verify-audit --json"
+}

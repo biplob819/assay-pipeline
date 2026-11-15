@@ -1,0 +1,69 @@
+# Release on a version tag (OSS-01, OWNER D-20): build, smoke-test the wheel, publish to PyPI by
+# trusted publishing (OIDC; no stored token), then install the published package with uvx on
+# three OSes and run `assay doctor`. The PyPI project must list this repository, this workflow
+# (release.yml) and the environment `pypi` as a trusted publisher.
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - name: The tag names the package version
+        run: |
+          v=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "package $v, tag $GITHUB_REF_NAME"
+          test "v$v" = "$GITHUB_REF_NAME"
+      - run: uv build
+      - name: Smoke-test the built wheel
+        run: |
+          wheel=$(ls dist/*.whl)
+          uvx --python 3.12 --from "$wheel" assay --version
+          uvx --python 3.12 --from "$wheel" assay doctor --offline --json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/assay-pipeline
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+  smoke:
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    permissions: {}
+    steps:
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - name: uvx --from assay-pipeline assay doctor
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          for i in 1 2 3 4 5 6 7 8 9 10; do  # the index can take a few minutes to serve a new release
+            # no --python: uv picks a Python the package allows; doctor checks the network too
+            if uvx --refresh --from "assay-pipeline==$v" assay doctor --json; then exit 0; fi
+            sleep 30
+          done
+          exit 1
