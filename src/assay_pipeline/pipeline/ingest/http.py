@@ -69,7 +69,14 @@ class Fetcher:
         cap = min(self.max_delay, self.base_delay * 2**attempt)
         return cap * (0.5 + 0.5 * self.rng.random())  # jitter in [cap/2, cap]
 
-    def get_json(self, url: str, params: dict[str, str | int]) -> Fetched:
+    def get_json(
+        self,
+        url: str,
+        params: dict[str, str | int],
+        ok_statuses: frozenset[int] = frozenset(),
+    ) -> Fetched:
+        """GET JSON with the §2.5 retry rules. `ok_statuses` are non-2xx answers the caller
+        expects and parses itself (PubChem's `PUGREST.NotFound` 404), returned, not raised."""
         where = f"{url} {dict(sorted(params.items()))}" if params else url
         last_error = ""
         with self._client() as client:
@@ -84,6 +91,8 @@ class Fetcher:
                 except httpx.HTTPError as exc:  # redirects, decoding: not transient
                     raise FetchError(f"{where}: {exc.__class__.__name__}: {exc}") from exc
                 else:
+                    if resp.status_code in ok_statuses:
+                        return _parse(where, resp)
                     if resp.status_code in RETRY_STATUSES or resp.status_code >= 500:
                         last_error = f"HTTP {resp.status_code}"
                         retry_after = _retry_after(resp)

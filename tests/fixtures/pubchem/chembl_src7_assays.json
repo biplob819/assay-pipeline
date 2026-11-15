@@ -1,0 +1,31 @@
+{
+ "assays": [
+  {
+   "assay_chembl_id": "CHEMBL1614386",
+   "src_assay_id": "1729"
+  },
+  {
+   "assay_chembl_id": "CHEMBL1614511",
+   "src_assay_id": "1731"
+  },
+  {
+   "assay_chembl_id": "CHEMBL1614189",
+   "src_assay_id": "1726"
+  },
+  {
+   "assay_chembl_id": "CHEMBL1614029",
+   "src_assay_id": "1727"
+  },
+  {
+   "assay_chembl_id": "CHEMBL1963766",
+   "src_assay_id": "493040_69"
+  }
+ ],
+ "page_meta": {
+  "limit": 1000,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total_count": 5
+ }
+}

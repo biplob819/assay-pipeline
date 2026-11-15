@@ -47,7 +47,8 @@ class ChemblConfig(Model):
 
 class PubchemConfig(Model):
     base_url: Annotated[str, StringConstraints(pattern=r"^https://\S+[^/]$")]
-    max_requests_per_second: Annotated[float, Field(strict=True, gt=0, le=5, allow_inf_nan=False)]
+    # PubChem asks for fewer than 5 requests per second
+    max_requests_per_second: Annotated[float, Field(strict=True, gt=0, lt=5, allow_inf_nan=False)]
     exclude_depositors: tuple[Name, ...]
 
 

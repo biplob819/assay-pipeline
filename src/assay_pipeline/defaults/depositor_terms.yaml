@@ -1,0 +1,16 @@
+# PubChem depositors whose rows may enter the published snapshot (D-15, NFR5).
+# keep: true only when the depositor's terms add nothing beyond attribution that is compatible
+# with the snapshot's CC BY-SA 3.0 licence. Rows from depositors not listed, or listed with
+# keep: false, are dropped with reason depositor_not_cleared. Review before each published run.
+depositors:
+  - name: BindingDB
+    keep: true
+    licence: >-
+      CC BY (3.0; 4.0 on the 2024 UC San Diego Library dataset records) for BindingDB-curated
+      data; data BindingDB imported from ChEMBL are CC BY-SA 3.0
+    attribution: BindingDB (https://www.bindingdb.org), Gilson lab, UC San Diego
+    evidence:
+      - https://www.bindingdb.org/rwd/bind/info.jsp
+      - https://library.ucsd.edu/dc/object/bb1479731z
+      - https://github.com/dhimmel/bindingdb
+    checked: 2026-11-15

@@ -25,10 +25,15 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--version", action="version", version=f"assay {__version__}")
     sub = ap.add_subparsers(dest="command", metavar="command")
     ing = sub.add_parser("ingest", help="fetch source data into the raw cache")
-    ing.add_argument("source", choices=["chembl"])
+    ing.add_argument("source", choices=["chembl", "pubchem"])
     ing.add_argument("--config", type=Path, help="build config YAML (default: EGFR IC50)")
     ing.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
     ing.add_argument("--new-release", action="store_true", help="start a cache for a new release")
+    ing.add_argument(
+        "--depositor-terms",
+        type=Path,
+        help="PubChem depositor ledger YAML (default: the shipped depositor_terms.yaml)",
+    )
     ing.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
@@ -93,11 +98,22 @@ def _ingest(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.ingest.cache import CacheError, RawCache
     from assay_pipeline.pipeline.ingest.chembl import IngestError, ingest_chembl
     from assay_pipeline.pipeline.ingest.http import FetchError
+    from assay_pipeline.pipeline.ingest.pubchem import (
+        PubchemIngestReport,
+        ingest_pubchem,
+        load_depositor_terms,
+    )
 
     try:
         cfg = load_build_config(args.config)
-        fetcher = default_fetcher(cfg.chembl.max_requests_per_second)
-        report = ingest_chembl(cfg, RawCache(args.cache), fetcher, new_release=args.new_release)
+        cache = RawCache(args.cache)
+        if args.source == "pubchem":
+            terms = load_depositor_terms(args.depositor_terms)
+            fetcher = default_fetcher(cfg.pubchem.max_requests_per_second)
+            report = ingest_pubchem(cfg, cache, fetcher, new_release=args.new_release, terms=terms)
+        else:
+            fetcher = default_fetcher(cfg.chembl.max_requests_per_second)
+            report = ingest_chembl(cfg, cache, fetcher, new_release=args.new_release)
     except (ConfigError, IngestError, FetchError, CacheError, ValueError) as exc:
         if args.json:
             print(json.dumps({"ok": False, "error": str(exc)}))
@@ -106,6 +122,12 @@ def _ingest(args: argparse.Namespace) -> int:
         return 2
     if args.json:
         print(json.dumps({"ok": True, **asdict(report)}))
+    elif isinstance(report, PubchemIngestReport):
+        drops = ", ".join(f"{k} {v}" for k, v in report.drops_by_reason.items()) or "none"
+        print(
+            f"pubchem {report.release}: {report.rows} rows from {report.aids_kept} of "
+            f"{report.aids_listed} AIDs ({report.requests_made} requests); dropped: {drops}"
+        )
     else:
         print(
             f"{report.source} {report.release}: {report.records} records in {report.pages} pages "

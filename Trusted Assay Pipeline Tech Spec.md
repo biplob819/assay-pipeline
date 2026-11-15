@@ -166,7 +166,7 @@ class Activity(BaseModel):  # one row in the unified table; never merged
     relation: Literal["=", "<", ">", "<=", ">=", "unknown"]  # unknown: none given, or non-standard
     pic50: float | None
     source: Literal["chembl", "pubchem"]
-    source_record_id: str | None  # ChEMBL activity_id, or PubChem AID:SID
+    source_record_id: str | None  # ChEMBL activity_id, or PubChem AID:SID:n
     depositor: str | None  # PubChem only
     chembl_src_id: int | None  # ChEMBL's own source (7 = PubChem BioAssay, 37 = BindingDB), D-24
     data_validity_comment: str | None  # ChEMBL only, counted in the data card
@@ -356,11 +356,13 @@ Rows where ChEMBL sets `data_validity_comment` are kept and counted. That commen
 
 ### 5.2 PubChem mapping
 
-- AIDs come from the gene-symbol target listing. Only assays whose target is human EGFR are kept.
+- AIDs come from the gene-symbol target listing (gene symbols are not species-specific). Only assays whose summary lists the configured UniProt accession are kept (`target_not_configured` otherwise; assays that name the target only by a RefSeq accession, such as `NP_005219`, are dropped too — a stated limit). Concise tables can hold rows for several targets, so rows for other accessions are dropped as `other_target`.
+- **AIDs that ChEMBL imported are dropped** (reason `chembl_imported_aid`): ChEMBL's assays with `src_id` 7 for the configured target give their `src_assay_id` (a part id such as `493040_69` counts as AID 493040) (D-24).
 - **ChEMBL-deposited AIDs are dropped** (reason `chembl_deposited_aid`). ChEMBL deposits its own data into PubChem, so keeping them would count one measurement twice and make sources look as if they agree (H3).
 - Only rows whose activity name is IC50 are kept. Values are converted from the concise table's micromolar column to nM.
-- PubChem has no ChEMBL-style assay classification, so `assay_type="U"`. When a row has no qualifier, `relation="unknown"`, and QC5 flags it (H4).
-- `source_record_id` is `AID:SID`. `depositor` is the AID's source name, which must be listed in `depositor_terms.yaml` (D-15).
+- PubChem has no ChEMBL-style assay classification, so `assay_type="U"`. The concise table has no qualifier column, so every PubChem row gets `relation="unknown"`, and QC5 flags it (H4).
+- Structures come from `compound/cid/.../property/SMILES,InChIKey` in batches, for the CIDs of kept rows only; rows without a CID or a structure are dropped (`no_cid`, `no_structure`). The release is the UTC date of the AID listing (D-2).
+- `source_record_id` is `AID:SID:n`, where n numbers the rows that share an AID and SID in table order (PubChem repeats a SID for separate measurements and for each target). `depositor` is the AID's source name, which must be cleared in `depositor_terms.yaml` (D-15); ChEMBL-deposited AIDs are dropped whatever the config.
 
 ### 5.3 Quality rules (exact definitions)
 

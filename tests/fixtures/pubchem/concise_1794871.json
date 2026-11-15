@@ -1,0 +1,118 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1794871",
+     "354327356",
+     "86290382",
+     "Active",
+     "P00533",
+     "1956",
+     "0.054",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1794871",
+     "354327356",
+     "86290382",
+     "Active",
+     "P00533",
+     "1956",
+     "0.27",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1794871",
+     "354327356",
+     "86290382",
+     "Active",
+     "Q06187",
+     "695",
+     "0.01",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1794871",
+     "354327357",
+     "86280693",
+     "Active",
+     "P00533",
+     "1956",
+     "0.0063",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1794871",
+     "354327357",
+     "86280693",
+     "Active",
+     "P00533",
+     "1956",
+     "0.0093",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1794871",
+     "354327357",
+     "86280693",
+     "Active",
+     "Q06187",
+     "695",
+     "0.01",
+     "Kd",
+     "Biological Assay from US Patent US9694011B2: \"Substituted pyrazolopyrimidines as kinases inhibitors\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   }
+  ]
+ }
+}

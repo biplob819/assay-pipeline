@@ -1,0 +1,54 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1798578",
+     "251974395",
+     "16126651",
+     "Active",
+     "P00533",
+     "1956",
+     "0.0013",
+     "IC50",
+     "Measurement of EGFR Inhibitory Activity from US Patent US10280174B2: \"Salt of fused pyrimidine compound and crystal thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798578",
+     "381611587",
+     "118519887",
+     "Active",
+     "P00533",
+     "1956",
+     "0.0169",
+     "IC50",
+     "Measurement of EGFR Inhibitory Activity from US Patent US10280174B2: \"Salt of fused pyrimidine compound and crystal thereof\"",
+     "Confirmatory",
+     "",
+     ""
+    ]
+   }
+  ]
+ }
+}

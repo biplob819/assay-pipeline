@@ -1,0 +1,198 @@
+{
+ "Table": {
+  "Columns": {
+   "Column": [
+    "AID",
+    "SID",
+    "CID",
+    "Activity Outcome",
+    "Target Accession",
+    "Target GeneID",
+    "Activity Value [uM]",
+    "Activity Name",
+    "Assay Name",
+    "Assay Type",
+    "PubMed ID",
+    "RNAi"
+   ]
+  },
+  "Row": [
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P07949",
+     "5979",
+     "0.059",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P09619",
+     "5159",
+     "0.084",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P10721",
+     "3815",
+     "0.008",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P17948",
+     "2321",
+     "0.002",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P35916",
+     "2324",
+     "0.006",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P35918",
+     "16542",
+     "0.006",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Active",
+     "P35968",
+     "3791",
+     "0.003",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Unspecified",
+     "P00533",
+     "",
+     "3",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Unspecified",
+     "P11362",
+     "2260",
+     "2.8",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Unspecified",
+     "P12931",
+     "6714",
+     "3",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   },
+   {
+    "Cell": [
+     "1798470",
+     "56269724",
+     "11667893",
+     "Unspecified",
+     "Q16539",
+     "1432",
+     "3",
+     "IC50",
+     "HTRF Kinase Inhibition Assay from Article 10.1158/0008-5472.CAN-05-4665: \"AMG 706, an oral, multikinase inhibitor that selectively targets vascular endothelial growth factor, platelet-derived growth factor, and kit receptors, potently inhibits angiogenesis and induces regression in tumor xenografts.\"",
+     "Confirmatory",
+     "16951187",
+     ""
+    ]
+   }
+  ]
+ }
+}

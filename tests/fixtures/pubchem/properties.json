@@ -1,0 +1,31 @@
+{
+ "PropertyTable": {
+  "Properties": [
+   {
+    "CID": 11667893,
+    "SMILES": "CC1(CNC2=C1C=CC(=C2)NC(=O)C3=C(N=CC=C3)NCC4=CC=NC=C4)C",
+    "InChIKey": "RAHBGWKEPAQNFF-UHFFFAOYSA-N"
+   },
+   {
+    "CID": 16126651,
+    "SMILES": "C=CC(=O)N1CCCC(C1)N2C3=NC=NC(=C3C(=N2)C4=CC=C(C=C4)OC5=CC=CC=C5)N",
+    "InChIKey": "XYFPWWZEPKGCCK-UHFFFAOYSA-N"
+   },
+   {
+    "CID": 86280693,
+    "SMILES": "C=CC(=O)N1CCC[C@H](C1)N2C3=NC=NC(=C3C(=N2)C4=CC(=C(C=C4)OC5=CC=CC=C5)Cl)N",
+    "InChIKey": "BCVUHZCEHINVMQ-QGZVFWFLSA-N"
+   },
+   {
+    "CID": 86290382,
+    "SMILES": "C=CC(=O)N1CCC[C@H](C1)N2C3=NC=NC(=C3C(=N2)C4=CC=C(C=C4)OC5=CC=C(C=C5)F)N",
+    "InChIKey": "ILYWXMXJQALBEV-GOSISDBHSA-N"
+   },
+   {
+    "CID": 118519887,
+    "SMILES": "C=CC(=O)N1CCC[C@H](C1)N2C3=NC=NC(=C3C(=N2)C(=O)NC4=NC5=CC=CC=C5O4)N",
+    "InChIKey": "WUMMDJMYFAWMBN-GFCCVEGCSA-N"
+   }
+  ]
+ }
+}
