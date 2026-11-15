@@ -1,0 +1,47 @@
+# Deploys the CISO dashboard (docs/report) to GitHub Pages (OWNER D-13, DSH-07).
+# The page is rendered from the committed results bundle, so it can be rebuilt here from the
+# repository alone; it is re-rendered and checked against the committed HTML before deploying.
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/report/**", "docs/results/**", "src/assay_pipeline/report/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - name: Re-render the dashboard from the committed bundle and compare
+        run: |
+          bundle="docs/results/$(cat docs/results/LATEST)"
+          uv run assay report --bundle "$bundle" --html /tmp/index.html
+          cmp /tmp/index.html docs/report/index.html
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: docs/report
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

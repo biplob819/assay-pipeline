@@ -89,6 +89,15 @@ def build_parser() -> argparse.ArgumentParser:
     beh.add_argument("--dry-run", action="store_true", help="print the judging estimate only")
     beh.add_argument("--max-cost", type=float, default=None, help="refuse or stop past this USD")
     beh.add_argument("--json", action="store_true", help="machine-readable output")
+    rep = sub.add_parser("report", help="build the results bundle and the dashboard HTML")
+    rep.add_argument("--run", type=Path, help="a finished run folder (collects a new bundle)")
+    rep.add_argument("--snapshots", type=Path, default=Path("snapshots"), help="snapshots root")
+    rep.add_argument("--snapshot", help="the run's snapshot id")
+    rep.add_argument("--oracle", type=Path, help="oracle results JSON")
+    rep.add_argument("--bundle", type=Path, help="render from this bundle instead of a run")
+    rep.add_argument("--results", type=Path, default=Path("docs/results"), help="bundle folder")
+    rep.add_argument("--html", type=Path, default=Path("docs/report/index.html"), help="output")
+    rep.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -339,6 +348,30 @@ def _behaviour(args: argparse.Namespace) -> int:
     return 0
 
 
+def _report(args: argparse.Namespace) -> int:
+    from assay_pipeline.report.collect import ReportError, collect, write_bundle
+    from assay_pipeline.report.html import render
+
+    try:
+        if args.bundle is not None:
+            bundle = json.loads(args.bundle.read_text(encoding="utf-8"))
+            bundle_path = args.bundle
+        elif args.run is not None and args.snapshot:
+            bundle = collect(args.run, args.snapshots, args.snapshot, args.oracle)
+            bundle_path = write_bundle(bundle, args.results / args.run.name)
+            # the Pages workflow renders this bundle: an explicit pointer, not a name sort
+            (args.results / "LATEST").write_text(f"{args.run.name}/bundle.json\n", encoding="utf-8")
+        else:
+            raise ReportError("give --bundle, or --run with --snapshot")
+        args.html.parent.mkdir(parents=True, exist_ok=True)
+        args.html.write_text(render(bundle), encoding="utf-8")
+    except (ReportError, OSError, ValueError, KeyError) as exc:
+        return _fail(args, "report", exc)
+    out = {"ok": True, "bundle": str(bundle_path), "html": str(args.html)}
+    print(json.dumps(out) if args.json else f"bundle {bundle_path}; report {args.html}")
+    return 0
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -372,6 +405,8 @@ def main(argv: list[str] | None = None) -> int:
         return _attack(args)
     if args.command == "behaviour":
         return _behaviour(args)
+    if args.command == "report":
+        return _report(args)
     return 2
 
 
