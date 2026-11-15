@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-15
+- [FEAT] [N1.4] — normalise: both sources to `Activity` rows with the RDKit parent (cleanup, largest fragment, uncharge; RDKit 2026.09 pinned), nM over the molar set rounded once, pIC50 from the rounded value, relation/variant/assay-type mapping, full provenance and hashed uids; one drop ledger with the PubChem ingest drops; source-key mismatch count; cache-only ChEMBL reader; malformed records drop with a reason while code and caller errors raise (L-26); three attacker verifier passes
 - [FEAT] [N1.3] — PubChem ingest: AIDs for the configured gene symbol, summaries in batches, ChEMBL-deposited (always) and ChEMBL-imported AIDs dropped (D-24), UniProt target filter (RefSeq-only stated limit), concise tables and batched structures for kept rows only, row ids `AID:SID:n` unique per row, NotFound answers cached and re-asked per CID, strict depositor ledger with its digest in the cursor (BindingDB cleared, D-15), every drop in the ledger, resumable UTC-date releases, `assay ingest pubchem`; recorded real fixture (6 AIDs) and golden cache digest; two attacker verifier passes
 - [FIX] [S3.2] — Windows CI: tests write doctored logs with LF line endings, the encoding lint prints POSIX paths, and the rename-while-open attack is skipped on Windows, which forbids it (L-24)
 - [FIX] [S3.2] — Windows CI: POSIX-only calls guarded with `sys.platform` checks; gate 5 now runs pyright for Linux, Darwin and Windows (L-23)

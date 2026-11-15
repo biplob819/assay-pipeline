@@ -43,6 +43,6 @@ Unit conversion, standardisation and the unified table (N1.4); the data card yie
 ## Stated limits
 - RefSeq-only target accessions are dropped (`target_not_configured`).
 - The concise table has no mutation column, so BindingDB wild-type and mutant rows look alike; N1.4 maps PubChem rows to `wild-type/unspecified` (H2 risk, data card).
-- The ChEMBL import list is read live, not tied to the N1.2 ChEMBL release; N1.4 cross-checks it against the ChEMBL cache.
+- The ChEMBL import list is read live, not tied to the N1.2 ChEMBL release; the data card states both releases (Q2.2). ChEMBL activity records carry no PubChem AID, so no cross-check is possible from the cache.
 - Record ids are positional within a release: if PubChem inserts a row for a SID in a later release, `AID:SID:n` may name a different measurement there. They are unique and stable within a release (and across a resume); N1.4 must not treat them as stable across releases.
 - A concise table with no `Row` key is recorded as an empty table.

@@ -247,3 +247,49 @@ def _ingest(cfg: BuildConfig, cache: RawCache, fetcher: Fetcher, new_release: bo
         cached_hits=hits,
         complete=True,
     )
+
+
+def read_chembl(cfg: BuildConfig, cache: RawCache, release: str | None = None) -> tuple[str, list]:
+    """Every cached activity record of a complete release, in activity_id order (cache only).
+
+    Pages are re-checked as at ingest time, and a record id seen twice is an error, so a
+    damaged or mixed cache cannot double count.
+    """
+    if release is None:
+        done = [r for r in cache.releases(SOURCE) if not _incomplete(cache, r)]
+        done = [r for r in done if not (cache.read_cursor(SOURCE, r) or {}).get("abandoned")]
+        if not done:
+            raise IngestError("no complete chembl release in the cache; run the ingest first")
+        if len(done) > 1:
+            raise IngestError(f"several complete chembl releases {done}: name one")
+        release = done[0]
+    try:
+        cursor = cache.read_cursor(SOURCE, release)
+    except CacheError as exc:
+        raise IngestError(f"chembl release {release!r}: {exc}") from exc
+    if cursor is None or cursor.get("complete") is not True or cursor.get("abandoned"):
+        raise IngestError(f"chembl release {release} is not complete")
+    if (cursor.get("target"), cursor.get("activity_type")) != (
+        cfg.target.chembl_target_id,
+        cfg.target.activity_type,
+    ):
+        raise IngestError(f"the chembl {release} cache was built for another target")
+    records: dict[int, dict] = {}
+    try:
+        for row in cache.index(SOURCE, release).values():
+            body = json.loads(cache.get(SOURCE, release, row.request_key))
+            if not (isinstance(body, dict) and "page_meta" in body):
+                continue  # status.json
+            for r in _check_page(cfg, body, 0, None, None, cache.release_dir(SOURCE, release)):
+                aid = int(r["activity_id"])
+                if aid in records:
+                    raise IngestError(f"activity {aid} is cached twice in chembl {release}")
+                records[aid] = r
+    except (CacheError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise IngestError(f"chembl {release}: {exc}") from exc
+    if len(records) != int(cursor.get("total_count") or 0):
+        raise IngestError(
+            f"chembl {release}: {len(records)} records cached, cursor says "
+            f"{cursor.get('total_count')}"
+        )
+    return release, [records[k] for k in sorted(records)]

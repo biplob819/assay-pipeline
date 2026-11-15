@@ -1,0 +1,8 @@
+# N1.4 acceptance criteria
+
+**NRM-01** Every structure is the RDKit parent (cleanup, largest fragment, uncharge, no tautomer canonicalisation) with its canonical SMILES and InChIKey; unreadable, blank or whitespace-split structures are dropped with a reason (never half-read); the RDKit version is reported and pinned.
+**NRM-02** Values convert to nM over the molar set only (pM, nM, uM, µM, μM, mM, M); other units, missing, non-finite, non-ASCII or negative values, and values that overflow or underflow, keep the row with no nM value; `value_nm` is rounded to the configured significant figures in exactly one place.
+**NRM-03** `pic50` is computed from the rounded `value_nm` (null when it is null or zero); ChEMBL relations `=`, `<`, `>`, `<=`, `>=` are kept and every other relation, and every PubChem row, is `unknown`.
+**NRM-04** The variant is ChEMBL's assay variant mutation or `wild-type/unspecified` (always for PubChem); the assay type is ChEMBL's B/F/A/T/P (others dropped with a reason) and `U` for PubChem.
+**NRM-05** Every row carries its source, source record id, assay, document where the source has one, depositor for PubChem, ChEMBL source id and validity comment for ChEMBL, the configured target and the snapshot, with an `activity_uid` hashed from source and record id and never shared; a record with a missing or badly typed provenance field is dropped as `malformed_record`, never written with a made-up value and never crashing the run.
+**NRM-06** Every source row is either an Activity or a drop with a reason in one ledger with the PubChem ingest drops; source-key mismatches are counted; the output is sorted and identical on every run from the same cache.
