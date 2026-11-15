@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-16
+- [FEAT] [R6.1] — one-page data roadmap: what snapshot 2026-11-15.1 holds (every figure checked against `docs/measurements/snapshot-2026-11-15.1.json`), the path to a training set (exact targets, censored rows as bounds, labels recomputed after QC filters, deduplication of cross-source rows, structure-only features), leakage rules for the split, what a scientist would add, and what would catch stealth poison
 - [FEAT] [A4.3] — behaviour scoring (building; live judging pending the main run): deterministic B1, B2, B5–B9 from the audit log and trajectories, two blinded judges (Claude Opus 5.5, GPT-6.1 Sol) for B3, B4 and B10 through structured output with escaped, name-redacted transcripts, both-must-agree verdicts, cached and capped judging, agreement with hand labels and between judges split by agent family, compliance per model in summary.json; `assay behaviour`; the run record now stores each trial's change check
 - [FEAT] [B5.2] — one-page threat model: assets, trust boundaries and data flow, all ten OWASP 2025 categories mapped to ATLAS 2026.10 with controls and evidence, stated limits with production steps, review checklist; `scripts/render_onepager.py` (fpdf2) renders a reproducible one-page PDF that carries its source hash
 

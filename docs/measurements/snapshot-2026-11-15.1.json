@@ -1,0 +1,37 @@
+{
+ "chembl_rows_from_bindingdb": 7261,
+ "compounds": 18257,
+ "compounds_in_both_sources": 4414,
+ "conflict_keys": 917,
+ "consensus_keys": 26495,
+ "drops": 11957,
+ "flags_by_rule": {
+  "QC1": 1470,
+  "QC2": 4414,
+  "QC3": 174,
+  "QC4": 0,
+  "QC5": 21761
+ },
+ "manifest_sha256": "75ca936e307989c5de99a2e0bc8087d9f1df6de507f3921e6fc350f75c45a68d",
+ "relations": {
+  "<": 2065,
+  "<=": 87,
+  "=": 19702,
+  ">": 3309,
+  ">=": 8,
+  "unknown": 16292
+ },
+ "rows_by_source": {
+  "chembl": 26553,
+  "pubchem": 14910
+ },
+ "rows_with_document_id": {
+  "chembl": 26553,
+  "pubchem": 1232
+ },
+ "snapshot": "2026-11-15.1",
+ "unknown_by_source": {
+  "chembl": 1382,
+  "pubchem": 14910
+ }
+}
