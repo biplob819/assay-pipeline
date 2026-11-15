@@ -1,0 +1,212 @@
+# SQL guard bypass corpus (Tech Spec §6.1, GRD-08). Every `blocked` entry must be blocked with
+# exactly its reason; every `allowed` entry must be allowed, and its rendered SQL must run on a
+# DuckDB copy of the approved views. Add every new bypass a verifier finds.
+blocked:
+  # parse and statement count
+  - {sql: "", reason: parse_error}
+  - {sql: ";", reason: parse_error}
+  - {sql: "SELEC * FROM v_activities", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities WHERE (", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities LIMIT 0", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities LIMIT -1", reason: parse_error}
+  - {sql: "SELECT 1; SELECT 2", reason: multiple_statements}
+  - {sql: "SELECT * FROM v_activities; DROP TABLE activities", reason: multiple_statements}
+  - {sql: "SELECT 1 /* hide */; DELETE FROM activities", reason: multiple_statements}
+  - {sql: "SELECT 1 -- comment\n; ATTACH 'x.db'", reason: multiple_statements}
+  # not a SELECT
+  - {sql: "DROP TABLE activities", reason: not_select}
+  - {sql: "DELETE FROM activities", reason: not_select}
+  - {sql: "UPDATE activities SET pic50 = 1", reason: not_select}
+  - {sql: "INSERT INTO activities VALUES (1)", reason: not_select}
+  - {sql: "CREATE TABLE t AS SELECT * FROM embargoed_results", reason: not_select}
+  - {sql: "CREATE VIEW v_x AS SELECT * FROM embargoed_results", reason: not_select}
+  - {sql: "ALTER TABLE activities RENAME TO a", reason: not_select}
+  - {sql: "ATTACH 'other.duckdb' AS o", reason: not_select}
+  - {sql: "DETACH o", reason: not_select}
+  - {sql: "COPY v_activities TO 'out.csv'", reason: not_select}
+  - {sql: "COPY (SELECT * FROM embargoed_results) TO 'out.csv'", reason: not_select}
+  - {sql: "EXPORT DATABASE 'dir'", reason: parse_error}
+  - {sql: "IMPORT DATABASE 'dir'", reason: parse_error}
+  - {sql: "INSTALL httpfs", reason: not_select}
+  - {sql: "LOAD httpfs", reason: not_select}
+  - {sql: "SET enable_external_access = true", reason: not_select}
+  - {sql: "RESET lock_configuration", reason: not_select}
+  - {sql: "PRAGMA table_info('embargoed_results')", reason: not_select}
+  - {sql: "PRAGMA show_tables", reason: not_select}
+  - {sql: "SHOW TABLES", reason: not_select}
+  - {sql: "SHOW ALL TABLES", reason: not_select}
+  - {sql: "DESCRIBE embargoed_results", reason: not_select}
+  - {sql: "DESCRIBE v_activities", reason: not_select}
+  - {sql: "SUMMARIZE embargoed_results", reason: not_select}
+  - {sql: "CALL duckdb_tables()", reason: not_select}
+  - {sql: "EXPLAIN SELECT * FROM embargoed_results", reason: not_select}
+  - {sql: "CHECKPOINT", reason: not_select}
+  - {sql: "VACUUM", reason: not_select}
+  - {sql: "BEGIN TRANSACTION", reason: not_select}
+  - {sql: "USE memory", reason: not_select}
+  - {sql: "PIVOT v_activities ON source USING count(*)", reason: not_select}
+  - {sql: "SELECT * FROM (PIVOT v_activities ON source USING count(*))", reason: not_select}
+  # recursion
+  - {sql: "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r) SELECT * FROM r", reason: recursive_cte}
+  # tables outside the allow-list
+  - {sql: "SELECT * FROM embargoed_results", reason: table_not_allowed}
+  - {sql: "select * from EMBARGOED_RESULTS", reason: table_not_allowed}
+  - {sql: "SELECT * FROM \"embargoed_results\"", reason: table_not_allowed}
+  - {sql: "SELECT * FROM activities", reason: table_not_allowed}
+  - {sql: "SELECT * FROM consensus", reason: table_not_allowed}
+  - {sql: "SELECT * FROM main.embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM main.v_activities", reason: table_not_allowed}
+  - {sql: "SELECT * FROM agent.main.embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM memory.main.x", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities, embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities a JOIN embargoed_results e ON true", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities UNION ALL SELECT * FROM embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities WHERE inchikey IN (SELECT inchikey FROM embargoed_results)", reason: table_not_allowed}
+  - {sql: "SELECT (SELECT max(x) FROM embargoed_results) FROM v_activities", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities WHERE EXISTS (SELECT 1 FROM embargoed_results)", reason: table_not_allowed}
+  - {sql: "SELECT * FROM (SELECT * FROM (SELECT * FROM embargoed_results) a) b", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities INTERSECT SELECT * FROM embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activities EXCEPT SELECT * FROM embargoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM v_activitie", reason: table_not_allowed}
+  # CTE tricks
+  - {sql: "WITH v_activities AS (SELECT * FROM embargoed_results) SELECT * FROM v_activities", reason: cte_shadows_view}
+  - {sql: "WITH V_ACTIVITIES AS (SELECT 1) SELECT * FROM v_activities", reason: cte_shadows_view}
+  - {sql: "WITH x AS (SELECT * FROM embargoed_results) SELECT * FROM x", reason: table_not_allowed}
+  - {sql: "SELECT * FROM (WITH embargoed_results AS (SELECT 1) SELECT 1) a, embargoed_results", reason: table_not_allowed}
+  - {sql: "WITH a AS (SELECT 1) SELECT * FROM (WITH b AS (SELECT 2) SELECT * FROM a), b", reason: table_not_allowed}
+  # files
+  - {sql: "SELECT * FROM 'data.parquet'", reason: file_reference}
+  - {sql: "SELECT * FROM 'v_activities'", reason: file_reference}
+  - {sql: "SELECT * FROM '/etc/passwd'", reason: file_reference}
+  - {sql: "SELECT * FROM 's3://bucket/x.csv'", reason: file_reference}
+  - {sql: "SELECT * FROM read_csv('x.csv')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM read_csv_auto('/etc/passwd')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM read_parquet('x.parquet')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM read_json('x.json')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM read_text('x.txt')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM glob('*')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM query_table('embargoed_results')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM query('SELECT * FROM embargoed_results')", reason: function_not_allowed}
+  - {sql: "SELECT * FROM range(100000000)", reason: function_not_allowed}
+  - {sql: "SELECT * FROM generate_series(1, 100000000)", reason: function_not_allowed}
+  # catalog
+  - {sql: "SELECT * FROM information_schema.tables", reason: catalog_access}
+  - {sql: "SELECT * FROM information_schema.columns", reason: catalog_access}
+  - {sql: "SELECT * FROM pg_catalog.pg_tables", reason: catalog_access}
+  - {sql: "SELECT * FROM duckdb_tables()", reason: function_not_allowed}
+  - {sql: "SELECT * FROM duckdb_settings()", reason: function_not_allowed}
+  - {sql: "SELECT * FROM sqlite_master", reason: catalog_access}
+  - {sql: "SELECT * FROM duckdb_views", reason: catalog_access}
+  - {sql: "SELECT * FROM pg_tables", reason: catalog_access}
+  # functions outside the allow-list
+  - {sql: "SELECT getenv('HOME') FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT current_setting('enable_external_access')", reason: function_not_allowed}
+  - {sql: "SELECT read_blob('x') FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT version()", reason: function_not_allowed}
+  - {sql: "SELECT now() FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT random() FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT md5(inchikey) FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT string_agg(inchikey, ',') FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT list(inchikey) FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT row_number() OVER () FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT repeat('x', 1000000000) FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT regexp_matches(smiles, '(a+)+$') FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT count(*) FROM v_activities, LATERAL (SELECT getenv('x'))", reason: function_not_allowed}
+  # syntax outside plain SELECT
+  - {sql: "SELECT [1, 2, 3]", reason: function_not_allowed}
+  - {sql: "SELECT {'a': 1}", reason: function_not_allowed}
+  - {sql: "SELECT list_transform([1], x -> x + 1)", reason: function_not_allowed}
+  - {sql: "SELECT * FROM v_activities QUALIFY true", reason: not_select}
+  - {sql: "SELECT * FROM v_activities USING SAMPLE 10%", reason: not_select}
+  - {sql: "SELECT $1 FROM v_activities", reason: not_select}
+  - {sql: "SELECT ?", reason: not_select}
+  # verifier pass 1 (S3.1): keyword functions, non-integer limits, nested casts, FROM-first, look-alikes
+  - {sql: "SELECT user FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT \"current_catalog\" FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT current_schema FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT \"session_user\" FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT * FROM v_activities LIMIT 0.0", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities LIMIT 0.9", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities LIMIT NULL", reason: parse_error}
+  - {sql: "SELECT * FROM v_activities LIMIT 5 OFFSET -1", reason: parse_error}
+  - {sql: "SELECT CAST('[1,2]' AS INT[])", reason: not_select}
+  - {sql: "SELECT CAST(inchikey AS MAP(VARCHAR, INT)) FROM v_activities", reason: not_select}
+  - {sql: "FROM embargoed_results", reason: table_not_allowed}
+  - {sql: "FROM embargoed_results SELECT *", reason: table_not_allowed}
+  - {sql: "SELECT * FROM embаrgoed_results", reason: table_not_allowed}
+  - {sql: "SELECT * FROM ｅｍｂａｒｇｏｅｄ_results", reason: table_not_allowed}
+  - {sql: "WITH c0 AS (SELECT inchikey AS k FROM v_activities), c1 AS (SELECT k FROM c0 UNION ALL SELECT k FROM c0), c2 AS (SELECT k FROM c1 UNION ALL SELECT k FROM c1), c3 AS (SELECT k FROM c2 UNION ALL SELECT k FROM c2), c4 AS (SELECT k FROM c3 UNION ALL SELECT k FROM c3), c5 AS (SELECT k FROM c4 UNION ALL SELECT k FROM c4) SELECT count(*) FROM c5", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS k FROM v_activities), c1 AS (SELECT x.k FROM c0 x, c0 y WHERE x.k = y.k), c2 AS (SELECT x.k FROM c1 x, c1 y WHERE x.k = y.k), c3 AS (SELECT x.k FROM c2 x, c2 y WHERE x.k = y.k), c4 AS (SELECT x.k FROM c3 x, c3 y WHERE x.k = y.k), c5 AS (SELECT x.k FROM c4 x, c4 y WHERE x.k = y.k) SELECT count(*) FROM c5", reason: not_select}
+  # verifier pass 2 (S3.1): lateral alias chains and string doubling (D-28)
+  - {sql: "SELECT pic50 AS a0, a0 + a0 AS a1, a1 + a1 AS a2, a2 + a2 AS a3 FROM v_activities WHERE a3 > 0", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS l0_0, inchikey AS l0_1, inchikey AS l0_2, inchikey AS l0_3 FROM v_activities), c1 AS (SELECT l0_0||l0_1||l0_2||l0_3 AS l1_0, l0_0||l0_1||l0_2||l0_3 AS l1_1, l0_0||l0_1||l0_2||l0_3 AS l1_2, l0_0||l0_1||l0_2||l0_3 AS l1_3 FROM c0), c2 AS (SELECT l1_0||l1_1||l1_2||l1_3 AS l2_0, l1_0||l1_1||l1_2||l1_3 AS l2_1, l1_0||l1_1||l1_2||l1_3 AS l2_2, l1_0||l1_1||l1_2||l1_3 AS l2_3 FROM c1), c3 AS (SELECT l2_0||l2_1||l2_2||l2_3 AS l3_0, l2_0||l2_1||l2_2||l2_3 AS l3_1, l2_0||l2_1||l2_2||l2_3 AS l3_2, l2_0||l2_1||l2_2||l2_3 AS l3_3 FROM c2), c4 AS (SELECT l3_0||l3_1||l3_2||l3_3 AS l4_0, l3_0||l3_1||l3_2||l3_3 AS l4_1, l3_0||l3_1||l3_2||l3_3 AS l4_2, l3_0||l3_1||l3_2||l3_3 AS l4_3 FROM c3) SELECT length(l4_0) AS len FROM c4", reason: not_select}
+  - {sql: "SELECT q8 AS inchikey, inchikey + inchikey AS smiles, smiles + smiles AS variant FROM v_activities AS t(q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12) WHERE variant > 0", reason: not_select}
+  - {sql: "SELECT 1.0 AS inchikey, inchikey + inchikey AS smiles FROM v_quality", reason: not_select}
+  - {sql: "SELECT embargoed_results", reason: not_select}
+  - {sql: "SELECT activities", reason: not_select}
+  # verifier pass 4 (S3.1): renaming that hid string growth
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1(a) AS (SELECT a||a||a||a FROM c0), c2(a) AS (SELECT a||a||a||a FROM c1), c3(a) AS (SELECT a||a||a||a FROM c2), c4(a) AS (SELECT a||a||a||a FROM c3) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT 'x' AS a UNION ALL SELECT a||a||a||a FROM c0), c2 AS (SELECT 'x' AS a UNION ALL SELECT a||a||a||a FROM c1), c3 AS (SELECT 'x' AS a UNION ALL SELECT a||a||a||a FROM c2), c4 AS (SELECT 'x' AS a UNION ALL SELECT a||a||a||a FROM c3) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT * REPLACE (a||a||a||a AS a) FROM c0), c2 AS (SELECT * REPLACE (a||a||a||a AS a) FROM c1), c3 AS (SELECT * REPLACE (a||a||a||a AS a) FROM c2), c4 AS (SELECT * REPLACE (a||a||a||a AS a) FROM c3) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT * RENAME (b AS a) FROM (SELECT a||a||a||a AS b FROM c0) AS t), c2 AS (SELECT * RENAME (b AS a) FROM (SELECT a||a||a||a AS b FROM c1) AS t), c3 AS (SELECT * RENAME (b AS a) FROM (SELECT a||a||a||a AS b FROM c2) AS t), c4 AS (SELECT * RENAME (b AS a) FROM (SELECT a||a||a||a AS b FROM c3) AS t) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT a FROM (SELECT a||a||a||a FROM c0) AS t(a)), c2 AS (SELECT a FROM (SELECT a||a||a||a FROM c1) AS t(a)), c3 AS (SELECT a FROM (SELECT a||a||a||a FROM c2) AS t(a)), c4 AS (SELECT a FROM (SELECT a||a||a||a FROM c3) AS t(a)) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  # verifier pass 5 (S3.1): automatic names and scalar subqueries
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c0) AS t), c2 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c1) AS t), c3 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c2) AS t), c4 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c3) AS t) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+  - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c0) AS x) AS t), c2 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c1) AS x) AS t), c3 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c2) AS x) AS t), c4 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c3) AS x) AS t) SELECT max(length(a)) AS len FROM c4", reason: not_select}
+allowed:
+  - SELECT * FROM v_activities
+  - select * from v_activities
+  - SELECT * FROM V_ACTIVITIES
+  - SELECT * FROM "v_activities"
+  - SELECT count(*) FROM v_activities
+  - SELECT count(DISTINCT inchikey) FROM v_activities
+  - SELECT inchikey, median(pic50) AS m FROM v_activities GROUP BY inchikey
+  - SELECT inchikey, avg(pic50) FROM v_activities GROUP BY inchikey HAVING count(*) > 2
+  - SELECT * FROM v_activities WHERE pic50 BETWEEN 6 AND 9
+  - SELECT * FROM v_activities WHERE relation <> '=' ORDER BY pic50 DESC
+  - SELECT * FROM v_activities WHERE assay_type IN ('B', 'F') LIMIT 10
+  - SELECT * FROM v_activities LIMIT 5000
+  - SELECT * FROM v_activities LIMIT 10 OFFSET 20
+  - SELECT * FROM v_activities WHERE smiles LIKE '%N%'
+  - SELECT * FROM v_activities WHERE lower(assay_description) LIKE '%kinase%'
+  - SELECT * FROM v_activities WHERE contains(assay_description, 'EGFR')
+  - SELECT * FROM v_activities WHERE starts_with(inchikey, 'BSYN')
+  - SELECT round(avg(pic50), 2) FROM v_activities
+  - SELECT quantile_cont(pic50, 0.9) FROM v_activities
+  - SELECT stddev_samp(pic50), min(pic50), max(pic50), sum(value_nm) FROM v_activities
+  - SELECT log10(value_nm), ln(value_nm), exp(1), sqrt(4), power(10, 2), abs(-1) FROM v_activities
+  - SELECT CAST(pic50 AS INTEGER) FROM v_activities
+  - SELECT coalesce(variant, 'wild-type'), nullif(source, 'x') FROM v_activities
+  - SELECT upper(source), length(smiles), trim(assay_id) FROM v_activities
+  - SELECT CASE WHEN pic50 > 7 THEN 'potent' ELSE 'weak' END FROM v_activities
+  - SELECT * FROM v_activities WHERE source_record_id IS NULL
+  - SELECT * FROM v_activities WHERE NOT (pic50 > 5)
+  - SELECT a.inchikey, c.n_records FROM v_activities a JOIN v_compounds c ON a.inchikey = c.inchikey
+  - SELECT * FROM v_activities a LEFT JOIN v_consensus c ON a.inchikey = c.inchikey
+  - SELECT * FROM v_compounds WHERE inchikey IN (SELECT inchikey FROM v_activities WHERE pic50 > 8)
+  - SELECT (SELECT count(*) FROM v_compounds) AS n
+  - SELECT * FROM v_activities WHERE EXISTS (SELECT 1 FROM v_consensus WHERE conflict)
+  - WITH potent AS (SELECT * FROM v_activities WHERE pic50 > 8) SELECT count(*) FROM potent
+  - WITH a AS (SELECT inchikey FROM v_activities), b AS (SELECT * FROM a) SELECT * FROM b
+  - SELECT inchikey FROM v_activities UNION SELECT inchikey FROM v_compounds
+  - SELECT inchikey FROM v_activities INTERSECT SELECT inchikey FROM v_consensus
+  - SELECT * FROM v_quality
+  - SELECT metric, key, count FROM v_quality ORDER BY count DESC
+  - SELECT DISTINCT source FROM v_activities
+  - SELECT * FROM (SELECT inchikey, pic50 FROM v_activities) AS t WHERE t.pic50 > 7
+  - SELECT * FROM v_activities WHERE value_nm / 1000 > 1 AND pic50 % 2 = 0
+  - "SELECT 'drop table activities' AS note FROM v_activities"
+  - FROM v_activities
+  - FROM v_activities SELECT inchikey WHERE pic50 > 8
+  - WITH a AS (SELECT inchikey FROM v_activities) SELECT * FROM a x JOIN a y ON x.inchikey = y.inchikey
+  - SELECT * FROM v_activities LIMIT 5 OFFSET 0
+  - SELECT CAST(pic50 AS VARCHAR), CAST(value_nm AS DECIMAL(10, 2)) FROM v_activities
+  - SELECT inchikey, count(*) AS n FROM v_activities GROUP BY inchikey ORDER BY n DESC
+  - SELECT inchikey || '-' || source FROM v_activities
+  - SELECT lower(source) AS src, count(*) AS n FROM v_activities GROUP BY src
+  - SELECT inchikey, count(*) AS n FROM v_activities GROUP BY inchikey HAVING n > 1
+  - SELECT metric, sum(count) AS total FROM v_quality GROUP BY metric HAVING total > 0
+  - SELECT a.inchikey || '-' || c.inchikey AS pair FROM v_activities a JOIN v_compounds c ON a.inchikey = c.inchikey
+  - SELECT inchikey || inchikey AS s FROM v_activities
+  - SELECT * EXCLUDE (smiles) FROM v_activities
+  - SELECT inchikey FROM v_activities UNION ALL SELECT inchikey FROM v_compounds

@@ -1,6 +1,15 @@
 # S3.1 run state
 
-**Now:** spec
+**Now:** green
 
 ## History
 - 2026-11-15 — drafted in the scratchpad: sqlglot probes found a quoted file path parses as a table name, `quantile_cont`/`power`/`log10` parse under other class names, and `AND`/`CASE`/`EXISTS` are function classes; CTE scoping uses sqlglot scope analysis. 173 tests incl. 109-statement corpus and fuzzing.
+- 2026-11-15 — started (base 9ffb7f0); `sqlglot` (pinned <31) and `duckdb` added; guard and execution moved in from the draft; 173 tests.
+- 2026-11-15 — converge rerun after the N1.2 Windows test fix landed (2b806af).
+- 2026-11-15 — verifier pass 1 (attacker): no restricted row leaked in 250+ attacks and ~27,000 fuzzed compositions; GRD-06 disproved (a CTE fan-out chain ran 20 s past a 10 s timeout at 8.7 GB with memory_limit 1 GB, cost in bind/plan) and GRD-09 disproved (headers not counted against the cap; unbounded fetch; newlines in cells could forge the footer); GRD-03 partly (keyword functions as bare columns ran). Fixed (D-28) with corpus entries and tests; the child-process hard deadline is assigned to S3.3.
+- 2026-11-15 — verifier pass 2 (attacker): 0 leaks; GRD-06 disproved again (lateral alias chain 25 s past a 10 s timeout; string doubling to 17.8 GB) and GRD-09 (fetch budget per chunk, footer forgeable by a single-column cell, other line breaks unescaped). Fixed; D-28 and GRD-06 restated so the hard availability guarantee is S3.3's child process (L-19).
+- 2026-11-15 — verifier pass 3 (attacker): 0 leaks; GRD-09 confirmed; GRD-06 disproved by renaming (alias chain via column-alias lists or v_quality, 22 s past timeout; CTE-level string growth to 3.3 GB). Rules made structural (cross-reference, growth factor ≤ 64); false positives on GROUP BY/HAVING aliases and qualified concatenation fixed; FROM-less column references refused.
+- 2026-11-15 — verifier pass 4 (attacker): 0 leaks; all pass-3 bypasses closed; false positives fixed (23 ordinary queries allowed); GRD-06 disproved by five renamings that hid growth (CTE and derived column lists, `* REPLACE`, `* RENAME`, union branches matched by name). Renaming outside the select list is now refused and set operations take their largest branch.
+- 2026-11-15 — verifier pass 5 (attacker): five renaming variants closed, no regressions; GRD-06 disproved by DuckDB's automatic column names and by scalar subqueries carrying a grown string. Fixed conservatively: an unmatched name takes its scope's largest growth; a scalar subquery contributes its scope's largest output growth.
+- 2026-11-15 — fixing pass 5 exposed a builder bug: the scalar-subquery skip looked at every ancestor, so a derived table's own Subquery wrapper hid all columns in its body (growth inside derived tables always counted as 1; CTE bodies have no wrapper). Bounded to the measured expression, with a regression test.
+- 2026-11-15 — verifier pass 6 (attacker): GRD-01..09 confirmed, no regressions; every growth variant refused in CTE and derived-table form; 0 leaks across six passes. One accepted over-refusal (alias swap `pic50 AS value_nm, value_nm AS pic50`). Converge passed twice; rows flipped green.
