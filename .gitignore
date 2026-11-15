@@ -1,0 +1,26 @@
+# personal notes, not for the public repo (OWNER D-18)
+Portfolio notes.md
+
+.env
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.harness/
+.DS_Store
+
+# raw API cache, agent DB copies, run outputs and held-out cases stay local
+cache/
+runs/
+audit/
+*.duckdb
+heldout/*
+!heldout/MANIFEST.json
+
+.streamlit/secrets.toml
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
