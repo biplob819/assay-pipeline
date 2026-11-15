@@ -49,7 +49,7 @@ def offenders():
                 positional = {"read_text": 1, "write_text": 2, "open": 4}[name]
                 if len(node.args) >= positional:
                     continue  # encoding passed positionally, e.g. read_text("utf-8")
-                found.append(f"{path.relative_to(ROOT)}:{node.lineno} {name}()")
+                found.append(f"{path.relative_to(ROOT).as_posix()}:{node.lineno} {name}()")
     return found
 
 

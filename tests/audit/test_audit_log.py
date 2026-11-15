@@ -108,7 +108,7 @@ def test_every_tampering_kind_fails_naming_the_first_broken_seq(tmp_path, mutati
     else:  # truncate
         rows = rows[:3]
         expect = 3
-    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     report = verify(log.path, log.anchors_path)
     assert not report.ok and report.first_broken_seq == expect, report
 
@@ -137,7 +137,7 @@ def test_a_rewritten_log_with_a_valid_chain_is_caught_by_its_anchor(tmp_path, sh
         f["guard_decision"], f["guard_reason"] = "blocked", "not_select"
         rows[2] = canonical_json(f).decode()
     rows = _rechain(rows)
-    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     assert verify(log.path).ok  # the chain alone is fooled
     report = verify(log.path, log.anchors_path)
     assert not report.ok and report.first_broken_seq == 4
@@ -146,7 +146,7 @@ def test_a_rewritten_log_with_a_valid_chain_is_caught_by_its_anchor(tmp_path, sh
 
 def test_without_anchors_a_truncated_tail_is_undetectable_and_reported(tmp_path):
     log = write_run(tmp_path / "run.jsonl")
-    log.path.write_text("\n".join(lines(log.path)[:3]) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(lines(log.path)[:3]) + "\n", encoding="utf-8", newline="\n")
     report = verify(log.path)  # no anchors given
     assert report.ok and report.unanchored_tail == 3  # the stated limit, made visible
 
@@ -208,7 +208,7 @@ def test_a_broken_log_is_never_appended_to(tmp_path):
     log = write_run(tmp_path / "run.jsonl")
     rows = lines(log.path)
     del rows[2]
-    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     with pytest.raises(AuditError, match="broken at seq 2"):
         AuditLog(log.path, "run-1", clock=clock())
     assert not log.path.with_suffix(".jsonl.lock").exists()
@@ -245,7 +245,7 @@ def test_cli_verify_audit_exit_codes(tmp_path, capsys):
     assert cli.main(["verify-audit", str(log.path)]) == 0  # default anchors path
     rows = lines(log.path)
     del rows[3]
-    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     code = cli.main(["verify-audit", str(log.path), "--anchors", str(log.anchors_path), "--json"])
     out = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert code == 1 and out["ok"] is False and out["first_broken_seq"] == 3
@@ -303,7 +303,7 @@ def test_the_lock_dies_with_its_writer(tmp_path):
         f"AuditLog(r'{path}', 'run-1'); os._exit(0)"  # exits without closing
     )
     subprocess.run([sys.executable, "-c", code], check=True)
-    (tmp_path / "run.anchors.jsonl").write_text("", encoding="utf-8")
+    (tmp_path / "run.anchors.jsonl").write_text("", encoding="utf-8", newline="\n")
     with pytest.raises(AuditError, match="no anchor"):  # no stale lock: it opens, then checks
         AuditLog(path, "run-1", clock=clock())
 
@@ -311,7 +311,7 @@ def test_the_lock_dies_with_its_writer(tmp_path):
 def test_resume_is_refused_without_anchors_or_for_another_run(tmp_path):
     log = write_run(tmp_path / "run.jsonl")
     rows = lines(log.path)[:3]
-    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    log.path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     log.anchors_path.unlink()
     with pytest.raises(AuditError, match="cannot be checked"):
         AuditLog(log.path, "run-1", clock=clock())
@@ -369,13 +369,13 @@ def test_a_non_utf8_anchors_file_is_a_failing_report(tmp_path):
 def test_anchors_that_do_not_name_this_log_fail(tmp_path):
     log = write_run(tmp_path / "run.jsonl")
     copy = tmp_path / "other.jsonl"
-    copy.write_text("\n".join(lines(log.path)[:3]) + "\n", encoding="utf-8")
+    copy.write_text("\n".join(lines(log.path)[:3]) + "\n", encoding="utf-8", newline="\n")
     report = verify(copy, log.anchors_path)
     assert not report.ok and "no anchor" in (report.reason or "")
     text = log.anchors_path.read_text(encoding="utf-8").replace(
         '"log":"run.jsonl"', '"log":"rux.jsonl"'
     )
-    log.anchors_path.write_text(text, encoding="utf-8")
+    log.anchors_path.write_text(text, encoding="utf-8", newline="\n")
     assert not verify(log.path, log.anchors_path).ok
 
 
@@ -521,6 +521,9 @@ def test_anchor_repair_truncates_in_place_and_only_after_the_checks(tmp_path):
     assert log.anchors_path.read_bytes().startswith(good)  # complete anchors kept
 
 
+@pytest.mark.skipif(
+    __import__("sys").platform == "win32", reason="Windows refuses to rename an open file"
+)
 def test_a_log_replaced_while_open_is_not_written(tmp_path):
     path = tmp_path / "run.jsonl"
     log = AuditLog(path, "run-1", clock=clock())
@@ -556,7 +559,7 @@ def test_verify_refuses_an_oversized_file(tmp_path, monkeypatch):
 def test_anchor_lines_with_duplicate_keys_fail(tmp_path):
     log = write_run(tmp_path / "run.jsonl")
     text = log.anchors_path.read_text(encoding="utf-8").rstrip("\n")
-    log.anchors_path.write_text(text[:-1] + ',"seq":0}\n', encoding="utf-8")
+    log.anchors_path.write_text(text[:-1] + ',"seq":0}\n', encoding="utf-8", newline="\n")
     report = verify(log.path, log.anchors_path)
     assert not report.ok and "anchor line 0" in (report.reason or "")
 
@@ -576,7 +579,7 @@ def test_time_never_runs_backwards(tmp_path):
     f = json.loads(rows[2])
     f["at"] = "2001-01-01T00:00:00Z"
     rows[2] = canonical_json(f).decode()
-    good.path.write_text("\n".join(_rechain(rows)) + "\n", encoding="utf-8")
+    good.path.write_text("\n".join(_rechain(rows)) + "\n", encoding="utf-8", newline="\n")
     report = verify(good.path)
     assert (
         not report.ok and report.first_broken_seq == 2 and "timed before" in (report.reason or "")

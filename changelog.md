@@ -3,6 +3,8 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-15
+- [FEAT] [N1.3] — PubChem ingest: AIDs for the configured gene symbol, summaries in batches, ChEMBL-deposited and ChEMBL-imported AIDs dropped (D-24), UniProt target filter (RefSeq-only stated limit), concise tables and batched structures for kept rows only, strict depositor ledger (BindingDB cleared, D-15), every drop in the ledger, resumable date-named releases, `assay ingest pubchem`; recorded real fixture (6 AIDs) and golden cache digest
+- [FIX] [S3.2] — Windows CI: tests write doctored logs with LF line endings, the encoding lint prints POSIX paths, and the rename-while-open attack is skipped on Windows, which forbids it (L-24)
 - [FIX] [S3.2] — Windows CI: POSIX-only calls guarded with `sys.platform` checks; gate 5 now runs pyright for Linux, Darwin and Windows (L-23)
 - [FEAT] [S3.2] — audit log: hash chain over canonical JSON from a genesis line, one writer per physical file (OS lock on the log itself, thread lock, fsync; any failed write, replacement or size change stops the writer), anchors in a separate file (locked while written, rolled back on failure), a `verify` that never raises and names the first broken seq (edits, deletions, insertions, reordering, truncation, valid-chain rewrites, time running backwards, logs no anchor names), `assay verify-audit` and `make verify-audit`; four attacker verifier passes
 - [FIX] [N1.2] — retry test injected only the sleep, so Windows' coarse clock let a pacing sleep pass for a backoff; it now injects an advancing clock and checks the two backoffs exactly (L-18)
