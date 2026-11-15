@@ -24,13 +24,25 @@ from assay_pipeline.config import Limits, ViewsConfig
 from assay_pipeline.guard import GENERIC_MESSAGES, SqlGuard
 
 GRACE_SECONDS = 2.0
-CHILD_COMMAND = (sys.executable, "-m", "assay_pipeline.agent._child")
+# -I: isolated mode, so no module in the working directory (or PYTHON* variable) can load into
+# the child that holds the database connection (S3.3 verifier)
+CHILD_COMMAND = (sys.executable, "-I", "-m", "assay_pipeline.agent._child")
 SECRET_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")
+CHILD_ENV_ALLOW = frozenset({
+    "PATH", "HOME", "USERPROFILE", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
+    "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "VIRTUAL_ENV",
+})  # fmt: skip
 
 
 def child_env() -> dict[str, str]:
-    """The child needs no credentials: provider keys and other secrets are not passed on."""
-    return {k: v for k, v in os.environ.items() if not any(m in k.upper() for m in SECRET_MARKERS)}
+    """The child needs no credentials: only an allowlist of plain process variables is passed
+    on (a denylist by name missed DATABASE_URL, GH_PAT and the like), and never one whose name
+    marks a secret."""
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if k.upper() in CHILD_ENV_ALLOW and not any(m in k.upper() for m in SECRET_MARKERS)
+    }
 
 
 @dataclass(frozen=True)

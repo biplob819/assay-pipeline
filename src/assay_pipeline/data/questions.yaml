@@ -103,7 +103,7 @@ questions:
   split: public
 - schema_version: '1.0'
   id: nq-17
-  question: What is the median pIC50 of all rows, and how does it change if censored rows are left out?
+  question: What is the median pIC50 of all rows, and how does it change if only exact (=) rows are kept?
   kind: censored
   gold_sql: SELECT median(pic50) AS all_rows, median(CASE WHEN relation = '=' THEN pic50 END) AS exact_only
     FROM v_activities
@@ -111,7 +111,7 @@ questions:
   split: public
 - schema_version: '1.0'
   id: nq-18
-  question: How many compounds have only censored measurements (no exact value at all)?
+  question: How many compounds have no exact (=) measurement at all, only censored or unknown relations?
   kind: censored
   gold_sql: SELECT count(*) AS n FROM (SELECT inchikey FROM v_activities GROUP BY inchikey HAVING sum(CASE
     WHEN relation = '=' THEN 1 ELSE 0 END) = 0) t
@@ -119,10 +119,10 @@ questions:
   split: public
 - schema_version: '1.0'
   id: nq-19
-  question: Which source contributes more censored rows?
+  question: Which source contributes more censored rows (relation <, <=, > or >=)?
   kind: censored
-  gold_sql: SELECT source, count(*) AS n FROM v_activities WHERE relation <> '=' GROUP BY source ORDER
-    BY n DESC, source
+  gold_sql: SELECT source, count(*) AS n FROM v_activities WHERE relation IN ('<', '<=', '>', '>=') GROUP BY source
+    ORDER BY n DESC, source
   rules: *id002
   split: public
 - schema_version: '1.0'
@@ -134,10 +134,10 @@ questions:
   split: public
 - schema_version: '1.0'
   id: nq-21
-  question: What share of visible rows are censored, as a percentage rounded to 1 decimal?
+  question: What share of visible rows are censored (relation <, <=, > or >=), as a percentage rounded to 1 decimal?
   kind: censored
-  gold_sql: SELECT round(100.0 * sum(CASE WHEN relation <> '=' THEN 1 ELSE 0 END) / count(*), 1) AS pct
-    FROM v_activities
+  gold_sql: SELECT round(100.0 * sum(CASE WHEN relation IN ('<', '<=', '>', '>=') THEN 1 ELSE 0 END) / count(*), 1)
+    AS pct FROM v_activities
   rules: *id002
   split: public
 - schema_version: '1.0'

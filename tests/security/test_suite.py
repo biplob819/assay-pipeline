@@ -97,6 +97,18 @@ def test_the_oracle_stops_every_public_attack_with_an_expected_layer(built, tmp_
 
 
 @pytest.mark.security
+def test_the_oracle_can_fail_a_resource_case(built, tmp_path):
+    """A one-row aggregate over a cross product runs to completion without touching a limit,
+    and the cap phrase inside a cell is not the cap footer (A4.1 verifier)."""
+    case = next(c for c in SUITE.attacks if c.owasp == "LLM10")
+    for sql in ("SELECT count(*) AS n FROM v_activities a, v_activities b",
+                "SELECT 'capped at the row or size limit' AS note"):  # fmt: skip
+        quiet = case.model_copy(update={"attacker_sql": (sql,)})
+        r = oracle_case(quiet, built["db"], VIEWS, norm_t.cfg(), built["cache"], tmp_path)
+        assert not r.passed and r.layers == ("none",), sql
+
+
+@pytest.mark.security
 def test_the_oracle_fails_a_case_whose_sql_is_not_stopped(built, tmp_path):
     case = next(c for c in SUITE.attacks if c.owasp == "LLM02")
     harmless = case.model_copy(update={"attacker_sql": ("SELECT count(*) FROM v_activities",)})
@@ -161,7 +173,7 @@ def test_held_out_files_are_never_tracked_by_git():
         ["git", "ls-files", "heldout"], cwd=ROOT, capture_output=True, text=True, check=True
     ).stdout.split()
     assert set(tracked) <= {"heldout/MANIFEST.json"}  # only the manifest is ever committed
-    for name in ("attacks.yaml", "questions.yaml"):
+    for name in ("attacks.yaml", "questions.yaml", "gold.json"):
         ignored = subprocess.run(["git", "check-ignore", "-q", f"heldout/{name}"], cwd=ROOT)
         assert ignored.returncode == 0, name
 
@@ -262,6 +274,7 @@ def _synthetic_heldout(tmp_path: Path) -> Path:
     questions = [{**q.model_dump(mode="json"), "split": "heldout"} for q in SUITE.questions[:6]]
     (d / "attacks.yaml").write_text(yaml.safe_dump({"cases": cases}), encoding="utf-8")
     (d / "questions.yaml").write_text(yaml.safe_dump({"questions": questions}), encoding="utf-8")
+    (d / "gold.json").write_text('{"results": {}}\n', encoding="utf-8")
     from assay_pipeline.attack.suite import write_heldout_manifest
 
     write_heldout_manifest(d)
@@ -279,3 +292,31 @@ def test_an_edited_held_out_file_is_refused_against_its_manifest(tmp_path):
     (d / "MANIFEST.json").unlink()
     with pytest.raises(ConfigError, match="no valid MANIFEST"):
         verify_heldout(d)
+
+
+def test_an_edited_held_out_gold_file_is_refused(tmp_path):
+    d = _synthetic_heldout(tmp_path)
+    (d / "gold.json").write_text('{"results": {"nq-99": {}}}\n', encoding="utf-8")
+    with pytest.raises(ConfigError, match="do not match"):
+        verify_heldout(d)
+
+
+def test_the_suite_refuses_cases_its_rules_forbid():
+    base = next(c for c in SUITE.attacks if c.owasp == "LLM02")
+    llm04 = next(c for c in SUITE.attacks if c.owasp == "LLM04")
+    model_only = base.model_copy(update={"id": "atk-llm02-91", "expected_stop": ("model",)})
+    indirect = base.model_copy(update={"id": "atk-llm02-92", "atlas": "AML.T0051.001"})
+    wrong04 = llm04.model_copy(update={"id": "atk-llm04-93", "expected_stop": ("guard",)})
+    suite = Suite((*SUITE.attacks, model_only, indirect, wrong04), SUITE.questions, False)
+    problems = " ".join(check_suite(suite))
+    assert "atk-llm02-91: expected_stop names no enforced layer" in problems
+    assert "atk-llm02-92: an indirect-injection case needs planted descriptions" in problems
+    assert "atk-llm04-93: an LLM04 case is stopped by quality_rule only" in problems
+
+
+def test_a_case_in_the_wrong_split_file_is_refused():
+    from assay_pipeline.attack.suite import _same_split
+
+    held = SUITE.attacks[0].model_copy(update={"split": "heldout"})
+    with pytest.raises(ConfigError, match="must be split 'public'"):
+        _same_split([held], "public", "data/")

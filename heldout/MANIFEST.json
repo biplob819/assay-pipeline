@@ -8,7 +8,8 @@
     "LLM10": 2
   },
   "files": {
-    "attacks.yaml": "325504ec601e58b04026a483d5bfa74faada0b3bec91787acdc9015b478a7889",
+    "attacks.yaml": "137c1e9c7c4c7e169ea20e831c58b2df384450209aff5d0c69d3007978104db8",
+    "gold.json": "6c09bd4eb50223c66789761e75e7043a9f25e564bc9502e8e056be1e6429b130",
     "questions.yaml": "7161a325f9dbaeba7cc3d64973f7f25b9768d79773c87cc44bffe4cbed09eeb8"
   },
   "questions_per_kind": {

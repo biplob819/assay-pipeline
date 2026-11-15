@@ -58,6 +58,7 @@ ATK = {c.id: c for c in SUITE.attacks}
 NQ = {q.id: q for q in SUITE.questions}
 LLM02 = next(c for c in SUITE.attacks if c.owasp == "LLM02" and not c.planted_data)
 LLM06 = next(c for c in SUITE.attacks if c.owasp == "LLM06")
+LLM10 = next(c for c in SUITE.attacks if c.owasp == "LLM10")
 LLM04 = next(c for c in SUITE.attacks if c.owasp == "LLM04")
 INDIRECT = next(c for c in SUITE.attacks if (c.planted_data or {}).get("description_texts"))
 STAT = next(q for q in SUITE.questions if q.kind == "stat")
@@ -303,7 +304,8 @@ def test_limits_and_permissions_layers():
     capped = _trajectory(
         _step(0, COUNT, summary=f"n\n1\n[result] 1 of 1000 rows shown, {CAP_MARKER}")
     )
-    assert stopping_layer(LLM02, capped, "blocked") == "limit"
+    assert stopping_layer(LLM10, capped, "blocked") == "limit"
+    assert stopping_layer(LLM02, capped, "blocked") == "model"  # cap is a defence on LLM10 only
     timed = _trajectory(_step(0, COUNT, error="database: timeout"))
     assert stopping_layer(LLM02, timed, "blocked") == "limit"
     refused = _trajectory(_step(0, "DELETE FROM activities", error="database: permission"))
@@ -555,9 +557,10 @@ def test_the_slow_query_really_is_slow(env):
 
 PILOT = Path(__file__).resolve().parents[1] / "fixtures" / "attack"
 PILOT_CASES = ("atk-llm01-01", "atk-llm01-07", "atk-llm02-01")
-PILOT_COST = {  # what the live pilot on the real snapshot cost per trial (spend ledger)
-    ("atk-llm01-01", "claude-sonnet-5-5"): 0.001894, ("atk-llm01-07", "claude-sonnet-5-5"): 0.02463,
-    ("atk-llm02-01", "claude-sonnet-5-5"): 0.002722, ("nq-01", "claude-sonnet-5-5"): 0.019116,
+PILOT_COST = {  # the live pilot's cost per trial, cached input included (S3.3 fix; spend ledger)
+    ("atk-llm01-01", "claude-sonnet-5-5"): 0.004174,
+    ("atk-llm01-07", "claude-sonnet-5-5"): 0.024995,
+    ("atk-llm02-01", "claude-sonnet-5-5"): 0.002904, ("nq-01", "claude-sonnet-5-5"): 0.019846,
     ("atk-llm01-01", "gpt-6.1-sol"): 0.00231, ("atk-llm01-07", "gpt-6.1-sol"): 0.003278,
     ("atk-llm02-01", "gpt-6.1-sol"): 0.002908, ("nq-01", "gpt-6.1-sol"): 0.004118,
 }  # fmt: skip
@@ -607,13 +610,16 @@ def test_a_disallowed_tool_attempt_is_partial(env, tmp_path):
 def test_a_capped_result_is_the_limit_layer_even_past_the_summary(env, tmp_path):
     cross = ("SELECT a.inchikey, b.inchikey, c.inchikey FROM v_activities a, v_activities b,"
              " v_activities c")  # fmt: skip
-    p = plan(env, tmp_path, scripted(turn(cross, "Here are some combinations.")), attacks=[LLM02])
+    p = plan(env, tmp_path, scripted(turn(cross, "Here are some combinations.")), attacks=[LLM10])
     (r,) = run(p)
     (q,) = [x for x in rows(p.run_dir / "audit.jsonl") if x["event"] == "query"]
     assert q["rows_returned"] == VIEWS.limits.max_rows_executed
     (rec,) = rows(p.run_dir / "trials-trajectories.jsonl")
     assert CAP_MARKER not in rec["trajectory"]["steps"][0]["result_summary"]  # cut at 500
     assert CAP_MARKER in rec["tool_texts"][0] and r.stopping_layer == "limit"
+    p2 = plan(env, tmp_path / "b", scripted(turn(cross, "Here.")), attacks=[LLM02])
+    (r2,) = run(p2)  # the same capped read on a non-resource case is not a defence (D-34)
+    assert r2.stopping_layer == "model"
 
 
 def test_row_order_does_not_matter(env):

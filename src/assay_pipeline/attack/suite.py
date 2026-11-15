@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
@@ -71,6 +72,12 @@ def _questions(text: str, name: str) -> tuple[NormalQuestion, ...]:
         raise ConfigError(f"{name}: {exc}") from exc
 
 
+def _same_split(rows: Sequence[AttackCase | NormalQuestion], split: str, where: str) -> None:
+    wrong = [r.id for r in rows if r.split != split]
+    if wrong:
+        raise ConfigError(f"{where}: {', '.join(wrong)} must be split {split!r}")
+
+
 @dataclass(frozen=True)
 class Suite:
     attacks: tuple[AttackCase, ...]
@@ -82,13 +89,15 @@ def load_suite(heldout_dir: Path | str | None = None) -> Suite:
     """The public split, plus the held-out split when `heldout_dir` is given (hash-checked)."""
     attacks = _cases(_packaged("attacks.yaml"), "data/attacks.yaml")
     questions = _questions(_packaged("questions.yaml"), "data/questions.yaml")
+    _same_split([*attacks, *questions], "public", "data/")
     if heldout_dir is not None:
         d = Path(heldout_dir)
         verify_heldout(d)
-        attacks += _cases((d / "attacks.yaml").read_text(encoding="utf-8"), "heldout/attacks")
-        questions += _questions(
-            (d / "questions.yaml").read_text(encoding="utf-8"), "heldout/questions"
-        )
+        held_a = _cases((d / "attacks.yaml").read_text(encoding="utf-8"), "heldout/attacks")
+        held_q = _questions((d / "questions.yaml").read_text(encoding="utf-8"), "heldout/questions")
+        _same_split([*held_a, *held_q], "heldout", "heldout/")
+        attacks += held_a
+        questions += held_q
     suite = Suite(attacks, questions, heldout_dir is not None)
     problems = check_suite(suite)
     if problems:
@@ -115,8 +124,15 @@ def check_suite(suite: Suite) -> list[str]:
             pc = (c.planted_data or {}).get("planted_case")
             if pc not in planted:
                 problems.append(f"{c.id}: planted_case {pc!r} is not a Q2.1 planted case")
-        elif c.planted_data is not None and not (c.planted_data.get("description_texts")):
-            problems.append(f"{c.id}: planted data for an agent case needs description_texts")
+            if tuple(c.expected_stop) != ("quality_rule",):
+                problems.append(f"{c.id}: an LLM04 case is stopped by quality_rule only")
+        else:
+            if c.planted_data is not None and not (c.planted_data.get("description_texts")):
+                problems.append(f"{c.id}: planted data for an agent case needs description_texts")
+            if not ENFORCED & set(c.expected_stop):
+                problems.append(f"{c.id}: expected_stop names no enforced layer (ATK-02)")
+            if c.atlas == INDIRECT_ATLAS and not (c.planted_data or {}).get("description_texts"):
+                problems.append(f"{c.id}: an indirect-injection case needs planted descriptions")
     for q in suite.questions:
         if CANARY_PATTERN.search(q.question):
             problems.append(f"{q.id}: a canary appears in a question (ATK-06)")
@@ -131,16 +147,24 @@ def check_suite(suite: Suite) -> list[str]:
         for cat in CATEGORIES:
             if allc.get(cat, 0) != PER_CATEGORY:
                 problems.append(f"{cat}: {allc.get(cat, 0)} cases, want {PER_CATEGORY}")
+        held_q = sum(1 for q in suite.questions if q.split == "heldout")
+        if held_q != HELDOUT_QUESTIONS:
+            problems.append(f"{held_q} held-out questions, want {HELDOUT_QUESTIONS}")
         kinds = Counter(q.kind for q in suite.questions)
         if dict(kinds) != QUESTION_KINDS:
             problems.append(f"question kinds {dict(kinds)}, want {QUESTION_KINDS}")
     return problems
 
 
+HELDOUT_FILES = ("attacks.yaml", "questions.yaml", "gold.json")
+ENFORCED = {"guard", "permissions", "limit"}
+INDIRECT_ATLAS = "AML.T0051.001"
+
+
 def heldout_manifest(d: Path) -> dict[str, Any]:
     files = {
         n: hashlib.sha256((d / n).read_bytes()).hexdigest()
-        for n in ("attacks.yaml", "questions.yaml")
+        for n in HELDOUT_FILES  # gold.json too: an edited held-out gold must be refused
     }
     attacks = _cases((d / "attacks.yaml").read_text(encoding="utf-8"), "heldout/attacks")
     questions = _questions((d / "questions.yaml").read_text(encoding="utf-8"), "heldout/questions")

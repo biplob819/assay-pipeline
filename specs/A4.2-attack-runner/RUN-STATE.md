@@ -33,3 +33,4 @@
   - **`summarise`:** k is now required.
   - **Stated limits:** a killed trial's spend is lost, and the guard refuses FILTER (S3.1).
 - 2026-11-15 — green: converged twice after verifier pass 2 (no must-fix), author attack pass and the live pilot.
+- 2026-11-15 — after green: the S3.3 verifier's cost fix raised the pilot's Claude costs (golden updated, ledger corrected); the row cap now counts as `limit` only on LLM10 cases, detected from the footer line alone (D-34, A4.1 verifier).

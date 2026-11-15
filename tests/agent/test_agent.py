@@ -462,3 +462,97 @@ def test_the_responses_api_echo_of_instructions_is_scrubbed():
     from openai.types.responses import Response
 
     Response.model_validate(clean)  # still a valid response for replay
+
+
+# ---- independent verifier pass (S3.3 fix) ----
+
+
+def test_cached_input_is_counted_in_tokens_and_cost(db, tmp_path):
+    cached = msg([text("16")], "end_turn", tin=100, tout=10)
+    cached["usage"].update(cache_creation_input_tokens=1000, cache_read_input_tokens=2000)
+    result, _ = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", Replay([cached])))
+    # 100 plain + 1000 x 1.25 + 2000 x 0.1 = 1550 input-token equivalents at $2, 10 out at $10
+    assert result.trajectory.cost_usd == pytest.approx((1550 * 2 + 10 * 10) / 1e6)
+    t = AnthropicProvider("claude-sonnet-5-5", Replay([])).read(cached)
+    assert (t.tokens_in, t.cache_write_tokens, t.cache_read_tokens) == (3100, 1000, 2000)
+
+
+@pytest.mark.golden
+def test_the_real_claude_recording_costs_what_was_billed(db, tmp_path):
+    rec = json.loads((RECORDED / "recording-claude.json").read_text(encoding="utf-8"))
+    result = ask(QUESTION, db.path, "claude", tmp_path / "audit.jsonl", replay=rec)
+    assert result.trial.trajectory.cost_usd == pytest.approx(0.013833, abs=1e-6)
+
+
+def test_the_child_ignores_modules_in_the_working_directory(db, tmp_path, monkeypatch):
+    from assay_pipeline.agent.query_tool import CHILD_COMMAND
+
+    planted = tmp_path / "planted"
+    planted.mkdir()
+    mark = tmp_path / "mark.txt"
+    (planted / "duckdb.py").write_text(
+        f"open({str(mark)!r}, 'w').write('ran')\nraise SystemExit(3)\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(planted)
+    audit = AuditLog(tmp_path / "a.jsonl", "run-1")
+    r = QueryTool(db.path, VIEWS, audit, trial_id="t1", model="m").query(COUNT_SQL)
+    audit.close()
+    assert "-I" in CHILD_COMMAND and r.error_class is None and not mark.exists()
+
+
+def test_the_child_environment_is_an_allowlist(monkeypatch):
+    from assay_pipeline.agent.query_tool import child_env
+
+    for k in ("DATABASE_URL", "GH_PAT", "NPM_AUTH", "HF_HUB_PASS"):
+        monkeypatch.setenv(k, "secret")
+    env = child_env()
+    assert not {"DATABASE_URL", "GH_PAT", "NPM_AUTH", "HF_HUB_PASS"} & set(env)
+    assert "PATH" in env
+
+
+def test_two_asks_share_one_audit_file(db, tmp_path):
+    rec = [msg([text("16 rows.")], "end_turn")]
+    for _ in range(2):
+        ask("How many?", db.path, "claude", tmp_path / "ask.jsonl", replay=list(rec))
+    assert verify(tmp_path / "ask.jsonl").ok
+    assert [x["event"] for x in lines(tmp_path / "ask.jsonl")].count("answer") == 2
+
+
+def test_the_last_turn_after_the_budget_has_tools_off_and_keeps_a_refusal(db, tmp_path):
+    calls = [tool_use(COUNT_SQL, i) for i in range(1, STEP_BUDGET + 2)]
+    replay = Replay([msg(calls), msg([text("I won't.")], "refusal")])
+    result, _ = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", replay))
+    assert replay.requests[-1]["tool_choice"] == {"type": "none"}
+    assert replay.requests[0]["tool_choice"] == {"type": "auto"}
+    t = result.trajectory
+    assert t.stop_reason == "refusal" and t.steps[-1].kind == "refusal"
+    sol = Replay([resp([fcall(COUNT_SQL, i) for i in range(1, STEP_BUDGET + 2)]),
+                  resp([omsg("16")])])  # fmt: skip
+    trial(db, tmp_path / "s", OpenAIProvider("gpt-6.1-sol", sol))
+    assert sol.requests[-1]["tool_choice"] == "none"
+
+
+def test_an_unexpected_error_still_logs_the_answer_line(db, tmp_path):
+    short = Replay([msg([tool_use(COUNT_SQL)])])  # the run asks for a second response
+    with pytest.raises(RuntimeError, match="no more responses"):
+        trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", short))
+    events = [x["event"] for x in lines(tmp_path / "audit.jsonl")]
+    assert events == ["genesis", "question", "query", "answer"]
+
+
+def test_a_lone_surrogate_and_a_cut_off_answer_are_handled(db, tmp_path):
+    odd = msg([text("16 rows \ud800")], "max_tokens")
+    result, _ = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", Replay([odd])))
+    assert result.answer == "16 rows ?" and result.truncated
+    assert verify(tmp_path / "audit.jsonl").ok
+
+
+def test_a_recording_is_saved_even_when_the_ask_fails(db, tmp_path, monkeypatch):
+    from assay_pipeline.agent import ask as askmod
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-only")
+    monkeypatch.setattr(askmod, "anthropic_create", Replay([msg([tool_use(COUNT_SQL)])]))
+    out = tmp_path / "rec.json"
+    with pytest.raises(RuntimeError):
+        ask("How many?", db.path, "claude", tmp_path / "a.jsonl", record=True, record_path=out)
+    assert len(json.loads(out.read_text(encoding="utf-8"))) == 1

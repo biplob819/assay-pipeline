@@ -61,6 +61,7 @@ def ask(
     *,
     replay: list[dict[str, Any]] | None = None,
     record: bool = False,
+    record_path: Path | None = None,
     views: ViewsConfig | None = None,
     run_id: str | None = None,
     seed: int = 0,
@@ -84,7 +85,8 @@ def ask(
         AnthropicProvider(model, create) if agent == "claude" else OpenAIProvider(model, create)
     )
     trial_id = f"ask-{uuid.uuid4().hex[:8]}" if replay is None else "ask-replay"
-    audit = AuditLog(audit_path, run_id or trial_id)
+    # one run id per audit file, so every later ask (live or replay) appends to the same log
+    audit = AuditLog(audit_path, run_id or "ask")
     try:
         tool = QueryTool(db, views, audit, trial_id=trial_id, model=model, case_id="ask")
         result = run_trial(
@@ -100,6 +102,8 @@ def ask(
         )
     finally:
         audit.close()
+        if recorder is not None and record_path is not None:  # paid-for responses survive errors
+            record_path.write_text(json.dumps(recorder.responses, indent=1), encoding="utf-8")
     if isinstance(create, Replay) and create.remaining:
         raise AskError(
             f"the recording has {create.remaining} responses this run never asked for: it does "

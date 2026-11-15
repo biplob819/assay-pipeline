@@ -243,10 +243,8 @@ def _ask(args: argparse.Namespace) -> int:
                 raise AskError(f"{args.replay}: a recording is a JSON list of responses")
         result = ask(
             args.question, args.db, args.model, args.audit, replay=replay,
-            record=args.record is not None,
+            record=args.record is not None, record_path=args.record,
         )  # fmt: skip
-        if args.record is not None and result.recording is not None:
-            args.record.write_text(json.dumps(result.recording, indent=1), encoding="utf-8")
     except (AskError, OSError, ValueError, RuntimeError) as exc:
         return _fail(args, "ask", exc)
     t = result.trial.trajectory

@@ -44,16 +44,18 @@ class Turn:
     text: str
     tool_calls: tuple[ToolCall, ...]
     stop: str  # "tool_use" | "end" | "refusal" | "max_tokens"
-    tokens_in: int
+    tokens_in: int  # every input token, cached ones included
     tokens_out: int
     raw: dict[str, Any]
+    cache_write_tokens: int = 0  # of tokens_in: written to the prompt cache (Anthropic 1.25x)
+    cache_read_tokens: int = 0  # of tokens_in: read from the prompt cache (Anthropic 0.1x)
 
 
 class Provider(Protocol):
     name: str
 
     def start(self, system: str, question: str) -> None: ...
-    def next_turn(self) -> Turn: ...
+    def next_turn(self, final: bool = False) -> Turn: ...
     def add_results(self, results: Sequence[tuple[ToolCall, str]]) -> None: ...
 
 
@@ -103,13 +105,14 @@ class AnthropicProvider:
         self._system = system
         self._messages = [{"role": "user", "content": question}]
 
-    def next_turn(self) -> Turn:
+    def next_turn(self, final: bool = False) -> Turn:
+        """`final`: the step budget is spent, so the model must answer; no tool can be called."""
         raw = self.create(
             model=self.model,
             max_tokens=self.max_tokens,
             system=[{"type": "text", "text": self._system, "cache_control": {"type": "ephemeral"}}],
             tools=self.tools(),
-            tool_choice={"type": "auto"},
+            tool_choice={"type": "none"} if final else {"type": "auto"},
             output_config={"effort": self.effort},
             messages=list(self._messages),  # a snapshot: later turns never alter this request
         )
@@ -134,7 +137,11 @@ class AnthropicProvider:
             stop = "end"
         # thinking and tool_use blocks go back unchanged, as the API requires
         self._messages.append({"role": "assistant", "content": raw["content"]})
-        return Turn(text, tuple(calls), stop, msg.usage.input_tokens, msg.usage.output_tokens, raw)
+        u = msg.usage
+        write, read = u.cache_creation_input_tokens or 0, u.cache_read_input_tokens or 0
+        # input_tokens counts only the uncached part; cached input is billed too (S3.3 verifier)
+        return Turn(text, tuple(calls), stop, u.input_tokens + write + read, u.output_tokens, raw,
+                    cache_write_tokens=write, cache_read_tokens=read)  # fmt: skip
 
     def add_results(self, results: Sequence[tuple[ToolCall, str]]) -> None:
         self._messages.append(
@@ -176,13 +183,14 @@ class OpenAIProvider:
         self._system = system
         self._input = [{"role": "user", "content": question}]
 
-    def next_turn(self) -> Turn:
+    def next_turn(self, final: bool = False) -> Turn:
+        """`final`: the step budget is spent, so the model must answer; no tool can be called."""
         raw = self.create(
             model=self.model,
             instructions=self._system,
             input=list(self._input),  # a snapshot: later turns never alter this request
             tools=self.tools(),
-            tool_choice="auto",
+            tool_choice="none" if final else "auto",
             reasoning={"effort": self.effort},
             max_output_tokens=self.max_output_tokens,
         )

@@ -292,12 +292,8 @@
    "ordered": false,
    "rows": [
     [
-     "pubchem",
-     14892
-    ],
-    [
      "chembl",
-     5351
+     5339
     ]
    ]
   },
@@ -319,7 +315,7 @@
    "ordered": false,
    "rows": [
     [
-     50.8
+     13.4
     ]
    ]
   }
