@@ -34,10 +34,11 @@ PUBLISHED_MD = ("*.md", "docs/**/*.md", ".github/**/*.md", "tests/fixtures/**/RE
 
 
 def _published_md() -> list[str]:
-    found = {p.relative_to(ROOT) for g in PUBLISHED_MD for p in ROOT.glob(g)}
-    ignored = subprocess.run(["git", "check-ignore", "--stdin"], input="\n".join(map(str, found)),
+    # posix paths on every OS: git speaks them, and Windows CI would otherwise use backslashes
+    found = {p.relative_to(ROOT).as_posix() for g in PUBLISHED_MD for p in ROOT.glob(g)}
+    ignored = subprocess.run(["git", "check-ignore", "--stdin"], input="\n".join(found),
                              capture_output=True, text=True, cwd=ROOT).stdout.split()  # fmt: skip
-    return sorted(str(p) for p in found if str(p) not in set(ignored))
+    return sorted(found - set(ignored))
 
 
 def test_every_relative_link_in_the_readme_and_docs_resolves():
