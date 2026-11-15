@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "id": "nq-01",
+  "question": "How many binding assays report an IC50 for gefitinib?",
+  "kind": "stat",
+  "gold_sql": "SELECT COUNT(*) FROM v_activities WHERE assay_type = 'B'",
+  "rules": [
+    "B1",
+    "B2",
+    "B5"
+  ],
+  "split": "public"
+}

@@ -1,0 +1,29 @@
+{
+  "activity_uid": "0123456789abcdef",
+  "inchikey": "BSYNRYMUTXBXSQ-UHFFFAOYSA-N",
+  "source_inchikey": "BSYNRYMUTXBXSQ-UHFFFAOYSA-N",
+  "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+  "target": "EGFR",
+  "variant": "wild-type/unspecified",
+  "assay_type": "U",
+  "assay_id": "1433",
+  "assay_description": "Inhibition of EGFR tyrosine kinase",
+  "value_original": 41.0,
+  "units_original": "nM",
+  "value_nm": 41.0,
+  "relation": "unknown",
+  "pic50": 7.3872,
+  "source": "pubchem",
+  "source_record_id": "1433:842121",
+  "depositor": "BindingDB",
+  "chembl_src_id": null,
+  "data_validity_comment": null,
+  "document_id": null,
+  "flags": [
+    "QC5"
+  ],
+  "flag_reasons": {
+    "QC5": "relation unknown"
+  },
+  "snapshot": "2026-11-19.1"
+}

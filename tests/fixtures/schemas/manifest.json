@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "snapshot": "2026-11-19.1",
+  "target": "EGFR",
+  "activity_type": "IC50",
+  "created_at": "2026-11-19T08:00:00Z",
+  "source_releases": {
+    "chembl": "ChEMBL_37",
+    "pubchem": "2026-11-19"
+  },
+  "raw_cache_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "rows_by_source": {
+    "chembl": 20000,
+    "pubchem": 900
+  },
+  "drops_by_reason": {
+    "chembl_deposited_aid": 4400
+  },
+  "flags_by_rule": {
+    "QC1": 1,
+    "QC2": 2,
+    "QC3": 3,
+    "QC4": 0,
+    "QC5": 5
+  },
+  "files": {
+    "activities.parquet": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "content_sha256": {
+    "activities.parquet": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "tool_versions": {
+    "python": "3.12.13",
+    "rdkit": "2026.03.1"
+  },
+  "code_sha": "805c335",
+  "planted": false
+}

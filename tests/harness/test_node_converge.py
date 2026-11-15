@@ -328,3 +328,9 @@ def test_banned_modules_reached_through_re_exports_are_flagged(tmp_path):
     problems, _ = nc.boundary_problems(tmp_path / "src")
     assert any("banned module builtins from inspect" in p for p in problems)
     assert any("banned module pkgutil from unittest.mock" in p for p in problems)
+
+
+def test_build_smoke_loads_the_packaged_default_configs():
+    """The wheel must carry assay_pipeline/defaults/*.yaml (SCH-04); gate 11 proves it."""
+    joined = " ".join(" ".join(c) for c in nc.SMOKE_COMMANDS)
+    assert "load_build_config()" in joined and "load_views_config()" in joined

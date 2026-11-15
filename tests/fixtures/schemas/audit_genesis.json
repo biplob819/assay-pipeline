@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "seq": 0,
+  "at": "2026-11-19T08:00:00Z",
+  "event": "genesis",
+  "run_id": "run-1",
+  "trial_id": null,
+  "case_id": null,
+  "model": null,
+  "question": null,
+  "sql": null,
+  "rendered_sql": null,
+  "guard_decision": null,
+  "guard_reason": null,
+  "rows_returned": null,
+  "rows_shown": null,
+  "result_sha256": null,
+  "db_error_class": null,
+  "answer_sha256": null,
+  "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

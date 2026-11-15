@@ -1,0 +1,23 @@
+# What the agent may see and do (Tech Spec §5.4, §6.1). The guard allows nothing else.
+views:
+  - name: v_activities
+    columns: [inchikey, smiles, variant, assay_type, assay_id, assay_description, value_nm,
+              relation, pic50, source, source_record_id, flags, snapshot]
+  - name: v_compounds
+    columns: [inchikey, smiles, n_records, n_sources, snapshot]
+  - name: v_consensus
+    columns: [inchikey, target, variant, assay_type, n_records, n_sources, median_pic50,
+              spread_pic50, conflict, member_uids, snapshot]
+  - name: v_quality
+    columns: [metric, key, count, snapshot]
+functions: [count, sum, avg, median, min, max, quantile_cont, stddev_samp, abs, round, log10,
+            ln, exp, power, sqrt, lower, upper, length, trim, contains, starts_with, coalesce,
+            nullif, cast]
+limits:
+  max_rows_executed: 1000
+  max_rows_shown: 50
+  max_chars_shown: 6000
+  timeout_seconds: 10
+  step_budget: 8
+  memory_limit: 1GB
+  threads: 2

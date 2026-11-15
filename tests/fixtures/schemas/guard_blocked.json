@@ -1,0 +1,10 @@
+{
+  "decision": "blocked",
+  "reason": "table_not_allowed",
+  "rendered_sql": null,
+  "tables": [
+    "embargoed_results"
+  ],
+  "functions": [],
+  "limit_applied": null
+}

@@ -1,0 +1,12 @@
+{
+  "decision": "allowed",
+  "reason": null,
+  "rendered_sql": "SELECT COUNT(*) FROM v_activities LIMIT 1000",
+  "tables": [
+    "v_activities"
+  ],
+  "functions": [
+    "count"
+  ],
+  "limit_applied": 1000
+}

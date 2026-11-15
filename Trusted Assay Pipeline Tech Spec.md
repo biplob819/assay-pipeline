@@ -709,7 +709,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | SCH-01 | Data schemas: `RawResponse`, `Activity`, `Drop`, `Consensus`, `Manifest` | FR2, FR3, FR5 |
 | SCH-02 | Security schemas: `GuardDecision`, `AuditLine`, `Anchor` | FR7, FR9 |
 | SCH-03 | Evaluation schemas: `AttackCase`, `NormalQuestion`, `TrialResult` | FR10 |
-| SCH-04 | `BuildConfig` (target, activity type, sources, limits) and `config/views.yaml` (approved views, columns, function allow-list), validated on load | FR6, FR7, OWNER D-22 |
+| SCH-04 | `BuildConfig` (target, activity type, sources, limits) and the views config (approved views, columns, function allow-list), shipped as packaged defaults and validated on load | FR6, FR7, OWNER D-22 |
 | SCH-05 | Format v1: `schema_version`, fixtures, round-trip contract tests, frozen models | §3 |
 
 **N1.2 ChEMBL ingest**

@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "source": "chembl",
+  "request_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "url": "https://www.ebi.ac.uk/chembl/api/data/activity.json?limit=1000&offset=0",
+  "release": "ChEMBL_37",
+  "fetched_at": "2026-11-19T08:00:00Z",
+  "status": 200,
+  "body_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

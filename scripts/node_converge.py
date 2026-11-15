@@ -60,7 +60,15 @@ from harness_lib import (
 )
 
 # Commands run inside the clean venv by gate 11. Node S3.2 adds `verify-audit` on a fixture.
-SMOKE_COMMANDS: list[list[str]] = [["assay", "--help"]]
+SMOKE_COMMANDS: list[list[str]] = [
+    ["assay", "--help"],
+    [  # N1.1: the default configs ship inside the wheel (SCH-04)
+        "python",
+        "-c",
+        "from assay_pipeline.config import load_build_config, load_views_config; "
+        "assert load_build_config().target.name == 'EGFR'; load_views_config()",
+    ],
+]
 PYTEST_UNIT_MARKERS = "not golden and not rebuild and not security"
 NA_MIN_REASON = 10
 NA_FORBIDDEN = {"logical"}  # every capability needs at least a real unit test

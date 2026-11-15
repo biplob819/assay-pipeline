@@ -1,0 +1,16 @@
+{
+  "inchikey": "BSYNRYMUTXBXSQ-UHFFFAOYSA-N",
+  "target": "EGFR",
+  "variant": "wild-type/unspecified",
+  "assay_type": "B",
+  "n_records": 2,
+  "n_sources": 1,
+  "median_pic50": 7.5,
+  "spread_pic50": 0.4,
+  "conflict": false,
+  "member_uids": [
+    "0123456789abcdef",
+    "fedcba9876543210"
+  ],
+  "snapshot": "2026-11-19.1"
+}
