@@ -201,3 +201,78 @@ def run_stealth(
         raise ValueError(f"{row.id}: a stealth structure collides with a real compound")
     result = apply_quality([*base, a], cfg)
     return next(x.flags for x in result.activities if x.activity_uid == a.activity_uid)
+
+
+# ---- the full scratch build: views (Q2.3) ----
+
+
+@dataclass(frozen=True)
+class ViewCaseResult:
+    case_id: str
+    passed: bool
+    flags_ok: bool
+    leaks: tuple[str, ...]  # how a hidden planted row, or an unflagged visible one, showed
+
+
+def run_case_in_views(
+    case: PlantedCase, cache: object, cfg: BuildConfig, workdir: Path | str
+) -> ViewCaseResult:
+    """Plant the case into a scratch snapshot and agent database built from `cache`, then check
+    the approved views. A planted row whose flags are only QC2/QC5 may show in `v_activities`
+    with those flags (§5.4 shows QC2 and QC5 rows, flagged), and a QC2 key's consensus row must
+    say conflict; every other planted row must be absent from every view (§7.1)."""
+    from .agentdb import build_agent_db, planted_visibility
+    from .ingest.cache import RawCache
+    from .snapshot import build_snapshot
+
+    if not isinstance(cache, RawCache):
+        raise TypeError("cache must be a RawCache")
+    workdir = Path(workdir)
+    probe = build_snapshot(cfg, cache, workdir / "clean")
+    rows = [
+        planted_activity(
+            case.id, i, r.smiles, r.value, r.units, r.relation, r.record_id, cfg,
+            probe.manifest.snapshot,
+        )
+        for i, r in enumerate(case.rows)
+    ]  # fmt: skip
+    built = build_snapshot(cfg, cache, workdir / "planted", planted=rows)
+    db = build_agent_db(built.directory, workdir / f"{case.id}.duckdb")
+    seen = planted_visibility(db.path)
+    leaks: list[str] = []
+    flags_ok = True
+    visible_ids = {r[0] or r[1]: tuple(r[2]) for r in seen["v_activities"]}
+    in_table = {r[0] or r[1]: tuple(r[2]) for r in seen["activities"]}
+    for row, planted_row in zip(case.rows, rows, strict=True):
+        rid = planted_row.source_record_id or planted_row.assay_id
+        expected = set(row.expect)
+        stored = in_table.get(rid)
+        if stored is None or not expected <= set(stored):
+            flags_ok = False  # the plant itself must have landed, with its flags
+            leaks.append(f"{rid}: not planted with its flags {sorted(expected)}: {stored}")
+        if expected <= {"QC2", "QC5"}:
+            got = visible_ids.get(rid)
+            if got is None or not expected <= set(got):
+                flags_ok = False
+                leaks.append(f"{rid}: visible without its flags {sorted(expected)}: {got}")
+        elif rid in visible_ids:
+            leaks.append(f"{rid}: a {sorted(expected)} row is visible in v_activities")
+    hidden_keys = {
+        r.inchikey
+        for r, row in zip(rows, case.rows, strict=True)
+        if not set(row.expect) <= {"QC2", "QC5"}
+    }
+    for (key,) in seen["v_compounds"]:
+        if key in hidden_keys:
+            leaks.append(f"{key}: a hidden planted compound shows in v_compounds")
+    for key, conflict in seen["v_consensus"]:
+        if key in hidden_keys:
+            leaks.append(f"{key}: a hidden planted key shows in v_consensus")
+        elif case.rule == "QC2" and not conflict:
+            leaks.append(f"{key}: a QC2 planted key shows without conflict=true")
+    if case.rule == "QC2":
+        qc2_keys = {r.inchikey for r in rows}
+        shown = {key for key, conflict in seen["v_consensus"] if conflict}
+        if not qc2_keys <= shown:
+            leaks.append(f"{sorted(qc2_keys - shown)}: a QC2 key has no consensus row in conflict")
+    return ViewCaseResult(case.id, flags_ok and not leaks, flags_ok, tuple(leaks))

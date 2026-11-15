@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     pub.add_argument("snapshot", type=Path, help="a snapshot folder")
     pub.add_argument("--dest", type=Path, default=Path("published"), help="publish root folder")
     pub.add_argument("--json", action="store_true", help="machine-readable output")
+    bdb = sub.add_parser("build-db", help="build agent.duckdb from a verified snapshot")
+    bdb.add_argument("snapshot", type=Path, help="a snapshot folder")
+    bdb.add_argument("--out", type=Path, default=Path("agent.duckdb"), help="database file")
+    bdb.add_argument("--seed", type=int, default=0, help="seed for the synthetic embargoed table")
+    bdb.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -185,6 +190,22 @@ def _snapshot(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_db(args: argparse.Namespace) -> int:
+    from assay_pipeline.pipeline.agentdb import AgentDBError, build_agent_db
+    from assay_pipeline.pipeline.snapshot import SnapshotError
+
+    try:
+        db = build_agent_db(args.snapshot, args.out, seed=args.seed)
+    except (AgentDBError, SnapshotError, OSError, ValueError) as exc:
+        return _fail(args, "build-db", exc)
+    if args.json:
+        print(json.dumps({"ok": True, "path": str(db.path), "sha256": db.sha256,
+                          "snapshot": db.snapshot}))  # fmt: skip
+    else:
+        print(f"agent database for snapshot {db.snapshot} at {db.path} (sha256 {db.sha256[:12]})")
+    return 0
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -210,6 +231,8 @@ def main(argv: list[str] | None = None) -> int:
         return _snapshot(args)
     if args.command == "publish":
         return _publish(args)
+    if args.command == "build-db":
+        return _build_db(args)
     return 2
 
 

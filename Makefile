@@ -1,4 +1,4 @@
-.PHONY: verify-audit test ingest snapshot publish
+.PHONY: verify-audit test ingest snapshot publish build-db
 
 # Re-hash an audit log and check its anchors (US5). Usage: make verify-audit LOG=audit/run.jsonl
 LOG ?= tests/fixtures/audit_ok.jsonl
@@ -19,6 +19,10 @@ snapshot:
 # Copy a verified, unplanted snapshot to published/. Usage: make publish SNAPSHOT=snapshots/<id>
 publish:
 	uv run assay publish "$(SNAPSHOT)"
+
+# Build agent.duckdb from a snapshot. Usage: make build-db SNAPSHOT=snapshots/<id>
+build-db:
+	uv run assay build-db "$(SNAPSHOT)"
 
 test:
 	uv run pytest -q

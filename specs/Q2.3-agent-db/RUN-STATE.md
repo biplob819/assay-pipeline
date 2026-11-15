@@ -1,0 +1,10 @@
+# Q2.3 run state
+
+**Now:** green
+
+## History
+- 2026-11-15 — started (base bf10fb5); agent database builder, views, synthetic embargoed table with canaries, locked connection in `agent/connection.py`, fresh copies and description planting, the LLM04 view check, `assay build-db`; 36 tests (permission tests under the security marker). All 10 LLM04 cases pass end to end through the real views. Clarified in the Tech Spec: QC2 planted rows show flagged (not absent), and `v_compounds`/`v_consensus` cover visible rows only.
+- 2026-11-15 — gate 9 caught a `duckdb.DuckDBPyConnection` annotation in the agent zone; the factory now returns an `AgentConnection` protocol.
+- 2026-11-15 — verifier pass 1 (attacker) confirmed VWS-01, 02, 04, 05, 06 and disproved VWS-03: read-only DuckDB allows TEMP tables, views and macros, so with the guard bypassed `CREATE TEMP VIEW v_activities AS SELECT * FROM embargoed_results` shadowed the approved view for the rest of the session (later guard-approved queries returned canaries), and a temp table spilled ~90 MB to disk past the memory cap. Fixed: `LockedConnection` runs only single SELECT statements (DuckDB's parser decides) and fails closed if a temp object ever exists; spilling off in the connect config. Also: NULL-safe view filters, tables built from the verified rows, atomic `agent.json`, contract failures as `AgentDBError`, planting refused for hidden rows, the LLM04 check now requires the plant to land and QC2 conflicts to show. 21 more tests (57).
+- 2026-11-15 — verifier pass 2 confirmed VWS-01, 02, 04, 05, 06 and every SQL-text attack on VWS-03 (comments, BOM, NUL, Unicode semicolons, query() tricks, PIVOT, parameters, SELECT-typed side effects); it disproved one clause: `execute` returned the raw DuckDB connection, so chained calls ran unchecked and a TEMP SEQUENCE was never caught. Fixed: a `Result` wrapper with only description and fetch methods; the temp-object check covers sequences and indexes. 4 more tests.
+- 2026-11-15 — green: converge passed twice; two attacker verifier passes; all six criteria confirmed.
