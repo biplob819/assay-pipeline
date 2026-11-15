@@ -2,7 +2,7 @@
 
 Nov 15, 2026 · @Biplob Chakraborty · Companion to the [Trusted Assay Pipeline PRD](Trusted%20Assay%20Pipeline%20PRD.md)
 
-The PRD says what the pipeline does and why. This spec says how it is built: the stage graph, schemas, quality and snapshot rules, the SQL guard, the audit log, the agent, the attack and scoring protocol, the console, the cost model, testing, and the build harness used to deliver it node by node. The harness is the one EvalKit was built with (EvalKit Tech Spec §11): a dependency graph of build nodes, a capability catalog, node-start and node-converge gates that each prove they can fail, a skeptical verifier, and append-only decision and lesson logs.
+The PRD says what the pipeline does and why. This spec says how it is built as an open-source project (MIT code, PyPI package `assay-pipeline`, CLI `assay`, any ChEMBL target with EGFR IC50 as the default and the published benchmark): the stage graph, schemas, quality and snapshot rules, the SQL guard, the audit log, the agent, the attack and scoring protocol, the console, the cost model, testing, and the build harness used to deliver it node by node. The harness is the one EvalKit was built with (EvalKit Tech Spec §11): a dependency graph of build nodes, a capability catalog, node-start and node-converge gates that each prove they can fail, a skeptical verifier, and append-only decision and lesson logs.
 
 Appendix A is the loophole review of the PRD (findings C1–C5, H1–H14, E1–E12) and shows which part of this spec closes each one. Appendix B lists the PRD edits this spec implies. This spec carries no dates. The **first release cut** means every Must story (US1–US8), which is the PRD's build-day scope.
 
@@ -10,7 +10,7 @@ Appendix A is the loophole review of the PRD (findings C1–C5, H1–H14, E1–E
 
 ## 1. Design decisions
 
-Each decision below seeds `docs/decisions.md` as D-1 to D-19. `OWNER D-n` marks a ruling the owner made (askme, 15 Nov 2026).
+Each decision below seeds `docs/decisions.md` as D-1 to D-26. `OWNER D-n` marks a ruling the owner made (askme, 15 Nov 2026).
 
 | ID | Decision | Alternatives considered | Why |
 | --- | --- | --- | --- |
@@ -33,6 +33,13 @@ Each decision below seeds `docs/decisions.md` as D-1 to D-19. `OWNER D-n` marks 
 | D-17 | Behaviour rules B3, B4 and B10 are scored by two blinded judges, Claude Opus 5.5 and GPT-6.1 Sol, against a 24-answer hand-labelled set. Every other rule is checked deterministically | One judge; judge everything | The agents are Sonnet and Sol, so a single judge from one family would grade its own family. Deterministic checks are cheaper and exact wherever the rule allows (§7.5) |
 | OWNER D-18 | Job-search content stays out of the public repo: the PRD in the repo is product-only, and portfolio framing moves to `Portfolio notes.md`, as in EvalKit | Keep the PRD as written | The repo is public. EvalKit enforces this with a test (`test_portfolio_notes_stay_out_of_public_repo`) |
 | D-19 | Build status comes from `scripts/status.py` in this repo, not from the statusnow skill | A plan file for statusnow | statusnow is wired to the Kova and VoC checkouts (EvalKit D-13) |
+| OWNER D-20 | Open source: published on PyPI as `assay-pipeline` by GitHub Actions trusted publishing on a version tag; the GitHub repo is the source | GitHub-only install | `pip install assay-pipeline` or `uvx --from assay-pipeline assay …` lets anyone run it with their own keys; the name was free on PyPI (checked 15 Nov 2026) |
+| OWNER D-21 | Import package `assay_pipeline`; CLI command `assay` | Import `assay` | `assay` on PyPI is an unrelated package, so `import assay` could clash when both are installed |
+| OWNER D-22 | Any target: the ChEMBL target id, UniProt accession, PubChem gene symbol and activity type come from `config/build.yaml`. EGFR IC50 (CHEMBL203, P00533) is the bundled default and the published benchmark. The attack suite and normal questions stay EGFR benchmark cases | EGFR hard-wired | Other teams can reuse the pipeline, not just reproduce it; ingest and tests take the target as a parameter |
+| OWNER D-23 | Python 3.11, 3.12 and 3.13 on Linux, macOS and Windows, all tested in CI | Python 3.12 on Linux and macOS | RDKit, DuckDB and pyarrow ship wheels for all nine; CI is free on a public repo; EvalKit's Windows lessons (L-7, L-18, L-32) carry over |
+| D-24 | `Activity.target` is the configured target name, and `Activity` also carries `data_validity_comment` and `chembl_src_id`. Cross-source duplicates are handled in both directions: PubChem AIDs deposited by ChEMBL are dropped, PubChem AIDs that ChEMBL imported (ChEMBL source 7) are dropped, and BindingDB rows that appear in both are reported as cross-source duplicates | EGFR literal; ChEMBL-deposited AIDs only | The API probe (15 Nov 2026) found about 95% of PubChem's EGFR assays deposited by ChEMBL, and ChEMBL importing PubChem BioAssay (source 7) and BindingDB (source 37) data |
+| D-25 | Harness changes from EvalKit found by the W0.1 verifier (passes 1–4). **Boundary gate — what it is and is not.** It stops *accidental* coupling in code we write ourselves: the pipeline reaching a model SDK or the agent, the agent reaching the pipeline or opening DuckDB writable. It is not a sandbox against deliberately hostile code inside the repository; Python can always reach around a lint (pydantic `ImportString`, `yaml.unsafe_load`, string annotations, frames, entry points). The enforcing controls are runtime: the locked read-only connection (Q2.3 VWS-03), the guard, and the §7.3 oracle. It has two halves. (1) A static lint over the pipeline and agent zones: imports resolved to full module names (relative, from- and star-imports included) against the banned prefixes and, in the pipeline, any top-level module starting with `anthropic` or `openai`; banned names `exec`, `eval`, `compile`, `__import__`, `getattr`, `setattr`, `delattr`, `vars`, `globals`, `locals`, `import_module` (as names, from-imported names or aliases); banned attributes (including match-pattern keyword attributes) `__dict__`, `__builtins__`, `__import__`, `import_module`, `modules`, `sys`, `__getattribute__`, `__globals__`, `__subclasses__`, `__code__`, `attrgetter`, `methodcaller`, `f_builtins`, `f_globals`, `_getframe`; importing `importlib` (except `importlib.metadata` and `importlib.resources`, and no other attribute of the `importlib` name), `runpy`, `builtins`, `imp`, `pkgutil`, `ctypes`, `pydoc`, `zipimport`, `pickle`, `marshal`, `code`, `codeop`, `operator.attrgetter`, `operator.methodcaller`; importing any of those banned modules by name from another module outside the package (`from inspect import builtins`); any binding of `sys` other than a plain `import sys` (aliases, from-imports, `import X as sys`); aliasing `os` or importing it from another module; star imports; any import that binds the bare package name; and in the agent zone, DuckDB reachable only from `agent/connection.py` as a plain `import duckdb` used solely in `duckdb.connect(..., read_only=True)` with an optional config of literal keys and values and no `access_mode`, any other `duckdb` name, attribute, import or match attribute failing. (2) A runtime check: each zone module is imported in a fresh interpreter with a finder that records and blocks the zone's banned modules, so a helper module outside the zones that pulls one in at import time is caught, and after import it scans each zone module's own names for a banned module bound under any name (a renamed re-export such as `from enum import bltns`); imports made only when a function runs are outside it, and so are local-variable or parameter names and attribute chains through a legitimate library (`inspect.builtins`), which only deliberate code uses. A zone module that cannot be imported cleanly (an exception or `SystemExit` at import, a missing dependency) fails the gate, since it is broken either way; `__main__.py` entry points are skipped because importing one runs its program. The ATTACH-in-SQL heuristic was dropped. **Self-tests** call the real gate functions and require each named defect, with `uv` present; every verifier bypass and every rule a mutant could drop has a plant. **Criteria** are `**CAP-ID** text` lines of six or more words with no TODO/TBD. **Gate 13** checks the changelog entry, criterion lines and record files; while a node is building it also checks that spec and criteria changed since the node's base and that RUN-STATE follows the newest change to `src/`, `scripts/`, `tests/`, `pyproject.toml`, `uv.lock` or `.github/` since the base: while any of those differs from HEAD (edits, renames, deletions), RUN-STATE must differ too and be at least as new as every existing changed file; once committed, git commit times decide. A green node's records are frozen, so it can be re-converged after later nodes. Stated limit: rewriting history (a rebase that re-stamps commit times) can make stale records look fresh; the verifier and the per-node commit are the backstop. An unknown base (or a shallow clone missing it) or a non-git folder fails with a clear message. **Private words** are checked by `scripts/leak_guard.py` against a git-ignored `.leakguard` (comment lines skipped): the pre-commit hook checks the staged blobs and paths the commit would add, the commit-msg hook checks the message, and a local test checks every publishable file and path (all skipped where `.leakguard` is absent, as in CI); matching is a substring search over each text decoded as UTF-8, Latin-1, UTF-16-LE and UTF-16-BE, NFKD-folded, case-folded and mapped through a listed table of Cyrillic, Greek, Armenian, Latin-extension and small-capital look-alikes (not the full Unicode confusables set); a mutation test proves each layer is needed. The secret scan lists files NUL-separated and its hook scans staged blobs. CI actions are pinned by commit SHA, resolved through the GitHub API on 15 Nov 2026 (actions/checkout v4 → 11d5960a…, astral-sh/setup-uv v6 → d0cc045d…); the first CI run is the proof that they resolve | EvalKit's harness unchanged; a lint claimed to be complete; committing hashes of private words | Each change answers a demonstrated bypass or false failure (W0.1 RUN-STATE, passes 1–4). Four verifier passes showed that no lint over Python is complete, so the claim was narrowed to what it can deliver and a runtime import check added; a hash of a guessable word is reversible, so the words stay out of the repository |
+| D-26 | Open-source onboarding: no telemetry; users bring their own provider keys; `assay doctor` checks Python, keys (never printed), network reach and cache state; every run that calls a model supports `--dry-run` and `--max-cost`; docs (quickstart, configuring a target, cost, threat model), CONTRIBUTING, SECURITY, CODE_OF_CONDUCT and issue templates ship with v0.1.0 | Repo-only docs | The same onboarding EvalKit ships (EvalKit B2.4, B2.5); a user can get a first snapshot with no keys at all |
 
 ---
 
@@ -53,6 +60,7 @@ class Stage(Protocol):
 - **Skip rule.** A stage is skipped when a manifest exists whose inputs and code version match the current ones. `make` gives the order; the manifest gives correctness.
 - **Atomic writes.** Everything is written to a temp file and then renamed. A failed stage leaves no partial output.
 - **No clocks, no randomness.** Stages read no wall clock and draw no random numbers. Any timestamp comes from the raw cache (fetch time of the release status call), and any sampling uses a seed from `BuildConfig`.
+- **Config.** `BuildConfig` and `ViewsConfig` defaults ship inside the package (`assay_pipeline/defaults/`), so a pip-installed `assay` needs no repo checkout; `--config` points at another file for another target.
 - **Drop ledger.** Every row a stage drops is written to `drops.parquet` with source, source record ID, stage and reason code. "Data yield" (PRD metric) is computed from this ledger alone.
 
 ### 2.2 Data graph (the data side)
@@ -65,8 +73,8 @@ PubChem PUG-REST ────▶ IngestPubChem ┴─▶ Normalise ─▶ Qualit
                                           provenance)   consensus)  hashes)      embargoed_results)
 ```
 
-- **IngestChEMBL** pages `activity` records for target `CHEMBL203` (human EGFR) with `standard_type=IC50`, 1,000 per page, and also fetches the `assay` records they reference (for description and variant). It records `chembl_db_version` from the `status` endpoint and **refuses to resume across a release change**; resuming into a new release starts a new cache.
-- **IngestPubChem** lists AIDs for gene symbol EGFR, keeps human-target assays, drops AIDs deposited by ChEMBL (§5.2), then fetches each AID's concise data table and the structures of its CIDs in batches. It stays under 5 requests per second and backs off on `PUGREST.ServerBusy`.
+- **IngestChEMBL** pages `activity` records for the configured target (default `CHEMBL203`, human EGFR) and activity type (default `IC50`), 1,000 per page. Activity records already carry the assay description and variant mutation (probe of 15 Nov 2026), so no separate assay fetch is needed. It records `chembl_db_version` from the `status` endpoint and **refuses to resume across a release change**; resuming into a new release starts a new cache.
+- **IngestPubChem** lists AIDs for the configured gene symbol, keeps assays whose target is the configured UniProt accession, drops AIDs deposited by ChEMBL or already imported by ChEMBL (§5.2, D-24), then fetches each AID's concise data table and the structures of its CIDs in batches. It stays under 5 requests per second and backs off on `PUGREST.ServerBusy`.
 - **Normalise** maps both sources to `Activity` (§3), standardises structures (D-3), converts to nM, computes `pic50 = 9 − log10(value_nm)`, and carries provenance.
 - **Quality** applies QC1–QC5 (§5.3) and builds the consensus table.
 - **Snapshot** writes the Parquet files and the manifest (§5.5).
@@ -124,7 +132,7 @@ The model never sees a raw DuckDB error. Errors map to one of four generic messa
 
 ## 3. Schemas (pydantic)
 
-Format v1. Every file carries `schema_version: "1.0"`. Models are frozen; sequences are tuples (EvalKit L-8), and floats reject NaN and infinity (EvalKit L-9).
+Format v1. Every file record (`RawResponse` index lines, `Manifest`, `AuditLine`, `Anchor`, `AttackCase`, `NormalQuestion`, `TrialResult`) carries `schema_version: "1.0"`; row records (`Activity`, `Drop`, `Consensus`) live in Parquet files whose version is the manifest's. Models are frozen; sequences are tuples (EvalKit L-8), and floats reject NaN and infinity (EvalKit L-9). The code in `assay_pipeline.schemas` is authoritative for the cross-field rules (N1.1 spec).
 
 ```python
 Flag = Literal["QC1", "QC2", "QC3", "QC4", "QC5"]
@@ -145,19 +153,21 @@ class Activity(BaseModel):  # one row in the unified table; never merged
     inchikey: str  # RDKit parent InChIKey (D-3)
     source_inchikey: str | None  # as the source gave it
     smiles: str  # RDKit canonical SMILES of the parent
-    target: Literal["EGFR"]
+    target: str  # configured target name, default "EGFR" (OWNER D-22)
     variant: str  # "wild-type/unspecified" or a mutation string, e.g. "L858R"
-    assay_type: Literal["B", "F", "A", "U"]  # ChEMBL binding/functional/ADME; U = unknown (PubChem)
+    assay_type: Literal["B", "F", "A", "T", "P", "U"]  # ChEMBL assay types; U = unknown (PubChem only)
     assay_id: str  # CHEMBL assay id or PubChem AID
     assay_description: str  # free text from the source; untrusted (C3)
     value_original: float | None
     units_original: str | None
     value_nm: float | None
-    relation: Literal["=", "<", ">", "<=", ">=", "unknown"]
+    relation: Literal["=", "<", ">", "<=", ">=", "unknown"]  # unknown: none given, or non-standard
     pic50: float | None
     source: Literal["chembl", "pubchem"]
     source_record_id: str | None  # ChEMBL activity_id, or PubChem AID:SID
     depositor: str | None  # PubChem only
+    chembl_src_id: int | None  # ChEMBL's own source (7 = PubChem BioAssay, 37 = BindingDB), D-24
+    data_validity_comment: str | None  # ChEMBL only, counted in the data card
     document_id: str | None
     flags: tuple[Flag, ...]
     flag_reasons: dict[Flag, str]
@@ -187,6 +197,8 @@ class Consensus(BaseModel):  # one row per QC2 key
 
 class Manifest(BaseModel):
     snapshot: str
+    target: str  # OWNER D-22
+    activity_type: str  # "IC50" by default
     created_at: datetime  # from the raw cache, never the wall clock
     source_releases: dict[str, str]
     raw_cache_sha256: str  # hash over the sorted cache index
@@ -226,6 +238,7 @@ class AuditLine(BaseModel):  # append-only, hash-chained
     rows_shown: int | None
     result_sha256: str | None
     db_error_class: Literal["timeout", "memory", "permission", "other"] | None
+    answer_sha256: str | None  # on "answer" events: hash of the answer text, not the text
     prev_hash: str
     hash: str  # sha256(canonical_json(line without "hash"))
 
@@ -315,11 +328,12 @@ def run_case(case: str, model: str, *, mode: Literal["replay", "live"]) -> Conso
 | `assay attack --model all --k 3 --split public` | Runs attacks and normal questions; `--dry-run` prints the estimate; `--max-cost` caps spend | Yes |
 | `assay attack --guard off` | Ablation on a sacrificial copy; refuses unless the target DB is a temp copy | Yes |
 | `assay ask "…" --model sonnet` | One question through the full path, for manual checks | Yes |
+| `assay doctor` | Checks Python, which provider keys are set (never printed), network reach to ChEMBL and PubChem, and the raw cache (D-26) | No |
 | `assay report` | Builds the CISO dashboard from the latest run | No |
 
 Every command takes `--json`. Exit codes follow EvalKit's: 0 success; 1 run finished but an attack succeeded or a check failed (CI gate); 2 configuration or runtime error; 3 stopped at the cost cap, with a resume hint.
 
-**Versioning.** The app is versioned with semver tags; v0.1.0 is the first release cut. Snapshot ids are `YYYY-MM-DD.n`: the date is the ChEMBL release fetch date from the raw cache, and `n` increments when the same cache is rebuilt with a code change. The id is stored in the manifest, so a rebuild on another day reuses it.
+**Versioning.** semver; v0.1.0 is the first release cut and the first PyPI release (OWNER D-20). While on 0.x a breaking change to the CLI, the snapshot format or the audit-line format bumps the minor version. Snapshot ids are `YYYY-MM-DD.n`: the date is the ChEMBL release fetch date from the raw cache, and `n` increments when the same cache is rebuilt with a code change. The id is stored in the manifest, so a rebuild on another day reuses it.
 
 ---
 
@@ -410,7 +424,7 @@ The 10-second timeout is a `threading.Timer` that calls `con.interrupt()`. `memo
 ### 6.2 Least privilege
 
 - The agent's connection is opened as in D-4. A test proves that each of these fails on the agent connection even with the guard bypassed: `CREATE`, `INSERT`, `COPY … TO`, `read_csv('…')`, `ATTACH`, `INSTALL httpfs`, and `SET enable_external_access=true`.
-- The agent zone never receives the snapshot path, only `agent.duckdb`. The pipeline never imports a model SDK. Both rules are enforced by the boundary gate (§11.6, gate 9), an AST import check: `assay.pipeline.*` may not import `anthropic`, `openai` or `assay.agent`, and `assay.agent.*` may not import `assay.pipeline` or open DuckDB without `read_only=True`.
+- The agent zone never receives the snapshot path, only `agent.duckdb`. The pipeline never imports a model SDK. The boundary gate (§11.6, gate 9; policy in D-25) checks both against accidental coupling: a static lint over `assay_pipeline.pipeline` and `assay_pipeline.agent` (no model SDK or agent import in the pipeline, no pipeline import in the agent, no dynamic import machinery, DuckDB opened only by `agent/connection.py` and only read-only) plus a runtime import check. It is a lint, not a sandbox; the runtime controls below are what enforce the boundary.
 - **Stated limit (threat model):** table-level read control rests on the guard alone, because DuckDB has no GRANTs. The oracle run shows that this holds for every attack in the suite, and the threat model names database roles as the production addition.
 
 ### 6.3 Audit log
@@ -539,6 +553,7 @@ Every real run appends to `docs/measurements/spend-ledger.jsonl` and reports the
 | Boundary | Import rules of §6.2 | gate 9 |
 | Static | Lint, types | `uv run ruff check`, `uv run pyright` |
 | Build | Wheel installs in a clean venv; `assay --help`; `assay verify-audit` on a fixture log | `uv build` |
+| Compatibility | Python 3.11, 3.12 and 3.13 on Linux, macOS and Windows (OWNER D-23) | CI matrix |
 
 **Observability.** Every stage writes `_stage.json`. Every attack run writes `runs/<run_id>/run.log` (JSON lines: case, model, trial, layer, cost, error), `summary.json` (with total cost and wall-clock), the audit log and its anchors.
 
@@ -546,7 +561,7 @@ Every real run appends to `docs/measurements/spend-ledger.jsonl` and reports the
 
 ## 11. Build harness (lean Kova, ported from EvalKit)
 
-The pipeline is built as a graph of **build nodes**. A node can start only when everything it depends on is green, and it turns green only when its proof passes every gate. The scripts are ported from `~/EvalKit/scripts/` (`harness_lib.py`, `node_start.py`, `node_converge.py`, `verify_graph_eligibility.py`, `status.py`, `secret_scan.py`) with the node-id pattern changed to `^[WNQSABRD]\d+\.\d+$` and the gates of §11.6.
+The pipeline is built as a graph of **build nodes**. A node can start only when everything it depends on is green, and it turns green only when its proof passes every gate. The scripts are ported from `~/EvalKit/scripts/` (`harness_lib.py`, `node_start.py`, `node_converge.py`, `verify_graph_eligibility.py`, `status.py`, `secret_scan.py`) with the node-id pattern changed to `^[WNQSABRD]\d+\.\d+$`, the gates of §11.6, and the hardening of D-25.
 
 ### 11.1 Repo layout for the harness
 
@@ -577,9 +592,9 @@ Status vocabulary: `not-started | spec | building | green`.
 
 | Node | Title | Depends on | Deliverable (what exists when it is green) | Stories |
 | --- | --- | --- | --- | --- |
-| **W0.1** | Repo and harness | — | Repo `assay-pipeline`, uv project (Python 3.12), CI, ported harness scripts with `--self-test` on every gate, records seeded | — |
+| **W0.1** | Repo and harness | — | Repo `assay-pipeline`, uv project (Python 3.11–3.13), CI on three OSes, ported harness scripts with `--self-test` on every gate, records seeded | — |
 | **N1.1** | Schemas and config | W0.1 | `assay.schemas` (§3), `BuildConfig`, view and allow-list config, format v1 fixtures | US1, US3 |
-| **N1.2** | ChEMBL ingest | N1.1 | Resumable activity and assay ingest for CHEMBL203 IC50, raw cache, release lock, recorded fixture | US1 |
+| **N1.2** | ChEMBL ingest | N1.1 | Resumable activity ingest for the configured target (default CHEMBL203 IC50), raw cache, release lock, recorded fixture | US1 |
 | **N1.3** | PubChem ingest | N1.1 | AID discovery, ChEMBL-deposited AIDs dropped, concise data and structures, rate limit, depositor ledger | US1 |
 | **N1.4** | Normalise | N1.2, N1.3 | RDKit parent standardisation, nM, pIC50, variant, provenance, drop ledger | US1 |
 | **Q2.1** | Quality rules | N1.4 | QC1–QC5 with boundary tests, consensus table, planted-row fixtures for LLM04 | US2, US7 |
@@ -593,7 +608,7 @@ Status vocabulary: `not-started | spec | building | green`.
 | **A4.3** | Behaviour scoring | A4.2 | B1–B10 checks, dual judges for B3, B4 and B10, 24 hand labels, agreement report | US6 |
 | **B5.1** | CISO dashboard | A4.2, A4.3, Q2.2 | `assay report`: attack outcomes by category, model and layer; access events; data-quality tab; snapshot history; deployed | US2, US6 |
 | **B5.2** | Threat model | A4.2 | One-page PDF from `docs/threat-model.md`: assets, trust boundaries, threats mapped to OWASP and ATLAS, controls, stated limits, review checklist | US8 |
-| **B5.3** | README and v0.1.0 | B5.1, B5.2 | README with diagram, real results and how to rebuild, decision log published, tag v0.1.0 | US1–US8 |
+| **B5.3** | Open-source release v0.1.0 | B5.1, B5.2 | README with diagram and real results, docs, community files, `assay doctor`, PyPI trusted publishing, tag v0.1.0 | US1–US8 |
 | **R6.1** | Data roadmap | Q2.2 | One-page PDF: clean assay data to model training, what a scientist would add, what would catch stealth poison | — |
 | **D6.1** | Console backend | S3.3, A4.1 | `run_case()`, replay cache, live guard (passcode, rate limit, Postgres spend counter), ephemeral audit | US9 |
 | **D6.2** | Console page | D6.1, B5.1 | Streamlit page in `portfolio-demos`, sample attacks, live audit view, deployed | US9 |
@@ -679,12 +694,12 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
-| HAR-01 | uv project (Python 3.12), `assay` package skeleton, MIT licence, ruff pre-commit, `.gitattributes` forcing LF (EvalKit L-7) | D-14 |
-| HAR-02 | CI: lint, types, tests, security and build on every push (Linux and macOS) | NFR1 |
+| HAR-01 | uv project (Python 3.11–3.13), `assay_pipeline` package skeleton with the `assay` CLI, MIT licence, ruff pre-commit, `.gitattributes` forcing LF (EvalKit L-7) | D-14, OWNER D-21 |
+| HAR-02 | CI: lint, types, tests, security and build on every push, Python 3.11–3.13 on Linux, macOS and Windows, actions pinned by SHA | NFR1, OWNER D-23 |
 | HAR-03 | `verify_graph_eligibility.py` ported, with a self-test | D-14 |
 | HAR-04 | `node_start.py` ported, with a self-test | D-14 |
-| HAR-05 | `node_converge.py` with the 13 gates of §11.6, every gate with a self-test | D-14 |
-| HAR-06 | Records: `graph.md`, `catalog.tsv`, `decisions.md` seeded with D-1 to D-19, `lessons.md`, `changelog.md`, spend ledger, `scripts/status.py` | D-14, D-19 |
+| HAR-05 | `node_converge.py` with the 13 gates of §11.6, every gate with a self-test that names its planted defect | D-14, D-25 |
+| HAR-06 | Records: `graph.md`, `catalog.tsv`, `decisions.md` seeded with D-1 to D-26, `lessons.md`, `changelog.md`, spend ledger, `scripts/status.py` | D-14, D-19 |
 | HAR-07 | Secret-scanning gate; `.env` git-ignored; keys never printed | NFR1 |
 
 **N1.1 Schemas and config**
@@ -694,15 +709,15 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | SCH-01 | Data schemas: `RawResponse`, `Activity`, `Drop`, `Consensus`, `Manifest` | FR2, FR3, FR5 |
 | SCH-02 | Security schemas: `GuardDecision`, `AuditLine`, `Anchor` | FR7, FR9 |
 | SCH-03 | Evaluation schemas: `AttackCase`, `NormalQuestion`, `TrialResult` | FR10 |
-| SCH-04 | `BuildConfig` and `config/views.yaml` (approved views, columns, function allow-list), validated on load | FR6, FR7 |
+| SCH-04 | `BuildConfig` (target, activity type, sources, limits) and `config/views.yaml` (approved views, columns, function allow-list), validated on load | FR6, FR7, OWNER D-22 |
 | SCH-05 | Format v1: `schema_version`, fixtures, round-trip contract tests, frozen models | §3 |
 
 **N1.2 ChEMBL ingest**
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
-| CHM-01 | Paged activity fetch for CHEMBL203, IC50, with the fields of §5.1 | FR1 |
-| CHM-02 | Referenced assay records (description, variant) | FR2, C3, H2 |
+| CHM-01 | Paged activity fetch for the configured target and activity type (default CHEMBL203, IC50), with the fields of §5.1 | FR1, OWNER D-22 |
+| CHM-02 | Assay description, variant mutation and ChEMBL source id captured from each activity record | FR2, C3, H2, D-24 |
 | CHM-03 | Content-addressed raw cache with release recorded from the status endpoint | D-2, FR1 |
 | CHM-04 | Resume from cursor; refuse to resume across a release change | FR1, H5 |
 | CHM-05 | Retry rules of §2.5 | §2.5 |
@@ -712,8 +727,8 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
-| PUB-01 | AID discovery for gene symbol EGFR, human targets only | FR1 |
-| PUB-02 | Drop ChEMBL-deposited AIDs, recorded in the drop ledger | H3 |
+| PUB-01 | AID discovery for the configured gene symbol, filtered to the configured UniProt accession | FR1, OWNER D-22 |
+| PUB-02 | Drop AIDs deposited by ChEMBL or already imported by ChEMBL, recorded in the drop ledger | H3, D-24 |
 | PUB-03 | Concise data fetch, IC50 rows, micromolar column | FR1, FR2 |
 | PUB-04 | Batched structure fetch by CID | FR2 |
 | PUB-05 | Under 5 requests per second; backoff on ServerBusy | §2.5 |
@@ -858,7 +873,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | THR-03 | Stated limits (DuckDB has no GRANTs, anchor trust, stealth poison) and production steps | C1, C4, H7 |
 | THR-04 | One-page PDF render; a test checks that every suite category and control appears | US8 |
 
-**B5.3 README and v0.1.0**
+**B5.3 Open-source release v0.1.0**
 
 | Cap | Capability | Trace |
 | --- | --- | --- |
@@ -868,6 +883,12 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | REL-04 | Decision log and data card linked | — |
 | REL-05 | A sample of real answers and audit lines read by hand before publishing (EvalKit L-37) | — |
 | REL-06 | Tag v0.1.0 | — |
+| OSS-01 | PyPI `assay-pipeline` released by trusted publishing on tag; `uvx --from assay-pipeline assay doctor` smoke test after release on three OSes | OWNER D-20 |
+| OSS-02 | `assay doctor`: Python, keys set (never printed), network reach, cache state; `--json` on every command | D-26 |
+| OSS-03 | Docs: quickstart (a first snapshot with no keys), configuring another target, controlling cost, reading the dashboard | D-26, OWNER D-22 |
+| OSS-04 | CONTRIBUTING, SECURITY (key handling, reporting a vulnerability), CODE_OF_CONDUCT, issue and PR templates | D-26 |
+| OSS-05 | Privacy statement: no telemetry; data goes only to ChEMBL, PubChem and the model providers the user configures | D-26 |
+| OSS-06 | A second target builds end to end from config in CI (recorded fixture) | OWNER D-22 |
 
 **R6.1 Data roadmap**
 
@@ -942,7 +963,7 @@ Every gate runs and is reported even after an earlier one fails. Every gate ship
 10. **Security**: `pytest -m security` (guard corpus, oracle, permission tests, audit tamper tests) and the secret scan.
 11. Build: the wheel installs in a clean venv, and `assay --help` and `assay verify-audit tests/fixtures/audit_ok.jsonl` both run.
 12. Changed code has changed tests.
-13. Records fresh: the node's spec, criteria and RUN-STATE were modified at or after the last code commit for that node.
+13. Records: a changelog entry for the node, a real `**CAP-ID** text` criterion line for every row, spec, criteria and RUN-STATE present, spec and criteria changed since the node's base, and RUN-STATE changed at or after the newest source, test or config change (git times, D-25).
 
 ### 11.7 Roles
 
@@ -1018,7 +1039,7 @@ Reviewed wearing a lead PM's and a staff engineer's hats. **C** findings break a
 
 ## Appendix B: PRD edits this spec implies
 
-Items 1–9 are proposed, not yet applied to the PRD. Item 10 is applied:
+All ten are applied to the PRD (15 Nov 2026):
 
 1. **QC2:** key on `(inchikey, target, variant, assay_type)`; "keep the median" moves to `v_consensus` with member IDs (H1, H2).
 2. **Approved views:** add `v_consensus`, and add `assay_description` and `variant` to `v_activities` (C3, D-6).

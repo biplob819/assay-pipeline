@@ -1,0 +1,8 @@
+# N1.2 acceptance criteria
+
+**CHM-01** Paging requests `activity.json` with the configured target, activity type, `order_by=activity_id` and the configured page size, advancing the offset until `total_count` records are cached; on the recorded fixture it caches exactly the 15 records over 3 pages in activity-id order.
+**CHM-02** Every cached activity record carries the fields later stages need (listed in the spec), checked on the recorded fixture; a page whose records name another target or activity type stops the ingest with an error naming the offset.
+**CHM-03** The release is read from `status.json` before any activity page; bodies are stored gzip with mtime 0 under their request key, each indexed by one valid `RawResponse` line naming the release; reading a body whose bytes no longer match `body_sha256` raises an error.
+**CHM-04** A rerun after an interruption resumes and re-fetches no cached page; a rerun on a complete cache makes no page requests and writes nothing; a changed live release while an older release's cache is incomplete, a cache built for another target, activity type or page size, or a `total_count` change mid-run each stop with an error naming the cause, and `--new-release` starts a separate cache for the new release.
+**CHM-05** Transport errors, 429 and 5xx are retried with capped exponential backoff and jitter up to 6 attempts, then fail the stage with nothing half-written; other 4xx and unparseable bodies are never retried; the user agent names the project only.
+**CHM-06** The recorded fixture holds real ChEMBL responses with their licence attribution, every ingest test runs on it through a mock transport with no network, and running the ingest twice into two empty caches gives byte-identical cache files.

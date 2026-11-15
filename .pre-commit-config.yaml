@@ -1,0 +1,26 @@
+# Mirrors scripts/install_hooks.py: checks run on what git will commit, not the working tree.
+default_install_hook_types: [pre-commit, commit-msg]
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5
+    hooks:
+      - id: ruff
+      - id: ruff-format
+        args: [--check]
+  - repo: local
+    hooks:
+      - id: secret-scan
+        name: secret scan (staged blobs)
+        entry: python scripts/secret_scan.py --staged
+        language: system
+        pass_filenames: false
+      - id: leak-guard
+        name: leak guard (staged blobs and paths, OWNER D-18)
+        entry: python scripts/leak_guard.py --staged
+        language: system
+        pass_filenames: false
+      - id: leak-guard-message
+        name: leak guard (commit message)
+        entry: python scripts/leak_guard.py --message
+        language: system
+        stages: [commit-msg]

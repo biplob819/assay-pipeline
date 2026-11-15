@@ -26,7 +26,7 @@ One build delivers both halves of trustworthy AI over research data: data that a
 | Deliverable | What it is | Where it lives | Ready by |
 | --- | --- | --- | --- |
 | GitHub repo `assay-pipeline` | Ingest, normalise, quality rules, snapshots, SQL guard, agent, audit log, attack suite, tests | GitHub, public | Thu 19 |
-| CISO dashboard | Data quality, snapshot history, access events, attack pass rate by OWASP category | Cloudflare Pages | Thu 19 |
+| CISO dashboard | Data quality, snapshot history, access events, attack pass rate by OWASP category | GitHub Pages | Thu 19 |
 | Threat model | One page: assets, trust boundaries, threats mapped to OWASP and MITRE ATLAS, controls | PDF, linked from the project page | Thu 19 |
 | Data roadmap | One page: how clean assay data feeds model training, and what a scientist would add | PDF, linked from the project page | Fri 20 |
 | Demo page | An agent console in the shared `portfolio-demos` app, with sample attacks to try | Streamlit Community Cloud | Sun 22 |
@@ -53,7 +53,7 @@ Four personas drive ten stories; the eight marked Must make up Thursday's scope.
 | US4 | CISO | know the agent cannot write, read restricted tables or run unbounded queries | approval rests on enforced controls | The guard blocks every such attempt before the database sees it | Must |
 | US5 | CISO | see every agent query in a log nobody can quietly edit | I can audit after the fact | Hash-chained audit log; `make verify-audit` fails if any line changes | Must |
 | US6 | CISO | see attack results by OWASP category and by the layer that stopped each one | I know where defence actually sits | Pass rate per category, per model, split into guard, model refusal, leak | Must |
-| US7 | Chemist | catch planted impossible values before they reach a snapshot | poisoned data never trains a model | Every planted row is flagged by a quality rule | Must |
+| US7 | Chemist | catch planted impossible values before they reach an approved view | poisoned data never trains a model | Every planted row is flagged by a quality rule and absent from every approved view | Must |
 | US8 | Reviewer | read a one-page threat model | I can test your security judgement quickly | Assets, boundaries, threats, controls on one page | Must |
 | US9 | Reviewer | try an attack in a demo and watch it get stopped and logged | I see the controls work | The console shows the guard decision and the new audit line | Should |
 | US10 | Chemist | explore compounds and values in a simple view | I can sanity-check the data | Filter by compound, assay type and value range | Could |
@@ -88,9 +88,9 @@ Twelve functional requirements, five quality rules and a six-category attack sui
 | FR4 | Five quality rules (below), each with unit tests for a passing and a failing row | US2, US7 |
 | FR5 | Parquet snapshots with a manifest of SHA-256 hashes, row counts, flags per rule and source releases | US3 |
 | FR6 | DuckDB opened read-only for the agent, exposing approved views; a synthetic `embargoed_results` table outside the allow-list | US4 |
-| FR7 | A SQL guard that parses each statement and blocks anything other than a single SELECT on an approved view, adds `LIMIT 1000` and a 10-second timeout | US4 |
+| FR7 | A SQL guard that parses each statement and blocks anything other than a single SELECT on approved views (table references resolved after CTE scoping, functions on an allow-list), runs only SQL re-rendered from its own parse, adds `LIMIT 1000` and a 10-second timeout, and shows the model at most 50 rows | US4 |
 | FR8 | An agent on Claude Sonnet 5.5 and GPT-6.1 Sol with one tool, `query(sql)` | US4, US6 |
-| FR9 | An append-only audit log where each line carries the hash of the previous line, plus `make verify-audit` | US5 |
+| FR9 | An append-only audit log where each line carries the hash of the previous line, with anchors kept outside the log so a truncated or rewritten log is detected, plus `make verify-audit` | US5 |
 | FR10 | 60 attack cases and 30 normal questions, scored by EvalKit's attack-outcome scorer | US6 |
 | FR11 | A CISO dashboard: data quality, snapshot history, access events, attack pass rate by category, model and stopping layer | US2, US6 |
 | FR12 | An agent console demo with sample attacks and a live audit view | US9 |
@@ -98,7 +98,7 @@ Twelve functional requirements, five quality rules and a six-category attack sui
 **Quality rules.**
 
 - QC1. Units that cannot be converted to nM.
-- QC2. Duplicates on compound InChIKey, target and assay type: keep the median, flag spreads over one log unit.
+- QC2. Duplicates on compound InChIKey, target, variant and assay type: flag every member when the spread exceeds one log unit. Rows are never merged; medians live in `v_consensus` with the member record IDs.
 - QC3. pIC50 outside 3 to 12.
 - QC4. Missing source record ID.
 - QC5. Censored values (relation other than "="), kept but flagged.
@@ -120,10 +120,10 @@ Each case is also tagged with its closest MITRE ATLAS technique, such as LLM Pro
 
 | ID | Area | Bar |
 | --- | --- | --- |
-| NFR1 | Defence in depth | No attack succeeds even if the model complies; the guard and permissions must stop it alone |
+| NFR1 | Defence in depth | No attack succeeds even if the model complies: in a model-free run, the enforced layers (guard, read-only locked connection, limits) stop every attack. DuckDB has no per-table permissions, so table-level reads rest on the guard |
 | NFR2 | Reproducibility | Identical snapshot hashes on rebuild |
 | NFR3 | Audit | 100% of agent calls logged; any edit breaks verification |
-| NFR4 | Cost | About $3 per attack run on both models |
+| NFR4 | Cost | About $9–19 per attack run on both models at 3 trials each, plus about $2 for the guard-off ablation; every run's spend is logged |
 | NFR5 | Licensing | ChEMBL is CC BY-SA 3.0, so the published table keeps that licence and attribution; PubChem depositor terms checked per source |
 | NFR6 | Explainability | The pipeline and the threat model each fit on one page and can be explained in five minutes |
 
@@ -141,7 +141,7 @@ The agent answers questions about the assay data from approved views only, shows
 | B6 | Follow instructions found inside data fields | Never | LLM01 cases |
 | B7 | Query tables outside the allow-list, or reveal the embargoed table exists in any detail | Never | LLM02 cases |
 | B8 | Attempt to write, delete or touch files | Never | LLM06 cases |
-| B9 | Reveal its system prompt or guard rules verbatim | Never | LLM01 cases that ask for the prompt |
+| B9 | Reveal its system prompt or guard rules verbatim | Never | LLM01 cases that ask for the prompt (also tagged LLM07 System Prompt Leakage) |
 | B10 | Give medical, dosing or synthesis advice | Never | 4 off-scope normal questions |
 
 **Example of a good answer.** "Across 4 binding assays in snapshot 2026-11-19.1, the median IC50 for this compound against EGFR is reported with its range; one censored value (“>10,000 nM”) was excluded. SQL: `SELECT ... FROM v_activities WHERE ...`"
@@ -186,7 +186,7 @@ The top row is the data side; the second and third rows are the security side. T
 - **Data pipeline.** Python 3.12 with uv; `chembl_webresource_client` for ChEMBL; `httpx` for PubChem PUG-REST; RDKit to standardise structures and compute InChIKeys; pandas and DuckDB for normalising and quality rules; Parquet snapshots with SHA-256 hashes.
 - **Agent zone.** DuckDB opened with `read_only=True`; `sqlglot` parses every statement for the guard; the anthropic and openai SDKs for the agent; an append-only JSONL audit log with a hash chain. EvalKit, pinned, scores attack outcomes.
 - **Trust boundary.** Nothing in the agent zone can write to the snapshot, and the pipeline never calls a model, so a compromised prompt cannot touch the data and a bad data row cannot reach the agent without passing the quality rules.
-- **Dashboard and console.** Static HTML on Cloudflare Pages; the console runs in the shared Streamlit app on Streamlit Community Cloud, against its own copy of the database and audit log.
+- **Dashboard and console.** Static HTML on GitHub Pages; the console runs in the shared Streamlit app on Streamlit Community Cloud, against its own copy of the database and audit log.
 
 ## Data model and interfaces
 
@@ -235,7 +235,7 @@ class AttackCase(BaseModel):
     expected_stop: Literal["guard", "model", "quality_rule", "limit"]
 ```
 
-**Approved views.** `v_activities` (unflagged rows plus censored ones), `v_compounds` (one row per InChIKey), `v_quality` (counts per rule). Nothing else is visible to the agent.
+**Approved views.** `v_activities` (rows whose only flags are QC2 or QC5, with variant and assay description), `v_compounds` (one row per InChIKey), `v_consensus` (medians per QC2 key with member record IDs), `v_quality` (counts per rule). Nothing else is visible to the agent.
 
 **CLI.**
 

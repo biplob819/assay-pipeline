@@ -2,6 +2,8 @@
 Portfolio notes.md
 
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 *.pyc
@@ -24,3 +26,6 @@ heldout/*
 .streamlit/secrets.toml
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# private words the leak guard checks for; never committed (OWNER D-18)
+.leakguard
