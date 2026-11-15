@@ -68,6 +68,11 @@ SMOKE_COMMANDS: list[list[str]] = [
         "from assay_pipeline.config import load_build_config, load_views_config; "
         "assert load_build_config().target.name == 'EGFR'; load_views_config()",
     ],
+    [  # S3.2: the installed CLI verifies the shipped fixture log (AUD-06)
+        "assay",
+        "verify-audit",
+        str(ROOT / "tests" / "fixtures" / "audit_ok.jsonl"),
+    ],
 ]
 PYTEST_UNIT_MARKERS = "not golden and not rebuild and not security"
 NA_MIN_REASON = 10

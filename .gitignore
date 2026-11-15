@@ -15,13 +15,14 @@ build/
 .harness/
 .DS_Store
 
-# raw API cache, agent DB copies, run outputs and held-out cases stay local
-cache/
-runs/
-audit/
+# raw API cache, agent DB copies, run outputs and held-out cases stay local (anchored to the
+# repo root, so source packages with the same names are never ignored)
+/cache/
+/runs/
+/audit/
 *.duckdb
-heldout/*
-!heldout/MANIFEST.json
+/heldout/*
+!/heldout/MANIFEST.json
 
 .streamlit/secrets.toml
 .claude/settings.local.json

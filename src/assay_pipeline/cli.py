@@ -30,7 +30,62 @@ def build_parser() -> argparse.ArgumentParser:
     ing.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
     ing.add_argument("--new-release", action="store_true", help="start a cache for a new release")
     ing.add_argument("--json", action="store_true", help="machine-readable output")
+    ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
+    ver.add_argument("log", type=Path)
+    ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
+    ver.add_argument(
+        "--no-anchors",
+        action="store_true",
+        help="check the chain only (a truncated tail is then undetectable)",
+    )
+    ver.add_argument("--json", action="store_true", help="machine-readable output")
     return ap
+
+
+def _printable(text: str) -> str:
+    """Escape control characters so a crafted file name cannot drive the terminal."""
+    return "".join(ch if ch.isprintable() else ch.encode("unicode_escape").decode() for ch in text)
+
+
+def _verify_fail(args: argparse.Namespace, msg: str) -> int:
+    if args.json:
+        print(json.dumps({"ok": False, "error": msg}))
+    else:
+        print(_printable(msg), file=sys.stderr)
+    return 1
+
+
+def _verify_audit(args: argparse.Namespace) -> int:
+    from assay_pipeline.audit import verify
+
+    try:
+        if args.no_anchors:
+            anchors = None
+        elif args.anchors is not None:
+            anchors = args.anchors
+        elif args.log.name:
+            anchors = args.log.with_suffix(".anchors.jsonl")
+        else:
+            return _verify_fail(args, f"{args.log} is not a log file path")
+        if anchors is not None and not anchors.exists():
+            return _verify_fail(
+                args,
+                f"anchors file {anchors} not found (pass --no-anchors to check the chain only)",
+            )
+        report = verify(args.log, anchors)
+    except (OSError, ValueError) as exc:
+        return _verify_fail(args, f"cannot verify {args.log}: {exc}")
+    if args.json:
+        print(json.dumps(asdict(report)))
+    elif report.ok:
+        tail = f", {report.unanchored_tail} after the last anchor" if report.unanchored_tail else ""
+        print(f"audit log OK: {report.lines} lines, {report.anchors} anchors{tail}")
+    else:
+        print(
+            _printable(f"audit log BROKEN at seq {report.first_broken_seq}: {report.reason}"),
+            file=sys.stderr,
+        )
+    return 0 if report.ok else 1
 
 
 def _ingest(args: argparse.Namespace) -> int:
@@ -67,6 +122,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "ingest":
         return _ingest(args)
+    if args.command == "verify-audit":
+        return _verify_audit(args)
     return 2
 
 

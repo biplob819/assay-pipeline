@@ -334,3 +334,7 @@ def test_build_smoke_loads_the_packaged_default_configs():
     """The wheel must carry assay_pipeline/defaults/*.yaml (SCH-04); gate 11 proves it."""
     joined = " ".join(" ".join(c) for c in nc.SMOKE_COMMANDS)
     assert "load_build_config()" in joined and "load_views_config()" in joined
+
+
+def test_build_smoke_verifies_the_fixture_audit_log():
+    assert any(c[:2] == ["assay", "verify-audit"] for c in nc.SMOKE_COMMANDS)

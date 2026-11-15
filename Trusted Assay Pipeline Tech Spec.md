@@ -434,7 +434,7 @@ The 10-second timeout is a `threading.Timer` that calls `con.interrupt()`. `memo
 - The file is `audit/<run_id>.jsonl`. Line 0 is a `genesis` line whose `prev_hash` is 64 zeros. Each line's `hash` is `sha256(canonical_json(line without "hash"))`, and that includes `prev_hash`.
 - One writer task drains a queue, takes a file lock and fsyncs each line. Concurrent trials never write the file directly (EvalKit RUN-06).
 - Events: `question` when a trial starts, `query` for every tool call (allowed or blocked), and `answer` when the trial ends. Audit coverage (NFR3) is checked by cross-checking that every trajectory `Step` has exactly one `query` line and every trial has one `question` and one `answer`.
-- **Anchors.** After each case batch and at the end of a run, the writer appends `{log, seq, hash, at}` to `audit/anchors.jsonl`. The run report and dashboard print the final anchor.
+- **Anchors.** After each case batch and at the end of a run, the writer appends `{log, seq, hash, at}` to an anchors file: by default the per-log `<log>.anchors.jsonl`; the agent run (S3.3) may pass one shared path. A log with lines but no anchors file is never resumed, and `verify-audit` fails when no anchor names the log. The run report and dashboard print the final anchor.
 - `verify-audit` recomputes every hash, checks `prev_hash` links and seq continuity, and checks that every anchor's `(seq, hash)` matches the log. A changed, deleted, inserted or reordered line fails, and so does a truncated tail (because of the anchors). It names the first broken seq.
 - **Stated limit:** someone who can rewrite both the log and the anchor file can forge history. The production step is to write anchors to WORM storage or an external timestamping service; the threat model says so.
 

@@ -283,3 +283,19 @@ def test_status_output_is_deterministic(capsys):
 def test_gitattributes_force_lf():
     text = (ROOT / ".gitattributes").read_text(encoding="utf-8")
     assert "* text=auto eol=lf" in text
+
+
+def test_no_source_or_test_file_is_git_ignored():
+    """A too-broad ignore pattern (`audit/`) once hid the audit package from git and the wheel."""
+    import subprocess
+
+    files = [p for base in ("src", "tests", "scripts") for p in (ROOT / base).rglob("*.py")]
+    out = subprocess.run(
+        ["git", "check-ignore", "--no-index", "--stdin"],
+        cwd=ROOT,
+        input="\n".join(str(p.relative_to(ROOT)) for p in files),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout
+    assert out.strip() == "", out
