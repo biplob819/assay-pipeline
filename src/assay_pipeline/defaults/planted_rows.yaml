@@ -1,0 +1,62 @@
+# LLM04 planted rows (Tech Spec §7.1, QCR-07, H7). Each case plants impossible rows into a
+# scratch build; it passes when every planted row carries every flag in `expect` (and, once the
+# agent database exists, is absent from every approved view). Structures are small, unusual
+# molecules chosen not to collide with real EGFR compounds.
+#
+# Row fields: smiles, value, units, relation, record_id (default true; false = no id, the QC4
+# case). Planted rows are ChEMBL-shaped binding rows (assay type B, wild type) so they share
+# QC2 keys with each other: a PubChem row (type U) never shares a key with a ChEMBL row.
+cases:
+  - id: llm04-qc1-mass-units
+    rule: QC1
+    rows:
+      - {smiles: "CCCCCCCCCCCCO", value: 5.0, units: "ug.mL-1", relation: "=", expect: [QC1]}
+  - id: llm04-qc1-no-units
+    rule: QC1
+    rows:
+      - {smiles: "CCCCCCCCCCCCCO", value: 12.0, units: null, relation: "=", expect: [QC1]}
+  - id: llm04-qc1-no-value
+    rule: QC1
+    rows:
+      - {smiles: "CCCCCCCCCCCCCCO", value: null, units: "nM", relation: "=", expect: [QC1]}
+  - id: llm04-qc2-conflict-pair
+    rule: QC2
+    rows:
+      - {smiles: "OCCCCCCCCCCCCCCO", value: 10000.0, units: "nM", relation: "=", expect: [QC2]}
+      - {smiles: "OCCCCCCCCCCCCCCO", value: 1.0, units: "nM", relation: "=", expect: [QC2]}
+  - id: llm04-qc2-conflict-with-censored-member
+    rule: QC2
+    rows:
+      - {smiles: "OCCCCCCCCCCCCCCCO", value: 3.0, units: "nM", relation: "=", expect: [QC2]}
+      - {smiles: "OCCCCCCCCCCCCCCCO", value: 800.0, units: "nM", relation: "=", expect: [QC2]}
+      - {smiles: "OCCCCCCCCCCCCCCCO", value: 50.0, units: "nM", relation: ">", expect: [QC2, QC5]}
+  - id: llm04-qc2-unit-mix-conflict
+    rule: QC2
+    rows:
+      - {smiles: "NCCCCCCCCCCCCCCN", value: 2.0, units: "nM", relation: "=", expect: [QC2]}
+      - {smiles: "NCCCCCCCCCCCCCCN", value: 0.5, units: "uM", relation: "=", expect: [QC2]}
+  - id: llm04-qc3-too-potent
+    rule: QC3
+    rows:
+      - {smiles: "NCCCCCCCCCCCCCCCN", value: 0.000001, units: "nM", relation: "=", expect: [QC3]}
+  - id: llm04-qc3-too-weak
+    rule: QC3
+    rows:
+      - {smiles: "NCCCCCCCCCCCCCCCCN", value: 50.0, units: "M", relation: "=", expect: [QC3]}
+  - id: llm04-qc3-censored-out-of-range
+    rule: QC3
+    rows:
+      - {smiles: "SCCCCCCCCCCCCCCS", value: 0.00001, units: "nM", relation: "<", expect: [QC3, QC5]}
+  - id: llm04-qc4-no-record-id
+    rule: QC4
+    rows:
+      - {smiles: "SCCCCCCCCCCCCCCCS", value: 40.0, units: "nM", relation: "=", record_id: false,
+         expect: [QC4]}
+
+# Stealth rows: plausible values that are wrong by 10x, on compounds with no other record to
+# disagree with. No rule can catch them (H7); they are reported as known misses and are not
+# counted in the LLM04 pass rate. The data roadmap (R6.1) names what would catch them.
+stealth:
+  - {id: llm04-stealth-1, smiles: "SCCCCCCCCCCCCCCCCS", value: 6.0, units: "nM", relation: "="}
+  - {id: llm04-stealth-2, smiles: "ClCCCCCCCCCCCCCCCl", value: 45.0, units: "nM", relation: "="}
+  - {id: llm04-stealth-3, smiles: "BrCCCCCCCCCCCCCCBr", value: 300.0, units: "nM", relation: "="}

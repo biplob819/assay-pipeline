@@ -42,6 +42,7 @@ Each decision below seeds `docs/decisions.md` as D-1 to D-28. `OWNER D-n` marks 
 | D-26 | Open-source onboarding: no telemetry; users bring their own provider keys; `assay doctor` checks Python, keys (never printed), network reach and cache state; every run that calls a model supports `--dry-run` and `--max-cost`; docs (quickstart, configuring a target, cost, threat model), CONTRIBUTING, SECURITY, CODE_OF_CONDUCT and issue templates ship with v0.1.0 | Repo-only docs | The same onboarding EvalKit ships (EvalKit B2.4, B2.5); a user can get a first snapshot with no keys at all |
 | D-27 | The ingest user agent is `assay-pipeline/<version> (+https://github.com/biplob819/assay-pipeline)`: the tool and its public homepage, never anything about the person or machine running it | No contact at all; the user's own contact | Public APIs ask clients to identify themselves; the project homepage identifies the tool for any user of the open-source package without exposing who runs it (N1.2 verifier raised it) |
 | D-28 | Resource bounds. A static check cannot bound what a database costs to bind, plan and run (two attacker passes found three classes: CTE fan-out, DuckDB lateral column aliases, string doubling through nesting), so the availability guarantee is process isolation, not the guard: the agent's query tool (S3.3) runs each query in a child process killed at the timeout plus a short grace, with an address-space cap where the OS supports it (RLIMIT_AS on Linux and macOS; Windows relies on the deadline). The guard still refuses the known classes before DuckDB sees them: over 2,000 AST nodes, nesting deeper than 64, more than 16 tables after CTE expansion, more than 4 nested derived tables, any reference inside one select expression to an alias defined by another expression of the same SELECT (whatever its name; one-step uses in WHERE, GROUP BY, HAVING and ORDER BY are allowed), any output value built from more than 64 source values (a growth factor traced through CTEs, derived tables and set operations, set operations taking their largest branch, scalar subqueries and names the select list does not spell out (DuckDB's automatic names) taking their scope's largest growth, and renaming outside the select list — CTE or derived-table column lists, `* REPLACE`, `* RENAME` — refused so the trace stays exact), a `||` chain of more than 8 operands, and a column reference in a SELECT with no FROM; and execution fetches row by row up to about 8 MB | Rely on interrupt() and memory_limit; keep extending the guard's static bounds | The S3.1 attacker verifier showed guard-allowed statements of 0.4–1.2 KB running 15–25 s past a 10 s timeout and reaching 8.7–17.8 GB with memory_limit=1GB; interrupt() and memory_limit do not reach DuckDB's bind/plan phase or string intermediates (L-19) |
+| D-29 | A value of exactly 0 nM is a QC3 flag (its pIC50 would be +inf); QC1 still passes it | Leave zero unflagged; treat zero as QC1 | Real ChEMBL holds zero values; unflagged they would reach the views silently, and zero is converted, so QC1 is the wrong reason |
 
 ---
 
@@ -370,11 +371,13 @@ Rows where ChEMBL sets `data_validity_comment` are kept and counted. That commen
 | --- | --- | --- |
 | QC1 | `value_nm` can't be computed: missing value, missing units, or units outside the molar set (pM, nM, µM, mM, M) | Mass units (µg/mL) aren't converted, so they're flagged |
 | QC2 | Its key `(inchikey, target, variant, assay_type)` has at least two `relation "="` rows with a pIC50 spread above 1.0 | Every member is flagged, and the `v_consensus` row has `conflict=true`. The key includes `variant` (H2) |
-| QC3 | `pic50` is present and outside [3, 12] | Applies to censored bounds too |
+| QC3 | `pic50` is present and outside [3, 12], or `value_nm` is exactly 0 (pIC50 +inf, D-29) | Applies to censored bounds too |
 | QC4 | `source_record_id` is missing or blank | |
 | QC5 | `relation` is anything other than `"="` (censored or unknown) | Kept and flagged, and excluded from consensus medians |
 
 Each rule has a unit test with a passing and a failing row (FR4), and an edge test at its boundary (pIC50 exactly 3 and 12; spread exactly 1.0).
+
+Spreads are compared at pIC50 precision (4 dp), so 7.3 − 6.3 counts as exactly 1.0. Because PubChem rows are assay type `U` and ChEMBL rows never are, no QC2 key spans both sources: `n_sources` is 1 in practice, and cross-source overlap is reported in the data card by InChIKey (D-24), not through QC2.
 
 ### 5.4 Agent database and approved views
 
