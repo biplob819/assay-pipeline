@@ -25,3 +25,10 @@ Fetch every activity record of the configured target and activity type (default 
 
 ## Out of scope
 Parsing records into `Activity` (N1.4), PubChem (N1.3).
+
+## Build notes
+- `tests/fixtures/chembl/expected_cache.sha256` holds the digest of the cache the recorded fixture ingests to; the golden test fails on any change to cache layout, decompressed body content, index or cursor format (gzip's mtime-0 header is checked separately, in the CHM-03 test).
+- Pipeline tests run with sockets blocked (`tests/pipeline/conftest.py`), so a test that reaches the network fails loudly.
+- Verifier pass 1 changes: a page is validated (shape, target and type, integer and strictly increasing `activity_id`, `total_count`) before it is cached, so a bad page never poisons the cache; an older release folder with no cursor counts as incomplete; `--new-release` marks superseded incomplete releases `abandoned`, so later plain runs need no flag; a newer live release with a complete older cache simply starts a new cache folder; every 5xx and 429 is retried, `Retry-After` is honoured up to the backoff cap, other `httpx` errors fail at once, and fetch errors name the request's parameters (offset); corrupt cursors, bodies and index lines are `CacheError`s (CLI exit 2); release names are allow-listed (`[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}`, no Windows device names) and stray folders are ignored; a `.lock` file enforces the single writer; `fetched_at` must come from the server's Date header (`-0000` read as UTC); the golden digest hashes decompressed bodies so zlib builds cannot change it.
+- User agent (D-27): `assay-pipeline/<version> (+<project homepage>)`. It names the tool and its public homepage, never the person or machine running it.
+- Verifier pass 2 changes: `total_count` is checked against the cursor inside `_check_page`, before caching; `--new-release` abandons older releases only after the new release's config check passes; a returning abandoned release resumes with its abandoned flag cleared; any non-2xx response is an error; release names with a trailing dot or a device-name stem (`NUL.x`) are refused.
