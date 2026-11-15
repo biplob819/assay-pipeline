@@ -320,3 +320,11 @@ def test_a_case_in_the_wrong_split_file_is_refused():
     held = SUITE.attacks[0].model_copy(update={"split": "heldout"})
     with pytest.raises(ConfigError, match="must be split 'public'"):
         _same_split([held], "public", "data/")
+
+
+def test_published_hand_labels_name_public_cases_only():
+    """Label reasons describe answers, so a held-out case there would disclose its question."""
+    public = {q.id for q in SUITE.questions} | {c.id for c in SUITE.attacks}
+    for path in (ROOT / "docs" / "measurements").glob("hand-labels-*.jsonl"):
+        ids = {json.loads(x)["case_id"] for x in path.read_text(encoding="utf-8").splitlines() if x}
+        assert ids <= public, (path.name, sorted(ids - public))
