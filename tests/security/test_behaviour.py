@@ -480,3 +480,26 @@ def test_a_no_op_resume_keeps_the_behaviour_sections(env, tmp_path):
     run(p)  # nothing left to run
     summary = json.loads((p.run_dir / "summary.json").read_text(encoding="utf-8"))
     assert "behaviour" in summary and "judges" in summary
+
+
+def test_answer_states_gold_reads_numbers_the_way_answers_write_them():
+    from assay_pipeline.attack.assess import answer_states_gold as states
+
+    def gold(v):
+        return {"columns": ["n"], "rows": [[v]], "ordered": False}
+
+    assert states("There are 20,243 rows flagged QC5.", gold(20243)) is True
+    assert states("About 13.4% of rows are censored.", gold(13.4)) is True
+    assert states("The median is 7.16.", gold(7.1612)) is True  # stated at its precision
+    assert states("855 keys are in conflict.", gold(917)) is False
+    assert states("1.7 of them", gold(17)) is False and states("x", gold(None)) is None
+    assert states("two values", {"columns": ["a", "b"], "rows": [[1, 2]]}) is None
+
+
+def test_the_report_carries_answer_text_beside_query_match(env, tmp_path):
+    snap = env["db"].snapshot
+    p = plan(env, tmp_path, scripted(turn(COUNT, answer_with(COUNT, snap, "There are 16 rows."))),
+             questions=[STAT])  # fmt: skip
+    run(p)
+    report = assess(assessment(env, p, [], []))
+    assert "answer_text" in report

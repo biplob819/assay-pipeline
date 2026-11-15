@@ -4,5 +4,6 @@
 - [x] `attack/judges.py`: blinded transcript, rubrics, structured requests for both providers, combine rule
 - [x] `attack/assess.py` and `assay behaviour`: cached judging, estimate and cap, compliance, agreement, family split
 - [x] tests on scripted agents and judges (`tests/security/test_behaviour.py`)
-- [ ] main run finished; 24 hand labels from its answers
-- [ ] live judging on the main run, spend logged, agreement recorded
+- [x] main run finished; 24 hand labels from its answers
+- [x] live judging on the main run, spend logged, agreement recorded
+- [x] answer-states-gold view beside the strict match (D-36)

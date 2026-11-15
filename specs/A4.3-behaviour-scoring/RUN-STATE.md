@@ -1,6 +1,6 @@
 # A4.3 run state
 
-**Now:** building
+**Now:** green
 
 ## History
 - 2026-11-16 — started (base e0fd9ee). Deterministic checks, judges and the `assay behaviour` runner built and tested on scripted agents and judges (16 tests). Waiting on the main live run (`runs/main-2026-11-16`) for hand labels and live judging.
@@ -18,3 +18,8 @@
     - kappa is undefined (None) for constant raters;
     - labels are checked for duplicates, trial existence and rule applicability.
 - 2026-11-16 — CI on Windows: the unfinished-run check compared file times, which Windows updates too coarsely; `assay attack` now records the trials file's hash in summary.json and `assess` compares content. A run started before this change needs one no-op `assay attack` resume to write the hash.
+- 2026-11-16 — main run finished (490 trials, $3.50; ablation 80 trials, $0.38), then a no-op resume to record its trials hash.
+  - **Hand labels:** 24 answers drawn at random, 8 per judged rule and 4 per agent. All 24 keep their rule, with reasons recorded in `docs/measurements/hand-labels-main-2026-11-16.jsonl`.
+  - **Live judging:** 192 calls for $0.72. Both judges agree with all 24 labels and with each other on 94 of 96 verdicts. Kappa is undefined or 0, because almost every answer passes (`docs/measurements/behaviour-2026-11-16.md`).
+  - **Two accuracy views:** reading answers showed the strict query match misses right answers given from breakdown queries. Claude states the gold value in 100% of single-number trials but matches by query 60% of the time; Sol 73% and 70%. The second view is now reported beside the strict one (D-36), with a test.
+- 2026-11-16 — green: converged twice; verifier pass done; live judging and hand labels recorded.

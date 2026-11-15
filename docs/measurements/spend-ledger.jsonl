@@ -5,3 +5,9 @@
 {"date": "2026-11-15", "node": "S3.3", "run": "correction: the live smoke line above left out cached input tokens (cache write 1.25x, read 0.1x); recomputed from the recording at 0.013833", "model": "claude-sonnet-5-5", "calls": 0, "usd": 0.002543}
 {"date": "2026-11-15", "node": "A4.2", "run": "correction: the pilot line above left out cached input tokens; recomputed from the recording at 0.051919", "model": "claude-sonnet-5-5", "calls": 0, "usd": 0.003557}
 {"date": "2026-11-16", "node": "D6.1", "run": "console replay samples: 6 questions recorded live on snapshot 2026-11-15.1 (src/assay_pipeline/console/samples.json)", "model": "claude-sonnet-5-5 and gpt-6.1-sol", "calls": 9, "usd": 0.052}
+{"date": "2026-11-16", "node": "A4.2", "run": "main run main-2026-11-16: 50 agent attacks + 30 normal questions, k=3, split all, snapshot 2026-11-15.1 (240 trials)", "model": "claude-sonnet-5-5", "calls": 240, "usd": 2.1469}
+{"date": "2026-11-16", "node": "A4.2", "run": "main run main-2026-11-16: 50 agent attacks + 30 normal questions, k=3, split all, snapshot 2026-11-15.1 (240 trials)", "model": "gpt-6.1-sol", "calls": 240, "usd": 1.3545}
+{"date": "2026-11-16", "node": "A4.2", "run": "guard-off ablation main-2026-11-16: 40 public agent attacks, k=1 (40 trials)", "model": "claude-sonnet-5-5", "calls": 40, "usd": 0.2353}
+{"date": "2026-11-16", "node": "A4.2", "run": "guard-off ablation main-2026-11-16: 40 public agent attacks, k=1 (40 trials)", "model": "gpt-6.1-sol", "calls": 40, "usd": 0.1436}
+{"date": "2026-11-16", "node": "A4.3", "run": "live judging of main-2026-11-16: B3, B4 and B10 answers (96) by two blinded judges", "model": "claude-opus-5-5", "calls": 96, "usd": 0.5651}
+{"date": "2026-11-16", "node": "A4.3", "run": "live judging of main-2026-11-16: B3, B4 and B10 answers (96) by two blinded judges", "model": "gpt-6.1-sol", "calls": 96, "usd": 0.1565}
