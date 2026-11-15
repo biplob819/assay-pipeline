@@ -1,0 +1,328 @@
+{
+ "manifest_sha256": "75ca936e307989c5de99a2e0bc8087d9f1df6de507f3921e6fc350f75c45a68d",
+ "results": {
+  "nq-01": {
+   "columns": [
+    "n_compounds"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     17085
+    ]
+   ]
+  },
+  "nq-02": {
+   "columns": [
+    "source",
+    "n"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "chembl",
+     24927
+    ],
+    [
+     "pubchem",
+     14892
+    ]
+   ]
+  },
+  "nq-03": {
+   "columns": [
+    "median_pic50"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     7.1612
+    ]
+   ]
+  },
+  "nq-04": {
+   "columns": [
+    "n"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     2866
+    ]
+   ]
+  },
+  "nq-05": {
+   "columns": [
+    "inchikey",
+    "median_pic50"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "BUVKJPOCMOXSSQ-UHFFFAOYSA-N",
+     11.5229
+    ],
+    [
+     "QFXMHNZCUIIRHD-UHFFFAOYSA-N",
+     11.2218
+    ],
+    [
+     "YXOXHAUUTIOBDA-UHFFFAOYSA-N",
+     11.2218
+    ],
+    [
+     "BZHDPIVTQKXAQQ-UHFFFAOYSA-N",
+     11.0969
+    ],
+    [
+     "KFHMLBXBRCITHF-UHFFFAOYSA-N",
+     11.0969
+    ]
+   ]
+  },
+  "nq-06": {
+   "columns": [
+    "assay_type",
+    "n"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "A",
+     661
+    ],
+    [
+     "B",
+     23345
+    ],
+    [
+     "F",
+     898
+    ],
+    [
+     "T",
+     23
+    ],
+    [
+     "U",
+     14892
+    ]
+   ]
+  },
+  "nq-07": {
+   "columns": [
+    "n_conflicts"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     855
+    ]
+   ]
+  },
+  "nq-08": {
+   "columns": [
+    "mean_pic50"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     7.07
+    ]
+   ]
+  },
+  "nq-09": {
+   "columns": [
+    "n_assays"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     2608
+    ]
+   ]
+  },
+  "nq-10": {
+   "columns": [
+    "variant",
+    "n"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "wild-type/unspecified",
+     34989
+    ],
+    [
+     "L858R,T790M",
+     1889
+    ],
+    [
+     "UNDEFINED MUTATION",
+     873
+    ],
+    [
+     "L858R",
+     861
+    ],
+    [
+     "L858R,T790M,C797S",
+     760
+    ],
+    [
+     "T790M",
+     282
+    ],
+    [
+     "L861Q",
+     52
+    ],
+    [
+     "C797S,L858R",
+     45
+    ],
+    [
+     "T790M,C797S",
+     30
+    ],
+    [
+     "T790M,L858M",
+     30
+    ],
+    [
+     "C797S",
+     5
+    ],
+    [
+     "G719C",
+     2
+    ],
+    [
+     "G719S",
+     1
+    ]
+   ]
+  },
+  "nq-11": {
+   "columns": [
+    "inchikey",
+    "spread_pic50"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "DUYJMQONPNNFPI-UHFFFAOYSA-N",
+     6.8751
+    ]
+   ]
+  },
+  "nq-15": {
+   "columns": [
+    "n"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     20243
+    ]
+   ]
+  },
+  "nq-16": {
+   "columns": [
+    "relation",
+    "n"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "<",
+     2065
+    ],
+    [
+     "<=",
+     87
+    ],
+    [
+     "=",
+     19576
+    ],
+    [
+     ">",
+     3179
+    ],
+    [
+     ">=",
+     8
+    ],
+    [
+     "unknown",
+     14904
+    ]
+   ]
+  },
+  "nq-17": {
+   "columns": [
+    "all_rows",
+    "exact_only"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     7.1308,
+     7.1612
+    ]
+   ]
+  },
+  "nq-18": {
+   "columns": [
+    "n"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     6316
+    ]
+   ]
+  },
+  "nq-19": {
+   "columns": [
+    "source",
+    "n"
+   ],
+   "ordered": true,
+   "rows": [
+    [
+     "pubchem",
+     14892
+    ],
+    [
+     "chembl",
+     5351
+    ]
+   ]
+  },
+  "nq-20": {
+   "columns": [
+    "n"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     20243
+    ]
+   ]
+  },
+  "nq-21": {
+   "columns": [
+    "pct"
+   ],
+   "ordered": false,
+   "rows": [
+    [
+     50.8
+    ]
+   ]
+  }
+ },
+ "snapshot": "2026-11-15.1"
+}

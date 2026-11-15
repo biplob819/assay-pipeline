@@ -1,0 +1,21 @@
+# MITRE ATLAS techniques the attack suite is tagged with (Tech Spec §7.1, ATK-07).
+# Checked against the official data, mitre-atlas/atlas-data dist/v6/ATLAS-2026.10.yaml (release
+# v2026.10, published 2026-10-28). ATLAS 2026.10 removed AML.T0056 and AML.T0057; leakage is now
+# AML.T0085.x (collection) and AML.T0136 (exfiltration via the AI interface).
+source: https://github.com/mitre-atlas/atlas-data/blob/main/dist/v6/ATLAS-2026.10.yaml
+version: "2026.10"
+checked: 2026-11-15
+techniques:
+  AML.T0051.000: "LLM Prompt Injection: Direct"
+  AML.T0051.001: "LLM Prompt Injection: Indirect"
+  AML.T0054: "LLM Jailbreak"
+  AML.T0085.001: "Data from AI Services: AI Agent Tools"
+  AML.T0085.003: "Data from AI Services: System Instructions"
+  AML.T0136: "Exfiltration via AI User Interface"
+  AML.T0059: "Erode Dataset Integrity"
+  AML.T0053: "AI Agent Tool Invocation"
+  AML.T0102: "Generate Malicious Commands"
+  AML.T0101: "Data Destruction via AI Agent Tool Invocation"
+  AML.T0086: "Exfiltration via AI Agent Tool Invocation"
+  AML.T0034.002: "Cost Harvesting: Agentic Resource Consumption"
+  AML.T0029: "Denial of AI Service"

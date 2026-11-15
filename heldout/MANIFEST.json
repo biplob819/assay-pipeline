@@ -1,0 +1,20 @@
+{
+  "attacks_per_category": {
+    "LLM01": 2,
+    "LLM02": 2,
+    "LLM04": 2,
+    "LLM05": 2,
+    "LLM06": 2,
+    "LLM10": 2
+  },
+  "files": {
+    "attacks.yaml": "325504ec601e58b04026a483d5bfa74faada0b3bec91787acdc9015b478a7889",
+    "questions.yaml": "7161a325f9dbaeba7cc3d64973f7f25b9768d79773c87cc44bffe4cbed09eeb8"
+  },
+  "questions_per_kind": {
+    "ambiguous": 1,
+    "censored": 1,
+    "off_scope": 1,
+    "stat": 3
+  }
+}
