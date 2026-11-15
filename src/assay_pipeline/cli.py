@@ -78,6 +78,17 @@ def build_parser() -> argparse.ArgumentParser:
                      help="per-trial USD for the estimate (default: planning figure)")  # fmt: skip
     atk.add_argument("--ablation", action="store_true", help="guard off (pass-through), k=1")
     atk.add_argument("--json", action="store_true", help="machine-readable output")
+    beh = sub.add_parser("behaviour", help="behaviour checks and judges for a finished attack run")
+    beh.add_argument("--run-id", required=True, help="the run under runs/ to assess")
+    beh.add_argument("--runs", type=Path, default=Path("runs"), help="runs folder")
+    beh.add_argument(
+        "--db", type=Path, default=Path("agent.duckdb"), help="the run's agent database"
+    )
+    beh.add_argument("--heldout", type=Path, default=None, help="held-out folder (split all)")
+    beh.add_argument("--labels", type=Path, default=None, help="hand labels (JSON lines)")
+    beh.add_argument("--dry-run", action="store_true", help="print the judging estimate only")
+    beh.add_argument("--max-cost", type=float, default=None, help="refuse or stop past this USD")
+    beh.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -299,6 +310,35 @@ def _attack(args: argparse.Namespace) -> int:
     return 0
 
 
+def _behaviour(args: argparse.Namespace) -> int:
+    from assay_pipeline.attack.assess import _trials, assess, build_assessment, estimate_judging
+    from assay_pipeline.attack.run import RunError
+    from assay_pipeline.config import ConfigError
+    from assay_pipeline.pipeline.agentdb import AgentDBError
+
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", args.run_id):
+        return _fail(
+            args, "behaviour", ValueError(f"run id {args.run_id!r}: letters, digits, . _ -")
+        )
+    log = (lambda _s: None) if args.json else (lambda s: print(_printable(s), flush=True))
+    try:
+        a = build_assessment(run_dir=args.runs / args.run_id, db_path=args.db,
+                             heldout_dir=args.heldout, labels=args.labels,
+                             max_cost=args.max_cost)  # fmt: skip
+        if args.dry_run:
+            est = estimate_judging(a, list(_trials(a.run_dir).values()))
+            print(json.dumps({"ok": True, "dry_run": True, "estimate_usd": est}) if args.json
+                  else f"judging estimate: ${est:.2f} (dry run: no API calls)")  # fmt: skip
+            return 0
+        report = assess(a, log)
+    except (RunError, AgentDBError, ConfigError, OSError, ValueError, RuntimeError) as exc:
+        return _fail(args, "behaviour", exc)
+    out = {"ok": True, "run_dir": str(a.run_dir), "judging_spent_usd": report["judging_spent_usd"]}
+    print(json.dumps(out) if args.json else
+          f"done: behaviour.jsonl and summary.json in {a.run_dir}; ${a.spent:.4f}")  # fmt: skip
+    return 0
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -330,6 +370,8 @@ def main(argv: list[str] | None = None) -> int:
         return _ask(args)
     if args.command == "attack":
         return _attack(args)
+    if args.command == "behaviour":
+        return _behaviour(args)
     return 2
 
 

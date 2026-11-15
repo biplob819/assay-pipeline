@@ -14,7 +14,7 @@ import json
 import os
 import shutil
 import threading
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
@@ -183,15 +183,17 @@ def _done(path: Path) -> tuple[dict[tuple[str, str, int], TrialResult], float]:
     return out, spent
 
 
+def cases_digest(items: Iterable[AttackCase | NormalQuestion]) -> str:
+    """The cases' full content, not just their ids: an edited prompt or gold query is a new
+    run, and a behaviour assessment must load exactly the run's cases."""
+    content = sorted(json.dumps(x.model_dump(mode="json"), sort_keys=True) for x in items)
+    return hashlib.sha256("\n".join(content).encode()).hexdigest()
+
+
 def _run_record(plan: RunPlan) -> dict[str, Any]:
-    # the cases' full content, not just their ids: an edited prompt or gold query is a new run
-    content = sorted(
-        json.dumps(x.model_dump(mode="json"), sort_keys=True)
-        for x in [*plan.attacks, *plan.questions]
-    )
     return {
         "db_sha256": plan.db.sha256, "snapshot": plan.db.snapshot, "seed": plan.seed,
-        "cases": hashlib.sha256("\n".join(content).encode()).hexdigest(), "k": _k(plan),
+        "cases": cases_digest([*plan.attacks, *plan.questions]), "k": _k(plan),
         "models": {a: AGENTS[a][0] for a in sorted(plan.models)},
     }  # fmt: skip
 
@@ -328,6 +330,7 @@ def _trial(
         "case_id": case_id, "model": model, "trial": trial, "audit_seq": [first, last],
         "trajectory": t.model_dump(mode="json"), "answer": result.answer,
         "turn_texts": list(result.turn_texts), "tool_texts": [c.text for c in tool.calls],
+        "changed": changed, "truncated": result.truncated,
     }  # fmt: skip
     common = {
         "schema_version": SCHEMA_VERSION, "case_id": case_id, "model": model, "trial": trial,
@@ -380,6 +383,7 @@ def run(plan: RunPlan, log: Callable[[str], None] = lambda _s: None) -> list[Tri
     record_path, record = _check_run_record(plan)
     stem = "ablation" if plan.ablation else "trials"
     traj_path = plan.run_dir / f"{stem}-trajectories.jsonl"
+    nonlocal_count = [0]  # trials written by this call
     done, plan.spent = _done(plan.results_path)
     complete = _complete(done, _trajectory_keys(traj_path))
     est = estimate(plan)
@@ -411,6 +415,7 @@ def run(plan: RunPlan, log: Callable[[str], None] = lambda _s: None) -> list[Tri
                 audit.anchor()
                 key = (r.case_id, r.model, r.trial)
                 done[key] = r
+                nonlocal_count[0] += 1
                 if r.status == "scored":
                     complete.add(key)
                 log(f"{r.case_id} {r.model} #{r.trial}: {r.outcome or r.answer_correct} "
@@ -436,15 +441,21 @@ def run(plan: RunPlan, log: Callable[[str], None] = lambda _s: None) -> list[Tri
     finally:
         audit.close()
         shutil.rmtree(plan.run_dir / "work", ignore_errors=True)
+    new_trials = nonlocal_count[0]
     check = verify(audit_path, audit.anchors_path)  # the chain and every per-trial anchor
     if not check.ok:
         raise RunError(f"{audit_path.name} does not verify: {check}")
     results = list(done.values())
+    name = "ablation-summary.json" if plan.ablation else "summary.json"
+    kept: dict[str, Any] = {}
+    if new_trials == 0 and (plan.run_dir / name).is_file():  # nothing changed: keep A4.3's part
+        old = json.loads((plan.run_dir / name).read_text(encoding="utf-8"))
+        kept = {k: old[k] for k in ("behaviour", "judges", "judging_spent_usd") if k in old}
     summary = summarise(results, plan.attacks, [] if plan.ablation else plan.questions,
                         seed=plan.seed, k=k)  # fmt: skip
     summary.update(estimate_usd=est, spent_usd=round(plan.spent, 6), ablation=plan.ablation,
                    snapshot=plan.db.snapshot, k=k)  # fmt: skip
-    name = "ablation-summary.json" if plan.ablation else "summary.json"
+    summary.update(kept)
     (plan.run_dir / name).write_text(json.dumps(summary, indent=1, sort_keys=True) + "\n",
                                      encoding="utf-8")  # fmt: skip
     return results
