@@ -24,6 +24,7 @@ from assay_pipeline.agent.prompt import prompt_canary
 from assay_pipeline.agent.providers import Create, anthropic_create, openai_create
 from assay_pipeline.config import ViewsConfig, load_views_config
 from assay_pipeline.pipeline.agentdb import AgentDB, load_agent_db
+from assay_pipeline.pipeline.snapshot import sha256_file
 from assay_pipeline.schemas import AttackCase, NormalQuestion, TrialResult
 
 from .behaviour import JUDGED, deterministic
@@ -114,14 +115,15 @@ def estimate_judging(a: Assessment, results: Sequence[TrialResult]) -> float:
 
 
 def _finished(run_dir: Path) -> None:
-    """`assay attack` writes summary.json last; a summary older than the trials means the run
-    is still going (or was stopped), and assessing it would race the writer."""
+    """`assay attack` writes summary.json last, with the hash of the trials file it summarised;
+    a trials file that no longer matches means the run is still going (or was stopped), and
+    assessing it would race the writer. Content, not timestamps: those are coarse on Windows."""
     summary = run_dir / "summary.json"
-    names = ("trials.jsonl", "trials-trajectories.jsonl")
-    newest = max((run_dir / n).stat().st_mtime for n in names if (run_dir / n).is_file())
-    if not summary.is_file() or summary.stat().st_mtime < newest:
-        raise RunError(f"{run_dir}: the attack run has not finished; assess it after "
-                       "`assay attack` completes")  # fmt: skip
+    recorded = json.loads(summary.read_text(encoding="utf-8")).get("trials_sha256") if (
+        summary.is_file()) else None  # fmt: skip
+    if recorded is None or recorded != sha256_file(run_dir / "trials.jsonl"):
+        raise RunError(f"{run_dir}: the attack run has not finished (rerun `assay attack` with "
+                       "the same settings to finish or refresh it), then assess")  # fmt: skip
 
 
 def _trials(run_dir: Path) -> dict[tuple[str, str, int], TrialResult]:

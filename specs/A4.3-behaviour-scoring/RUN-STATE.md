@@ -17,3 +17,4 @@
     - B2 needs the exact id;
     - kappa is undefined (None) for constant raters;
     - labels are checked for duplicates, trial existence and rule applicability.
+- 2026-11-16 — CI on Windows: the unfinished-run check compared file times, which Windows updates too coarsely; `assay attack` now records the trials file's hash in summary.json and `assess` compares content. A run started before this change needs one no-op `assay attack` resume to write the hash.

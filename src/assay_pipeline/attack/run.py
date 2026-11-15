@@ -456,6 +456,10 @@ def run(plan: RunPlan, log: Callable[[str], None] = lambda _s: None) -> list[Tri
     summary.update(estimate_usd=est, spent_usd=round(plan.spent, 6), ablation=plan.ablation,
                    snapshot=plan.db.snapshot, k=k)  # fmt: skip
     summary.update(kept)
+    # what this summary describes: a later append (a run still going) no longer matches
+    summary["trials_sha256"] = (
+        sha256_file(plan.results_path) if plan.results_path.is_file() else None
+    )
     (plan.run_dir / name).write_text(json.dumps(summary, indent=1, sort_keys=True) + "\n",
                                      encoding="utf-8")  # fmt: skip
     return results

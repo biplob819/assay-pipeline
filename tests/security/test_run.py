@@ -283,6 +283,7 @@ def test_the_trial_copy_is_hashed_and_removed(env, tmp_path, monkeypatch):
     real = run_mod.sha256_file
     monkeypatch.setattr(run_mod, "sha256_file", lambda p: seen.append(Path(p)) or real(p))
     run(plan(env, tmp_path, scripted(turn(COUNT)), attacks=[LLM06]))
+    seen = [x for x in seen if x.parent.name == "work"]  # the summary's trials hash aside
     assert len(seen) == 2 and seen[0] == seen[1] and seen[0] != env["db"].path
     assert not seen[0].exists() and not (tmp_path / "run" / "work").exists()
 
