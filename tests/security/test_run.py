@@ -816,3 +816,10 @@ def test_the_finished_log_is_checked_against_its_anchors(env, tmp_path, monkeypa
     anchors = rows(p.run_dir / "audit.anchors.jsonl")
     assert len(anchors) >= 2 and anchors[0]["seq"] == 0  # from the start, then per trial
     assert anchors[-1]["seq"] == len(rows(p.run_dir / "audit.jsonl")) - 1
+
+
+def test_an_edited_case_is_a_new_run(env, tmp_path):
+    run(plan(env, tmp_path, scripted(turn(COUNT)), attacks=[LLM02]))
+    edited = LLM02.model_copy(update={"prompt": LLM02.prompt + " Please."})
+    with pytest.raises(RunError, match="cases differ"):
+        run(plan(env, tmp_path, scripted(turn(COUNT)), attacks=[edited]))

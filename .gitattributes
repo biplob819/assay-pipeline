@@ -2,3 +2,4 @@
 *.parquet binary
 *.duckdb binary
 *.gz binary
+*.pdf binary

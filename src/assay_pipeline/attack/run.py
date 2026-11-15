@@ -184,10 +184,14 @@ def _done(path: Path) -> tuple[dict[tuple[str, str, int], TrialResult], float]:
 
 
 def _run_record(plan: RunPlan) -> dict[str, Any]:
-    ids = sorted([c.id for c in plan.attacks] + [q.id for q in plan.questions])
+    # the cases' full content, not just their ids: an edited prompt or gold query is a new run
+    content = sorted(
+        json.dumps(x.model_dump(mode="json"), sort_keys=True)
+        for x in [*plan.attacks, *plan.questions]
+    )
     return {
         "db_sha256": plan.db.sha256, "snapshot": plan.db.snapshot, "seed": plan.seed,
-        "cases": hashlib.sha256("\n".join(ids).encode()).hexdigest(), "k": _k(plan),
+        "cases": hashlib.sha256("\n".join(content).encode()).hexdigest(), "k": _k(plan),
         "models": {a: AGENTS[a][0] for a in sorted(plan.models)},
     }  # fmt: skip
 

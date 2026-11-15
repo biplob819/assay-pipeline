@@ -2,6 +2,9 @@
 
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
+## 2026-11-16
+- [FEAT] [B5.2] — one-page threat model: assets, trust boundaries and data flow, all ten OWASP 2025 categories mapped to ATLAS 2026.10 with controls and evidence, stated limits with production steps, review checklist; `scripts/render_onepager.py` (fpdf2) renders a reproducible one-page PDF that carries its source hash
+
 ## 2026-11-15
 - [FIX] [A4.1] — independent verifier pass: censored means <, <=, > or >= (D-33; nq-17 to nq-21 gold and wording, prompt and B3 rubric), two held-out cases replaced because their SQL was in public test material, held-out gold pinned by the manifest, six public cases rewritten to test what they claim, stricter suite checks, row cap credited only on LLM10 cases (D-34), oracle negative control for resource cases
 - [FIX] [S3.3] — independent verifier pass: Claude cost now counts cached input (about 18% was missing; ledger corrected), the query child runs isolated (`-I`) with an allowlisted environment, asks share one audit run id, the last turn after the step budget has tools off and keeps a refusal, every trial logs an answer line even on an unexpected error, cut-off answers flagged, recordings saved on failure
