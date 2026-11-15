@@ -35,6 +35,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="PubChem depositor ledger YAML (default: the shipped depositor_terms.yaml)",
     )
     ing.add_argument("--json", action="store_true", help="machine-readable output")
+    snap = sub.add_parser("snapshot", help="normalise, flag and write a snapshot from the cache")
+    snap.add_argument("--config", type=Path, help="build config YAML (default: EGFR IC50)")
+    snap.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
+    snap.add_argument("--out", type=Path, default=Path("snapshots"), help="snapshot root folder")
+    snap.add_argument("--chembl-release", help="ChEMBL release to read (default: the complete one)")
+    snap.add_argument("--pubchem-release", help="PubChem release to read (default: the latest)")
+    snap.add_argument("--depositor-terms", type=Path, help="PubChem depositor ledger YAML")
+    snap.add_argument("--json", action="store_true", help="machine-readable output")
+    pub = sub.add_parser("publish", help="copy a verified, unplanted snapshot to the publish root")
+    pub.add_argument("snapshot", type=Path, help="a snapshot folder")
+    pub.add_argument("--dest", type=Path, default=Path("published"), help="publish root folder")
+    pub.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -136,6 +148,54 @@ def _ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fail(args: argparse.Namespace, command: str, exc: BaseException) -> int:
+    if args.json:
+        print(json.dumps({"ok": False, "error": str(exc)}))
+    else:
+        print(_printable(f"assay {command}: {exc}"), file=sys.stderr)
+    return 2
+
+
+def _snapshot(args: argparse.Namespace) -> int:
+    from assay_pipeline.config import ConfigError, load_build_config
+    from assay_pipeline.pipeline.ingest.cache import CacheError, RawCache
+    from assay_pipeline.pipeline.ingest.chembl import IngestError
+    from assay_pipeline.pipeline.ingest.pubchem import load_depositor_terms
+    from assay_pipeline.pipeline.snapshot import SnapshotError, build_snapshot
+
+    try:
+        result = build_snapshot(
+            load_build_config(args.config),
+            RawCache(args.cache),
+            args.out,
+            chembl_release=args.chembl_release,
+            pubchem_release=args.pubchem_release,
+            terms=load_depositor_terms(args.depositor_terms),
+        )
+    except (ConfigError, CacheError, IngestError, SnapshotError, ValueError, OSError) as exc:
+        return _fail(args, "snapshot", exc)
+    m = result.manifest
+    if args.json:
+        print(json.dumps({"ok": True, "folder": str(result.directory), "skipped": result.skipped,
+                          "manifest": m.model_dump(mode="json")}))  # fmt: skip
+    else:
+        state = "up to date (skipped)" if result.skipped else "built"
+        rows = ", ".join(f"{k} {v}" for k, v in m.rows_by_source.items())
+        print(f"snapshot {m.snapshot} {state} at {result.directory}: {rows}")
+    return 0
+
+
+def _publish(args: argparse.Namespace) -> int:
+    from assay_pipeline.pipeline.snapshot import SnapshotError, publish
+
+    try:
+        dest = publish(args.snapshot, args.dest)
+    except (SnapshotError, OSError, ValueError) as exc:
+        return _fail(args, "publish", exc)
+    print(json.dumps({"ok": True, "published": str(dest)}) if args.json else f"published {dest}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = build_parser()
     args = ap.parse_args(argv)
@@ -146,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
         return _ingest(args)
     if args.command == "verify-audit":
         return _verify_audit(args)
+    if args.command == "snapshot":
+        return _snapshot(args)
+    if args.command == "publish":
+        return _publish(args)
     return 2
 
 

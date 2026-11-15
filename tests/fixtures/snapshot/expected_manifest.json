@@ -1,0 +1,42 @@
+{
+  "activity_type": "IC50",
+  "content_sha256": {
+    "DATA_CARD.md": "b22f993cbb5379a8cefa8e032a684728bdebb28c63ae26e802714000a131ec35",
+    "DATA_LICENSE.md": "5561d2c2f552e6354ad9d0076306da2d8bb7e0391c011fbb04628231a54bc67e",
+    "activities.parquet": "7694f41ffc5e7be55fc15947970bcdc38b9a0a44b2305c51872fa3571644053e",
+    "consensus.parquet": "5f4c3f656505b7b60ff0084c8b3174e889760d31b3b171893a257b84ee38b5e4",
+    "drops.parquet": "166a80785c6eac900ae0adf3e93d58ea68c0676ef848f718ba25fa299384fa12"
+  },
+  "created_at": "2026-11-15T13:24:00Z",
+  "drops_by_reason": {
+    "chembl_deposited_aid": 1,
+    "chembl_imported_aid": 1,
+    "not_activity_type": 4,
+    "other_target": 12,
+    "target_not_configured": 1
+  },
+  "files": {
+    "DATA_CARD.md": "b22f993cbb5379a8cefa8e032a684728bdebb28c63ae26e802714000a131ec35",
+    "DATA_LICENSE.md": "5561d2c2f552e6354ad9d0076306da2d8bb7e0391c011fbb04628231a54bc67e"
+  },
+  "flags_by_rule": {
+    "QC1": 0,
+    "QC2": 4,
+    "QC3": 2,
+    "QC4": 0,
+    "QC5": 5
+  },
+  "planted": false,
+  "raw_cache_sha256": "5d8fa7006d7b0db0baba5cbd92143f9acc4cdc81a3669fb79d69e1cc172b4931",
+  "rows_by_source": {
+    "chembl": 15,
+    "pubchem": 3
+  },
+  "schema_version": "1.0",
+  "snapshot": "2026-11-15.1",
+  "source_releases": {
+    "chembl": "ChEMBL_37",
+    "pubchem": "2026-11-15"
+  },
+  "target": "EGFR"
+}

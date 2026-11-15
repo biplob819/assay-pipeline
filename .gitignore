@@ -19,6 +19,7 @@ build/
 # repo root, so source packages with the same names are never ignored)
 /cache/
 /runs/
+/snapshots/
 /audit/
 *.duckdb
 /heldout/*
