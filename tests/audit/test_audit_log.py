@@ -532,10 +532,12 @@ def test_a_log_replaced_while_open_is_not_written(tmp_path):
         log.close()
 
 
-@pytest.mark.skipif(not hasattr(__import__("os"), "mkfifo"), reason="POSIX only")
+@pytest.mark.skipif(__import__("sys").platform == "win32", reason="POSIX only")
 def test_verify_refuses_a_fifo_instead_of_hanging(tmp_path):
     import os
+    import sys
 
+    assert sys.platform != "win32"  # skipped there; also tells the type checker
     fifo = tmp_path / "pipe.jsonl"
     os.mkfifo(fifo)
     report = verify(fifo)
@@ -655,10 +657,12 @@ def test_a_log_changed_under_its_writer_is_not_written(tmp_path, how):
         log.close()
 
 
-@pytest.mark.skipif(not hasattr(__import__("os"), "mkfifo"), reason="POSIX only")
+@pytest.mark.skipif(__import__("sys").platform == "win32", reason="POSIX only")
 def test_the_writer_refuses_a_fifo_without_blocking(tmp_path):
     import os
+    import sys
 
+    assert sys.platform != "win32"  # skipped there; also tells the type checker
     fifo = tmp_path / "pipe.jsonl"
     os.mkfifo(fifo)
     with pytest.raises(AuditError, match=r"not a regular file|cannot open"):

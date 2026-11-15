@@ -338,3 +338,17 @@ def test_build_smoke_loads_the_packaged_default_configs():
 
 def test_build_smoke_verifies_the_fixture_audit_log():
     assert any(c[:2] == ["assay", "verify-audit"] for c in nc.SMOKE_COMMANDS)
+
+
+def test_pyright_gate_checks_every_ci_platform(tmp_path, monkeypatch):
+    seen: list[str] = []
+
+    def fake_run(cmd, _root):
+        platform = cmd[cmd.index("--pythonplatform") + 1]
+        seen.append(platform)
+        return (1, "error: fcntl is not a known attribute") if platform == "Windows" else (0, "")
+
+    monkeypatch.setattr(nc, "_run", fake_run)
+    result = nc.gate_pyright(ctx(tmp_path, ""))
+    assert seen == ["Linux", "Darwin", "Windows"]
+    assert result.status == "FAIL" and result.detail.startswith("as Windows:")

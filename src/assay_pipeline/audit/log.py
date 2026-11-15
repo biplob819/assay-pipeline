@@ -95,7 +95,7 @@ def _open_log(path: Path) -> IO[bytes]:
     try:
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise AuditError(f"{path} is not a regular file")
-        if nonblock:
+        if nonblock and sys.platform != "win32":
             import fcntl
 
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) & ~nonblock)

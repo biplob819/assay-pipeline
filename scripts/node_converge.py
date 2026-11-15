@@ -239,8 +239,16 @@ def gate_ruff(ctx: Ctx) -> Result:
     return _tool_gate([sys.executable, "-m", "ruff", "check", "."], ctx.root, "ruff clean")
 
 
+PYRIGHT_PLATFORMS = ("Linux", "Darwin", "Windows")  # CI runs all three (L-23)
+
+
 def gate_pyright(ctx: Ctx) -> Result:
-    return _tool_gate([sys.executable, "-m", "pyright"], ctx.root, "pyright clean")
+    for platform in PYRIGHT_PLATFORMS:
+        cmd = [sys.executable, "-m", "pyright", "--pythonplatform", platform]
+        result = _tool_gate(cmd, ctx.root, "pyright clean")
+        if result.status != "PASS":
+            return Result(result.status, f"as {platform}: {result.detail}")
+    return Result("PASS", f"pyright clean on {', '.join(PYRIGHT_PLATFORMS)}")
 
 
 def _pytest(root: Path, marker: str, label: str) -> Result:

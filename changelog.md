@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-15
+- [FIX] [S3.2] — Windows CI: POSIX-only calls guarded with `sys.platform` checks; gate 5 now runs pyright for Linux, Darwin and Windows (L-23)
 - [FEAT] [S3.2] — audit log: hash chain over canonical JSON from a genesis line, one writer per physical file (OS lock on the log itself, thread lock, fsync; any failed write, replacement or size change stops the writer), anchors in a separate file (locked while written, rolled back on failure), a `verify` that never raises and names the first broken seq (edits, deletions, insertions, reordering, truncation, valid-chain rewrites, time running backwards, logs no anchor names), `assay verify-audit` and `make verify-audit`; four attacker verifier passes
 - [FIX] [N1.2] — retry test injected only the sleep, so Windows' coarse clock let a pacing sleep pass for a backoff; it now injects an advancing clock and checks the two backoffs exactly (L-18)
 - [FEAT] [S3.1] — SQL guard: default deny over a sqlglot AST (one plain SELECT over approved views, per-scope table resolution, function and syntax allow-lists, LIMIT cap), executes only comment-free re-rendered SQL under an interrupt timer with generic error messages and a 50-row / 6,000-character view for the model; 109-statement bypass corpus and fuzzing
