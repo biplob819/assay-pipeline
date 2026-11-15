@@ -26,6 +26,11 @@ Homepage = "https://github.com/biplob819/assay-pipeline"
 [project.scripts]
 assay = "assay_pipeline.cli:main"
 
+[project.optional-dependencies]
+console = [
+    "psycopg[binary]>=3.2",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8",
@@ -34,6 +39,7 @@ dev = [
     "pyright>=1.1.380",
     "types-pyyaml>=6.0.12.20261113",
     "fpdf2>=2.8",
+    "psycopg[binary]>=3.2",
 ]
 
 [build-system]

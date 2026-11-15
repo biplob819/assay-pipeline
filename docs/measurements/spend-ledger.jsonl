@@ -4,3 +4,4 @@
 {"date": "2026-11-15", "node": "A4.2", "run": "pilot: 3 attacks + 1 normal question, k=1, real snapshot 2026-11-15.1 (recorded as tests/fixtures/attack/pilot-sol.json)", "model": "gpt-6.1-sol", "calls": 5, "usd": 0.012614}
 {"date": "2026-11-15", "node": "S3.3", "run": "correction: the live smoke line above left out cached input tokens (cache write 1.25x, read 0.1x); recomputed from the recording at 0.013833", "model": "claude-sonnet-5-5", "calls": 0, "usd": 0.002543}
 {"date": "2026-11-15", "node": "A4.2", "run": "correction: the pilot line above left out cached input tokens; recomputed from the recording at 0.051919", "model": "claude-sonnet-5-5", "calls": 0, "usd": 0.003557}
+{"date": "2026-11-16", "node": "D6.1", "run": "console replay samples: 6 questions recorded live on snapshot 2026-11-15.1 (src/assay_pipeline/console/samples.json)", "model": "claude-sonnet-5-5 and gpt-6.1-sol", "calls": 9, "usd": 0.052}
