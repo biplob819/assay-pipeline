@@ -201,11 +201,16 @@ def test_transient_failures_are_retried_with_backoff(tmp_path, failure):
     server = Server()
     server.fail = [failure, failure]
     sleeps: list[float] = []
-    f = Fetcher(transport=httpx.MockTransport(server), sleep=sleeps.append)
+    ticks = iter(range(0, 10**6, 10))  # a clock that always advances: pacing never sleeps
+    f = Fetcher(
+        transport=httpx.MockTransport(server),
+        sleep=sleeps.append,
+        clock=lambda: float(next(ticks)),
+    )
     report = ingest_chembl(cfg(), RawCache(tmp_path), f)
     assert report.records == 15
-    backoffs = [s for s in sleeps if s >= 0.25]
-    assert len(backoffs) >= 2 and backoffs[1] > backoffs[0] * 0.9
+    assert len(sleeps) == 2  # exactly the two backoffs, nothing from pacing
+    assert 0.25 <= sleeps[0] <= 0.5 and 0.5 <= sleeps[1] <= 1.0  # jittered, doubling caps
 
 
 def test_retries_give_up_after_six_attempts_with_nothing_written(tmp_path):
