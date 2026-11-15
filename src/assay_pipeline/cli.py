@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import asdict
@@ -97,6 +98,9 @@ def build_parser() -> argparse.ArgumentParser:
     rep.add_argument("--bundle", type=Path, help="render from this bundle instead of a run")
     rep.add_argument("--results", type=Path, default=Path("docs/results"), help="bundle folder")
     rep.add_argument("--html", type=Path, default=Path("docs/report/index.html"), help="output")
+    rep.add_argument("--explorer", type=Path, default=None,
+                     help="compound explorer page, written with --run "
+                          "(default: explorer.html beside --html, which links to it)")  # fmt: skip
     rep.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
@@ -365,9 +369,21 @@ def _report(args: argparse.Namespace) -> int:
             raise ReportError("give --bundle, or --run with --snapshot")
         args.html.parent.mkdir(parents=True, exist_ok=True)
         args.html.write_text(render(bundle), encoding="utf-8")
+        if args.run is not None:  # the explorer embeds the snapshot itself, so it needs it
+            from assay_pipeline.report.explorer import explorer_data, render_explorer
+
+            snap_dir = args.snapshots / args.snapshot
+            lic = (snap_dir / "DATA_LICENSE.md").read_text(encoding="utf-8")
+            if args.explorer is None:  # the dashboard links explorer.html beside itself
+                args.explorer = args.html.with_name("explorer.html")
+            args.explorer.parent.mkdir(parents=True, exist_ok=True)
+            back = Path(os.path.relpath(args.html.resolve(), args.explorer.resolve().parent))
+            page = render_explorer(explorer_data(snap_dir), lic, dashboard=back.as_posix())
+            args.explorer.write_text(page, encoding="utf-8")
     except (ReportError, OSError, ValueError, KeyError) as exc:
         return _fail(args, "report", exc)
-    out = {"ok": True, "bundle": str(bundle_path), "html": str(args.html)}
+    out = {"ok": True, "bundle": str(bundle_path), "html": str(args.html),
+           "explorer": str(args.explorer) if args.run is not None else None}  # fmt: skip
     print(json.dumps(out) if args.json else f"bundle {bundle_path}; report {args.html}")
     return 0
 

@@ -29,6 +29,8 @@ jobs:
           bundle="docs/results/$(cat docs/results/LATEST)"
           uv run assay report --bundle "$bundle" --html /tmp/index.html
           cmp /tmp/index.html docs/report/index.html
+      - name: Check the explorer holds the published snapshot, not a test fixture
+        run: uv run pytest -q tests/report/test_explorer.py -k published_explorer
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:

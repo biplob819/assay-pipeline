@@ -85,11 +85,21 @@ def test_dark_mode_is_chosen_not_inverted(finished):
 
 def test_cli_renders_from_a_run_and_again_from_its_bundle(finished, tmp_path, capsys):
     p, root, snap = finished
+    from hashlib import sha256
+    from pathlib import Path
+
+    published = Path(__file__).resolve().parents[2] / "docs/report/explorer.html"
+    before = sha256(published.read_bytes()).hexdigest()
     html1, html2 = tmp_path / "a.html", tmp_path / "b.html"
     args = ["report", "--run", str(p.run_dir), "--snapshots", str(root), "--snapshot", snap,
             "--results", str(tmp_path / "results"), "--html", str(html1), "--json"]  # fmt: skip
     assert main(args) == 0
     out = json.loads(capsys.readouterr().out)
+    # the explorer follows --html (the dashboard links it as a sibling) and a report rendered
+    # elsewhere never rewrites the published page
+    assert out["explorer"] == str(tmp_path / "explorer.html")
+    assert 'href="a.html"' in (tmp_path / "explorer.html").read_text(encoding="utf-8")
+    assert sha256(published.read_bytes()).hexdigest() == before
     assert main(["report", "--bundle", out["bundle"], "--html", str(html2)]) == 0
     assert html1.read_text(encoding="utf-8") == html2.read_text(encoding="utf-8")
     assert main(["report", "--json"]) == 2

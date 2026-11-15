@@ -460,7 +460,8 @@ in normal questions. Blocks in normal questions are the guard's cost to honest u
         )
     };
 sources {", ".join(f"{_e(k)} {_e(v)}" for k, v in q["source_releases"].items())}. Rows are flagged,
-never deleted; drops happen at ingest with a recorded reason.</p>
+never deleted; drops happen at ingest with a recorded reason.
+<a href="explorer.html">Explore the compounds and their source records</a>.</p>
 <h3>Flags per rule</h3>{_bars(flags)}
 <h3>Rows by source</h3>{
         _table(
