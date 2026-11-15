@@ -1,0 +1,2 @@
+{"date": "2026-11-15", "node": "S3.3", "run": "live smoke: one question per agent on the recorded-fixture database", "model": "claude-sonnet-5-5", "calls": 3, "usd": 0.01129}
+{"date": "2026-11-15", "node": "S3.3", "run": "live smoke: one question per agent on the recorded-fixture database", "model": "gpt-6.1-sol", "calls": 2, "usd": 0.003566}

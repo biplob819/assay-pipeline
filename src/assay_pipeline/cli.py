@@ -52,6 +52,14 @@ def build_parser() -> argparse.ArgumentParser:
     bdb.add_argument("--out", type=Path, default=Path("agent.duckdb"), help="database file")
     bdb.add_argument("--seed", type=int, default=0, help="seed for the synthetic embargoed table")
     bdb.add_argument("--json", action="store_true", help="machine-readable output")
+    askp = sub.add_parser("ask", help="ask one agent one question about the snapshot")
+    askp.add_argument("question")
+    askp.add_argument("--db", type=Path, default=Path("agent.duckdb"), help="agent database")
+    askp.add_argument("--model", choices=["claude", "sol"], default="claude", help="which agent")
+    askp.add_argument("--audit", type=Path, default=Path("audit/ask.jsonl"), help="audit log")
+    askp.add_argument("--replay", type=Path, help="replay recorded responses (no API calls)")
+    askp.add_argument("--record", type=Path, help="save the live responses to this file")
+    askp.add_argument("--json", action="store_true", help="machine-readable output")
     ver = sub.add_parser("verify-audit", help="re-hash an audit log and check its anchors")
     ver.add_argument("log", type=Path)
     ver.add_argument("--anchors", type=Path, help="anchors file (default: <log>.anchors.jsonl)")
@@ -206,6 +214,38 @@ def _build_db(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ask(args: argparse.Namespace) -> int:
+    from assay_pipeline.agent.ask import AskError, ask
+
+    try:
+        replay = None
+        if args.replay is not None:
+            replay = json.loads(args.replay.read_text(encoding="utf-8"))
+            if not isinstance(replay, list):
+                raise AskError(f"{args.replay}: a recording is a JSON list of responses")
+        result = ask(
+            args.question, args.db, args.model, args.audit, replay=replay,
+            record=args.record is not None,
+        )  # fmt: skip
+        if args.record is not None and result.recording is not None:
+            args.record.write_text(json.dumps(result.recording, indent=1), encoding="utf-8")
+    except (AskError, OSError, ValueError, RuntimeError) as exc:
+        return _fail(args, "ask", exc)
+    t = result.trial.trajectory
+    if args.json:
+        print(json.dumps({"ok": True, "answer": result.trial.answer, "model": result.model,
+                          "snapshot": result.snapshot, "stop_reason": t.stop_reason,
+                          "steps": len(t.steps), "cost_usd": t.cost_usd,
+                          "audit": str(result.audit_path)}))  # fmt: skip
+    else:
+        answer = result.trial.answer
+        lines = answer.split("\n")  # keep the answer's lines; escape control characters in each
+        print("\n".join(_printable(line) for line in lines) if answer else "(no answer)")
+        print(f"\n[{result.model}, {len(t.steps)} queries, {t.stop_reason}, ${t.cost_usd:.4f}; "
+              f"audit {result.audit_path}]")  # fmt: skip
+    return 0
+
+
 def _publish(args: argparse.Namespace) -> int:
     from assay_pipeline.pipeline.snapshot import SnapshotError, publish
 
@@ -233,6 +273,8 @@ def main(argv: list[str] | None = None) -> int:
         return _publish(args)
     if args.command == "build-db":
         return _build_db(args)
+    if args.command == "ask":
+        return _ask(args)
     return 2
 
 

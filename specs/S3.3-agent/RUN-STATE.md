@@ -1,0 +1,9 @@
+# S3.3 run state
+
+**Now:** green
+
+## History
+- 2026-11-15 — started (base f6dd9ce). Checked the Claude API skill (manual loop justified: hard step budget, recordings, per-call audit); confirmed the OpenAI model id `gpt-6.1-sol` from OpenAI's model page and every SDK field name from the installed types; `evalkit-harness` 0.1.0 is now on PyPI (D-9). Query child runs as `python -m assay_pipeline.agent._child` (spawn re-imported `__main__` and broke under stdin and notebooks). Providers send a snapshot of their history per request (a test caught the recorded request changing after the call). 21 tests, no model calls. No API keys in this environment: the golden recordings are an owner action.
+- 2026-11-15 — the independent verifier stopped early: its account hit the weekly usage limit (resets 18 Nov, 1:30 pm IST) before reporting. Author attack pass instead, which found and fixed: SDK errors and failed Responses-API responses crashed the trial (now `stop_reason: transport`, audited); the query child inherited API keys (now stripped); a recording longer than the run was accepted (now refused); a blank question failed deep in the audit log (now refused up front).
+- 2026-11-15 — owner supplied keys (from EvalKit's `.env`). Live smoke, one question per agent: both correct and in format, $0.0149 total (ledger). Found: OpenAI's Response echoes `instructions` (the system prompt and its canary) and `tools`; scrubbed on arrival. Real recordings kept as fixtures with an offline golden replay test. 30 tests.
+- 2026-11-15 — green on converge (twice), the author attack pass and the live check. **Owed:** the independent attacker verifier pass, to run when the limit resets; any must-fix it finds becomes an S3.3 fix commit.
