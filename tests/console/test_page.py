@@ -1,4 +1,4 @@
-"""D6.2: the console page (DEM-01..04). No test calls a model."""
+"""D6.2: the console page (DEM-01..05). No test calls a model."""
 
 from __future__ import annotations
 
@@ -39,17 +39,24 @@ LIVE_ENV = {"ASSAY_CONSOLE_PASSCODE": "open-sesame", "ASSAY_CONSOLE_DATABASE_URL
 # ---- settings and wiring (DEM-02, DEM-04) ----
 
 
-def test_live_needs_the_passcode_the_spend_store_and_a_key():
+def test_live_needs_the_passcode_and_hosted_keys_need_the_store_and_a_key():
     s = Settings.from_env({})
     assert s.db == Path("agent.duckdb") and s.daily_cap == DAILY_CAP_USD and not s.live
-    assert "it needs a passcode, a spend store and a provider key" in s.live_off_reason()
-    for drop in LIVE_ENV:
-        if drop in KEYS:
-            continue
-        assert not Settings.from_env({k: v for k, v in LIVE_ENV.items() if k != drop}).live
-    assert not Settings.from_env({k: v for k, v in LIVE_ENV.items() if k not in KEYS}).live
+    assert s.live_off_reason() == "Live mode is off on this console: it needs a passcode."
+    own_only = Settings.from_env({"ASSAY_CONSOLE_PASSCODE": "open-sesame"})
+    assert own_only.live and not own_only.hosted  # visitors bring their own keys (OWNER D-37)
+    assert "it needs a spend store and a provider key" in own_only.hosted_off_reason()
+    full = Settings.from_env(LIVE_ENV)
+    assert full.live and full.hosted
+    for drop in ("ASSAY_CONSOLE_DATABASE_URL", *KEYS):
+        keys = [k for k in KEYS if k != drop] if drop in KEYS else list(KEYS)
+        s = Settings.from_env({k: v for k, v in LIVE_ENV.items() if k != drop})
+        assert s.live and s.hosted == (bool(keys) and drop in KEYS)
+    no_keys = Settings.from_env({k: v for k, v in LIVE_ENV.items() if k not in KEYS})
+    assert no_keys.live and not no_keys.hosted
+    assert "it needs a provider key" in no_keys.hosted_off_reason()
     only_claude = Settings.from_env({**LIVE_ENV, "OPENAI_API_KEY": " "})
-    assert only_claude.live and only_claude.agents == ("claude",)
+    assert only_claude.hosted and only_claude.agents == ("claude",)
     assert not Settings.from_env({**LIVE_ENV, "ASSAY_CONSOLE_PASSCODE": "   "}).live
     assert Settings.from_env({**LIVE_ENV, "ASSAY_CONSOLE_PASSCODE": "open-sesame\n"}).passcode == (
         "open-sesame"
@@ -73,22 +80,25 @@ def test_the_per_request_cap_is_the_largest_agents_bound():
     assert money(0.555) == "$0.56" and money(3.0) == "$3.00" and money(0.551) == "$0.56"
 
 
-def test_build_console_wires_live_only_with_every_secret(db, tmp_path, monkeypatch):  # noqa: F811
+def test_build_console_wires_hosted_keys_only_with_every_secret(db, tmp_path, monkeypatch):  # noqa: F811
     with pytest.raises(SettingsError, match="ASSAY_CONSOLE_DB") as missing:
         build_console(Settings.from_env({"ASSAY_CONSOLE_DB": str(tmp_path / "none.duckdb")}))
     assert str(tmp_path) not in str(missing.value)  # no host paths for visitors
     base = {"ASSAY_CONSOLE_DB": str(db.path)}
     off = build_console(Settings.from_env(base), tmp_path / "a")
     assert off.guard is None
-    half = build_console(Settings.from_env({**base, "ASSAY_CONSOLE_PASSCODE": "x"}), tmp_path / "b")
-    assert half.guard is None  # a passcode alone never wires a guard on an empty store URL
+    s = Settings.from_env({**base, "ASSAY_CONSOLE_PASSCODE": "x"})
+    own = build_console(s, tmp_path / "b")  # a passcode alone: own keys only, no spend store
+    assert own.guard is not None and own.guard.spend is None
+    assert "live requests need your own API key" in budget_line(own, s)
     on = build_console(Settings.from_env({**base, **LIVE_ENV}), tmp_path / "c")
     assert on.guard is not None and isinstance(on.guard.spend, PostgresSpend)
     assert on.guard.per_request_cap == live_bound_usd()
     monkeypatch.setitem(sys.modules, "psycopg", None)  # the console extra is not installed
     s = Settings.from_env({**base, **LIVE_ENV})
     no_client = build_console(s, tmp_path / "d")
-    assert no_client.guard is None and "client is missing" in budget_line(no_client, s)
+    assert no_client.guard is not None and no_client.guard.spend is None
+    assert "client is missing" in budget_line(no_client, s)
 
 
 def test_a_damaged_database_is_a_clean_settings_error(db, tmp_path):  # noqa: F811
@@ -119,7 +129,9 @@ def test_the_budget_line_shows_the_hold_what_is_left_and_when_it_is_used_up(db, 
     now = [0.0]
     line = BudgetLine(clock=lambda: now[0])
     assert line(console) == ("Each live request is held at up to $0.56 and settled to its actual "
-                             "cost; about $3.00 of today's $3.00 budget is left.")  # fmt: skip
+                             "cost; about $3.00 of today's $3.00 budget is left. With your own API "
+                             "key, a request is capped at $0.56 on your account and uses none of "
+                             "this console's budget.")  # fmt: skip
     spend.reserve(g._today(), 1.25, 3.0)
     for _ in range(5):  # reruns inside the window reuse the reading: no new connection
         assert "$3.00 of today's" in line(console)
@@ -258,15 +270,18 @@ def test_live_runs_the_typed_question_for_the_chosen_agent_and_shows_text_only(
     at, seen, console = _live(db, tmp_path, monkeypatch, create_for)
     assert not at.exception
     assert at.radio[0].options == ["claude-sonnet-5-5", "gpt-6.1-sol"]
-    assert at.text_input[0].proto.type == at.text_input[0].proto.PASSWORD
+    assert at.radio[1].options == ["This console's key", "My own API key"]
+    pw = at.text_input(key="passcode")
+    assert pw.proto.type == pw.proto.PASSWORD and len(at.text_input) == 1  # no key field yet
     assert at.text_area[0].max_chars == 500
     assert "about $3.00 of today's $3.00 budget is left" in at.info[0].value
     at.text_area[0].input("How many rows are there?")
-    at.text_input[0].input("open-sesame")
+    pw.input("open-sesame")
     at.button(key="ask").click().run()
     assert not at.exception and not at.error
     assert seen[-1] == {"question": "How many rows are there?", "agent": "claude",
-                        "session": seen[-1]["session"], "passcode": "open-sesame"}  # fmt: skip
+                        "session": seen[-1]["session"], "passcode": "open-sesame",
+                        "api_key": ""}  # fmt: skip
     assert len(seen[-1]["session"]) == 32 and agents == ["claude"]
     assert HOSTILE in [t.value for t in at.text]  # the reply is plain text...
     assert all(HOSTILE not in m.value and "alert(1)" not in m.value for m in at.markdown)  # ...only
@@ -284,10 +299,10 @@ def test_a_wrong_passcode_is_refused_and_an_unexpected_error_shows_no_traceback(
 
     at, _seen, _console = _live(db, tmp_path, monkeypatch, boom)
     at.text_area[0].input("How many rows are there?")
-    at.text_input[0].input("wrong")
+    at.text_input(key="passcode").input("wrong")
     at.button(key="ask").click().run()
     assert not at.exception and at.error[0].value == "Wrong passcode."
-    at.text_input[0].input("open-sesame")
+    at.text_input(key="passcode").input("open-sesame")
     at.button(key="ask").click().run()
     assert not at.exception and at.error[0].value == GENERIC_ERROR
     assert all("/secret/host/path" not in e.value for e in at.error)
@@ -298,7 +313,76 @@ def test_the_page_reports_a_missing_database_instead_of_crashing(tmp_path, monke
     assert not at.exception and "ASSAY_CONSOLE_DB" in at.error[0].value
 
 
-def test_live_mode_says_why_it_is_off_and_offers_only_keyed_agents(db, monkeypatch):  # noqa: F811
-    at = _app(monkeypatch, db.path, **{k: v for k, v in LIVE_ENV.items() if k not in KEYS})
-    assert not at.exception and "it needs a provider key" in at.info[0].value
+def test_live_mode_is_off_without_a_passcode(db, monkeypatch):  # noqa: F811
+    at = _app(monkeypatch, db.path, **{k: v for k, v in LIVE_ENV.items()
+                                       if k != "ASSAY_CONSOLE_PASSCODE"})  # fmt: skip
+    assert not at.exception and "it needs a passcode" in at.info[0].value
     assert not at.radio and not at.text_input
+
+
+# ---- the visitor's own key (DEM-05, OWNER D-37) ----
+
+OWN = "sk-own-test-key-0123456789abcdef"  # shape only
+
+
+def _rendered(at) -> str:
+    parts = [e.value for kind in ("text", "markdown", "error", "info", "caption") for e in
+             getattr(at, kind)]  # fmt: skip
+    parts += [df.value.to_csv() for df in at.dataframe]
+    return "\n".join(str(p) for p in parts)
+
+
+def test_an_own_key_request_needs_the_passcode_holds_nothing_and_never_shows_the_key(
+    db,  # noqa: F811
+    tmp_path,
+    monkeypatch,
+):
+    built = []
+
+    def create_for(agent, api_key=None):
+        built.append((agent, api_key))
+        return Replay([msg([tool_use(COUNT)]), msg([text("16 rows.")], "end_turn")])
+
+    at, seen, console = _live(db, tmp_path, monkeypatch, create_for)
+    at.radio[0].set_value("gpt-6.1-sol").run()
+    at.radio[1].set_value("My own API key").run()
+    key = at.text_input(key="key-sol")
+    assert key.label == "Your OpenAI API key" and key.proto.type == key.proto.PASSWORD
+    at.radio[0].set_value("claude-sonnet-5-5").run()  # the scripted replies are Claude's
+    at.radio[1].set_value("My own API key").run()
+    at.text_area[0].input("How many rows are there?")
+    at.button(key="ask").click().run()  # no key yet: refused on the page, nothing sent
+    assert at.error[0].value == "Enter your Anthropic API key, or use replay mode." and not seen
+    at.text_input(key="key-claude").input(OWN)
+    at.text_input(key="passcode").input("wrong")
+    at.button(key="ask").click().run()
+    assert at.error[0].value == "Wrong passcode." and built == []  # no client was built
+    at.text_input(key="passcode").input("open-sesame")
+    at.button(key="ask").click().run()
+    assert not at.exception and not at.error
+    assert seen[-1]["api_key"] == OWN and built == [("claude", OWN)]
+    assert "16 rows." in [t.value for t in at.text]
+    assert console.guard.remaining_today() == 3.0  # type: ignore[union-attr]  # nothing held
+    assert OWN not in _rendered(at)
+
+
+def test_a_console_with_only_a_passcode_offers_own_keys_only(db, monkeypatch):  # noqa: F811
+    at = _app(monkeypatch, db.path, ASSAY_CONSOLE_PASSCODE="open-sesame")
+    assert not at.exception
+    assert "hosted keys are off (it needs a spend store and a provider key)" in at.info[0].value
+    assert "live requests need your own API key" in at.info[0].value
+    assert at.radio[0].options == ["claude-sonnet-5-5", "gpt-6.1-sol"]
+    assert at.radio[1].options == ["My own API key"]
+    assert at.text_input(key="key-claude").label == "Your Anthropic API key"
+
+
+def test_hosted_keys_are_offered_only_for_agents_with_a_host_key(db, tmp_path, monkeypatch):  # noqa: F811
+    import assay_pipeline.console.page as page
+
+    g = Guard("open-sesame", SqliteSpend(tmp_path / "s.sqlite"), per_request_cap=live_bound_usd())
+    console = Console(db, tmp_path / "w", guard=g, create_for=no_api)
+    monkeypatch.setattr(page, "build_console", lambda settings, workdir=None: console)
+    at = _app(monkeypatch, db.path, **{**LIVE_ENV, "OPENAI_API_KEY": " "})
+    assert at.radio[1].options == ["This console's key", "My own API key"]
+    at.radio[0].set_value("gpt-6.1-sol").run()
+    assert at.radio[1].options == ["My own API key"]  # no host key for this agent

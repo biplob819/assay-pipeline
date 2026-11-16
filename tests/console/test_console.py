@@ -123,7 +123,7 @@ def test_live_requests_pass_the_guard_and_use_the_console_limits(db, tmp_path):
     r = console.run_case(question="How many rows?", passcode="open-sesame", session="s1")
     assert r.mode == "live" and r.reply == "16" and r.cost_usd > 0
     assert all(c["max_tokens"] == LIVE_MAX_OUTPUT for c in calls)
-    assert g.spend.spent(g._today()) == pytest.approx(r.cost_usd)  # settled to the actual cost
+    assert g.spend.spent(g._today()) == pytest.approx(r.cost_usd)  # settled to the actual cost  # type: ignore[union-attr]
 
 
 def test_a_wrong_passcode_and_a_spent_rate_limit_stop_before_any_call(db, tmp_path):
@@ -145,7 +145,7 @@ def test_the_per_request_and_daily_caps(db, tmp_path):
         console.run_case(question="How many rows?", passcode="open-sesame", session="s")
     small_day = guard(tmp_path / "d", daily_cap=bound * 1.5)
     console2, calls2 = live_console(db, tmp_path / "b", small_day, [msg([text("16")], "end_turn")])
-    small_day.spend.reserve(small_day._today(), bound, small_day.daily_cap)  # someone else's hold
+    small_day.spend.reserve(small_day._today(), bound, small_day.daily_cap)  # someone else's hold  # type: ignore[union-attr]
     with pytest.raises(GuardRefused, match="budget is used up"):
         console2.run_case(question="How many rows?", passcode="open-sesame", session="t")
     assert calls == [] and calls2 == []
@@ -163,7 +163,7 @@ def test_a_failed_live_run_keeps_its_whole_hold(db, tmp_path):
     console = Console(db, tmp_path / "c", guard=g, create_for=broken)
     with pytest.raises(RuntimeError):
         console.run_case(question="How many rows?", passcode="open-sesame", session="s")
-    assert g.spend.spent(g._today()) == pytest.approx(request_bound_usd(AGENTS["claude"][1]))
+    assert g.spend.spent(g._today()) == pytest.approx(request_bound_usd(AGENTS["claude"][1]))  # type: ignore[union-attr]
 
 
 def test_the_bound_covers_the_worst_live_request():
@@ -384,16 +384,17 @@ def test_a_transport_stop_keeps_the_whole_hold(db, tmp_path):
     console = Console(db, tmp_path / "c", guard=g, create_for=down)
     r = console.run_case(question="How many rows?", passcode="open-sesame", session="s")
     assert r.stop_reason == "transport"
-    assert g.spend.spent(g._today()) == pytest.approx(request_bound_usd(AGENTS["claude"][1]))
+    assert g.spend.spent(g._today()) == pytest.approx(request_bound_usd(AGENTS["claude"][1]))  # type: ignore[union-attr]
 
 
-def test_the_live_clients_do_not_retry():
-    import inspect
+def test_the_live_clients_do_not_retry(monkeypatch):
+    from assay_pipeline.console.engine import _client
 
-    from assay_pipeline.console.engine import _LiveCall
-
-    src = inspect.getsource(_LiveCall)
-    assert src.count("max_retries=0") == 2
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-host-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-host-key")
+    for agent in AGENTS:
+        for key in (None, "sk-own-fake-key"):
+            assert _client(agent, key).max_retries == 0
 
 
 def test_the_aggregate_log_is_bounded_on_disk(tmp_path, monkeypatch):
@@ -443,4 +444,4 @@ def test_an_unbilled_status_error_settles_at_the_completed_turns(db, tmp_path):
     console = Console(db, tmp_path / "c", guard=g, create_for=lambda _a: Overloaded())
     r = console.run_case(question="How many rows?", passcode="open-sesame", session="s")
     assert r.stop_reason == "transport" and 0 < r.cost_usd < 0.01
-    assert g.spend.spent(g._today()) == pytest.approx(r.cost_usd)  # not the $0.555 hold
+    assert g.spend.spent(g._today()) == pytest.approx(r.cost_usd)  # not the $0.555 hold  # type: ignore[union-attr]

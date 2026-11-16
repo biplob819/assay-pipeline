@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-17
+- [FEAT] [D6.2] — console live mode on the visitor's own Anthropic or OpenAI key (OWNER D-37, DEM-05): the passcode is still required, the rate limit and per-request cap still apply, nothing is held against the host's budget, and the key goes to that request's SDK client only (never the environment, disk, logs or the page). A console with only a passcode serves own-key requests.
 - [FIX] [B5.3] — one-page PDFs (threat model, data roadmap) are written uncompressed, so they rebuild byte-identically whatever zlib the interpreter has; Windows Python 3.14+ ships zlib-ng and failed the check (L-41).
 
 ## 2026-11-16

@@ -77,7 +77,7 @@ def test_unknown_status_rejected():
 def test_live_graph_is_eligible_and_complete():
     nodes, caps = load_graph(), load_catalog()
     assert len(nodes) == 21
-    assert len(caps) == 128
+    assert len(caps) == 129  # DEM-05 added by OWNER D-37
     assert find_cycle(nodes) is None
     assert eligibility_problems(nodes, caps) == []
     assert all(any(c.node == n for c in caps) for n in nodes), "every node has capability rows"

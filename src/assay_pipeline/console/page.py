@@ -5,7 +5,9 @@
   API call (DEM-01). Most samples are recorded model runs; two are scripted (labelled so) to
   show the guard blocking a query an agent does send.
 - **Live** asks a typed question behind the passcode, with a line showing what one request is
-  held at and what is left of today's budget (DEM-02).
+  held at and what is left of today's budget (DEM-02). A visitor may bring their own provider
+  key instead: the passcode is still required, and nothing is held against the host's budget
+  (DEM-05, OWNER D-37). A console with a passcode but no hosted keys serves own-key requests only.
 - Each query's guard decision is shown next to the audit line it wrote (DEM-03).
 
 Settings come from the host's secret store as environment variables (DEM-04, NFR1); nothing is
@@ -15,10 +17,10 @@ read from files in the repository:
 | --- | --- |
 | `ASSAY_CONSOLE_DB` | the agent database (`agent.duckdb`, with its `.json` beside it) |
 | `ASSAY_CONSOLE_PASSCODE` | live mode's passcode; live mode is off when unset |
-| `ASSAY_CONSOLE_DATABASE_URL` | Postgres for the shared daily spend counter (needed for live) |
+| `ASSAY_CONSOLE_DATABASE_URL` | Postgres daily spend counter (needed for hosted keys) |
 | `ASSAY_CONSOLE_DAILY_CAP` | daily live budget in USD (default 3.00, at least one request) |
 | `ASSAY_CONSOLE_WORKDIR` | where the database copy and aggregate log go (default: a temp dir) |
-| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | provider keys; live offers only agents whose key is set |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | hosted keys (optional: visitors can bring their own) |
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ AUDIT_FIELDS = ("seq", "event", "guard_decision", "guard_reason", "rows_returned
 BUDGET_TTL_S = 15.0  # the budget line reads the shared store at most this often
 CONNECT_TIMEOUT_S = 3  # an unreachable store must not hang every page rerun
 GENERIC_ERROR = "Something went wrong and the request did not complete. Replay mode still works."
+PROVIDERS = {"ANTHROPIC_API_KEY": "Anthropic", "OPENAI_API_KEY": "OpenAI"}
 
 
 class SettingsError(ValueError):
@@ -71,14 +74,23 @@ class Settings:
 
     @property
     def live(self) -> bool:
+        """Live mode is on: with a passcode, visitors can at least bring their own key."""
+        return bool(self.passcode)
+
+    @property
+    def hosted(self) -> bool:
+        """The host's keys and daily budget are offered too."""
         return bool(self.passcode and self.database_url and self.agents)
 
     def live_off_reason(self) -> str:
-        needs = (("a passcode", self.passcode), ("a spend store", self.database_url),
-                 ("a provider key", self.agents))  # fmt: skip
+        return "Live mode is off on this console: it needs a passcode."
+
+    def hosted_off_reason(self) -> str:
+        needs = (("a spend store", self.database_url), ("a provider key", self.agents))
         missing = [name for name, ok in needs if not ok]
-        need = missing[0] if len(missing) == 1 else ", ".join(missing[:-1]) + " and " + missing[-1]
-        return f"Live mode is off on this console: it needs {need}."
+        if not missing:
+            return "This console's hosted keys are off (its spend store client is missing)"
+        return f"This console's hosted keys are off (it needs {' and '.join(missing)})"
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -108,9 +120,15 @@ def _postgres_connect(url: str) -> Any:
     return psycopg.connect(url, connect_timeout=CONNECT_TIMEOUT_S)
 
 
+def provider_name(agent: str) -> str:
+    return PROVIDERS[AGENTS[agent][2]]
+
+
 def build_console(settings: Settings, workdir: Path | None = None) -> Console:
     """One console per app process: its own database copy and in-memory audit log. Live mode
-    is wired only when the passcode, the shared spend store and a provider key are all set."""
+    is wired when the passcode is set; the host's keys and budget only when the shared spend
+    store, a provider key and the Postgres client are there too. Otherwise the guard has no
+    spend store and admits own-key requests only."""
     if not settings.db.is_file():
         raise SettingsError("No agent database is configured (set ASSAY_CONSOLE_DB).")
     try:
@@ -121,15 +139,18 @@ def build_console(settings: Settings, workdir: Path | None = None) -> Console:
     work = workdir or settings.workdir or Path(tempfile.mkdtemp(prefix="assay-console-"))
     guard = None
     if settings.live:
-        try:
-            import psycopg  # noqa: F401  (the `console` extra)
-        except ImportError:
-            guard = None  # live stays off; the page says why
-        else:
-            spend = PostgresSpend(settings.database_url, connect=_postgres_connect)
-            guard = Guard(settings.passcode, spend, per_request_cap=live_bound_usd(),
-                          daily_cap=settings.daily_cap)  # fmt: skip
-    return Console(db, work, guard=guard, aggregate=AggregateLog(work / "aggregate.jsonl"))
+        spend = None
+        if settings.hosted:
+            try:
+                import psycopg  # noqa: F401  (the `console` extra)
+            except ImportError:
+                spend = None  # hosted keys stay off; the page says why
+            else:
+                spend = PostgresSpend(settings.database_url, connect=_postgres_connect)
+        guard = Guard(settings.passcode, spend, per_request_cap=live_bound_usd(),
+                      daily_cap=settings.daily_cap)  # fmt: skip
+    return Console(db, work, guard=guard, aggregate=AggregateLog(work / "aggregate.jsonl"),
+                   host_agents=settings.agents)  # fmt: skip
 
 
 def sample_label(s: Sample) -> str:
@@ -150,21 +171,24 @@ class BudgetLine:
 
     def __call__(self, console: Console, settings: Settings | None = None) -> str:
         if console.guard is None:
-            if settings is not None and settings.live:
-                return "Live mode is off on this console: its spend store client is missing."
             off = settings.live_off_reason() if settings else "Live mode is off on this console."
             return off + " Replay mode always works."
+        own = (f"With your own API key, a request is capped at {money(live_bound_usd())} on your "
+               "account and uses none of this console's budget.")  # fmt: skip
+        if console.guard.spend is None:
+            why = settings.hosted_off_reason() if settings else "This console's hosted keys are off"
+            return f"{why}: live requests need your own API key. {own}"
         now = self._clock()
         if now - self._at > BUDGET_TTL_S:
             self._left, self._at = console.guard.remaining_today(), now
         bound, left = live_bound_usd(), self._left
         hold = f"Each live request is held at up to {money(bound)} and settled to its actual cost; "
         if left is None:
-            return hold + "today's remaining budget is unavailable right now."
+            return hold + f"today's remaining budget is unavailable right now. {own}"
         if left < bound:
-            return hold + f"today's {money(console.guard.daily_cap)} budget is used up."
+            return hold + f"today's {money(console.guard.daily_cap)} budget is used up. {own}"
         return hold + (f"about ${left:.2f} of today's {money(console.guard.daily_cap)} "
-                       "budget is left.")  # fmt: skip
+                       f"budget is left. {own}")  # fmt: skip
 
 
 def budget_line(console: Console, settings: Settings | None = None) -> str:

@@ -23,6 +23,13 @@ Give a visitor (US9) a page where they can replay a recorded attack, or try thei
 - **Packaging:** `streamlit>=1.46` is in the `console` extra (1.46 is the first version that reads a config beside the script). `apps/console/requirements.txt` serves Community Cloud.
 - **Deploy notes:** `apps/console/README.md` gives the settings table and the steps for Streamlit Community Cloud or any host that runs `streamlit run`.
 
+## Own key (DEM-05, OWNER D-37, 17 Nov 2026)
+- **Engine:** `run_case(api_key=...)` checks the key's shape (`check_key`: printable ASCII, no spaces, at most 512 characters, never repeated in the message). The guard's `admit_own_key` applies the passcode, the per-request cap and the session rate limit, and holds nothing. `_LiveCall(agent, api_key)` passes the key to the SDK client constructor, never the environment, and the own-key client is pinned to the provider's public endpoint with the host's custom headers (`ANTHROPIC_CUSTOM_HEADERS`, `OPENAI_CUSTOM_HEADERS`), OpenAI organization and project removed and the host's proxy variables ignored (`trust_env=False`). If the host's custom headers carry a credential (`Authorization`, `X-Api-Key`, `Api-Key`), own keys are refused before the guard (`own_key_unavailable`). The provider error is raised outside the SDK's `except` block, so the SDK error (which carries the request headers; OpenAI's 401 text quotes part of the key) is neither chained nor its context; only the class name is kept, so a rejected key becomes "The provider refused that API key."
+- **Guard:** the spend store is optional. A console with a passcode but no hosted keys has a guard with no store: own-key requests are admitted and a host-key request is refused with `NO_HOSTED`.
+- **Page:** live mode is on whenever the passcode is set. "Pay with" offers "This console's key" (only when hosted keys are wired and the chosen agent has one) and "My own API key", which shows a password field labelled with the provider. The budget line adds what an own-key request is capped at on the visitor's account.
+- **Aggregate log:** a `key` field ("own" or "host"); never the key.
+- **Host agents:** a host-key request for an agent with no host key is refused before the guard, so it never holds budget (verifier note).
+
 ## Owner actions (DEM-04)
 - Choose the host. The Tech Spec names a `portfolio-demos` repository, which does not exist yet. Streamlit Community Cloud can deploy `apps/console/streamlit_app.py` straight from this repository.
 - In the host's secret store, set:
@@ -30,7 +37,7 @@ Give a visitor (US9) a page where they can replay a recorded attack, or try thei
   - `ASSAY_CONSOLE_PASSCODE`;
   - `ASSAY_CONSOLE_DATABASE_URL` (Postgres);
   - optionally `ASSAY_CONSOLE_DAILY_CAP`;
-  - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
+  - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` (optional: without them and the Postgres URL, visitors use their own keys).
 
 ## Out of scope
-Accounts, saved sessions, and live mode with the visitor's own keys.
+Accounts and saved sessions. (Live mode with the visitor's own key was added on 17 Nov 2026 by OWNER D-37, as DEM-05.)

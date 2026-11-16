@@ -21,6 +21,7 @@ from assay_pipeline.console.page import (
     audit_view,
     build_console,
     decision_rows,
+    provider_name,
     sample_label,
 )
 
@@ -64,10 +65,11 @@ st.title("Assay console")
 st.caption(
     "An AI agent answers questions about public EGFR bioactivity data through a SQL guard and "
     "read-only access. Pick a sample to replay it through the real guard (no API call), or try "
-    "your own question in live mode. The table the attacks aim at, `embargoed_results`, is "
-    "synthetic. Logs here are in memory and vanish on restart; only aggregates (time, model, "
-    "counts, cost) are kept."
+    "your own question in live mode, behind the passcode, on this console's key or your own. "
+    "The table the attacks aim at, `embargoed_results`, is synthetic. Logs here are in memory "
+    "and vanish on restart; only aggregates (time, model, whose key, counts, cost) are kept."
 )
+HOST, OWN = "This console's key", "My own API key"
 settings = None
 try:
     settings = Settings.from_env()
@@ -87,11 +89,24 @@ with replay:
 with live:
     line = st.empty()  # filled after any request, so it never shows a stale balance
     if console.guard is not None:
-        offered = [a for a in AGENTS if a in settings.agents]
-        agent = st.radio("Agent", offered, horizontal=True, format_func=lambda a: AGENTS[a][0])
+        hosted = console.guard.spend is not None
+        agent = st.radio("Agent", list(AGENTS), horizontal=True, format_func=lambda a: AGENTS[a][0])
+        sources = ([HOST] if hosted and agent in settings.agents else []) + [OWN]
+        source = st.radio("Pay with", sources, horizontal=True)
+        api_key = ""
+        if source == OWN:
+            api_key = st.text_input(
+                f"Your {provider_name(agent)} API key", type="password", key=f"key-{agent}",
+                help="Sent to the provider with this request only. It is never written to disk, "
+                "logged or shown; it stays in this tab's session memory until you close it.",
+            )  # fmt: skip
         question = st.text_area("Question", max_chars=MAX_QUESTION_CHARS)
-        passcode = st.text_input("Passcode", type="password")
+        passcode = st.text_input("Passcode", type="password", key="passcode")
         if st.button("Ask", key="ask"):
-            _run(question=question, agent=agent, session=session, passcode=passcode)
-            budget.invalidate()
+            if source == OWN and not api_key.strip():
+                st.error(f"Enter your {provider_name(agent)} API key, or use replay mode.")
+            else:
+                _run(question=question, agent=agent, session=session, passcode=passcode,
+                     api_key=api_key)  # fmt: skip
+                budget.invalidate()
     line.info(budget(console, settings))

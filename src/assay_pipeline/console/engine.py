@@ -10,6 +10,10 @@ connection against that copy:
   cost cap and the daily spend counter). The request is held at its upper bound, computed from
   the console's tighter limits (fewer steps, smaller outputs, a short question), and settled to
   the actual cost after.
+- **Own key** (OWNER D-37): a live request may carry the visitor's own provider key. It still
+  needs the passcode and passes the rate limit and per-request cap, but holds nothing against the
+  host's budget. The key goes to that request's SDK client only: it is never put in the process
+  environment (other visitors' requests share the process), stored, logged or shown.
 
 A persistent aggregate log keeps only timestamp, mode, model, guard counts, stop reason,
 latency and cost, never question, answer or SQL text (H14).
@@ -17,10 +21,12 @@ latency and cost, never question, answer or SQL text (H14).
 
 from __future__ import annotations
 
+import importlib
 import json
+import os
 import threading
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from importlib import resources
@@ -60,6 +66,14 @@ RESULT_TOKENS = CONSOLE_RESULT_CHARS
 ROTATE_MARGIN = 64  # lines a case can add at most is far below this
 AGGREGATE_MAX_BYTES = 5_000_000
 CACHE_WRITE_MULT = 1.25  # the system prompt is cached: bound input at the write price
+MAX_KEY_CHARS = 512
+KEY_REFUSED = "The provider refused that API key. Check it, or use replay mode."
+_KEY_ERRORS = ("AuthenticationError", "PermissionDeniedError")
+# An own-key client talks to the public endpoint only: the host's SDK settings (base URL, custom
+# headers, OpenAI organization and project) must never travel with a visitor's key.
+PUBLIC_URL = {"claude": "https://api.anthropic.com", "sol": "https://api.openai.com/v1"}
+CUSTOM_HEADERS_ENV = {"claude": "ANTHROPIC_CUSTOM_HEADERS", "sol": "OPENAI_CUSTOM_HEADERS"}
+CREDENTIAL_HEADERS = frozenset({"authorization", "x-api-key", "api-key", "proxy-authorization"})
 
 
 class ConsoleError(RuntimeError):
@@ -114,7 +128,7 @@ def request_bound_usd(prices: Prices, step_budget: int = LIVE_STEP_BUDGET) -> fl
 class AggregateLog:
     """JSON lines of aggregates only (CON-05): no visitor text ever reaches disk."""
 
-    FIELDS = ("at", "mode", "model", "queries", "blocked", "allowed", "stop_reason",
+    FIELDS = ("at", "mode", "model", "key", "queries", "blocked", "allowed", "stop_reason",
               "latency_ms", "cost_usd", "refused")  # fmt: skip
 
     def __init__(self, path: Path) -> None:
@@ -135,33 +149,94 @@ class _LiveCall:
     """One provider's calls with SDK retries off: a retried request the server had already
     processed would be billed but invisible to the settlement. It remembers whether the last
     failure could have been billed: an HTTP status error (429, 529, 4xx) was refused unbilled,
-    a connection error or timeout may have been processed."""
+    a connection error or timeout may have been processed.
 
-    def __init__(self, agent: str) -> None:
+    With `api_key` (a visitor's own key) the client gets the key directly; without it the SDK
+    reads the host's environment variable. The SDK error is not chained: it holds the request,
+    headers and all, and OpenAI's 401 message quotes part of the key."""
+
+    def __init__(self, agent: str, api_key: str | None = None) -> None:
         self.agent = agent
+        self._api_key = api_key
         self.billed_failure = False
+        self.last_error = ""  # the SDK error's class name, never its text
+
+    def __repr__(self) -> str:
+        return f"_LiveCall({self.agent!r}, own_key={self._api_key is not None})"
 
     def __call__(self, **kwargs: Any) -> dict[str, Any]:
+        client = _client(self.agent, self._api_key)
+        err = ""
         if self.agent == "claude":
             import anthropic
 
             try:
-                return anthropic.Anthropic(max_retries=0).messages.create(**kwargs).to_dict()
+                return client.messages.create(**kwargs).to_dict()
             except anthropic.APIError as exc:
                 self.billed_failure = not isinstance(exc, anthropic.APIStatusError)
-                raise ProviderError(f"anthropic: {type(exc).__name__}") from exc
-        import openai
+                err = type(exc).__name__
+        else:
+            import openai
 
-        try:
-            raw = openai.OpenAI(max_retries=0).responses.create(**kwargs).to_dict()
-        except openai.APIError as exc:
-            self.billed_failure = not isinstance(exc, openai.APIStatusError)
-            raise ProviderError(f"openai: {type(exc).__name__}") from exc
-        return scrub_openai(raw)
+            try:
+                return scrub_openai(client.responses.create(**kwargs).to_dict())
+            except openai.APIError as exc:
+                self.billed_failure = not isinstance(exc, openai.APIStatusError)
+                err = type(exc).__name__
+        self.last_error = err
+        # raised outside the except block, so the SDK error is not even the implicit context
+        raise ProviderError(f"{'anthropic' if self.agent == 'claude' else 'openai'}: {err}")
 
 
-def live_create(agent: str) -> Create:
-    return _LiveCall(agent)
+def _host_header_names(agent: str) -> list[str]:
+    """Header names the SDK would add from the host's custom-headers variable."""
+    env = os.environ.get(CUSTOM_HEADERS_ENV[agent], "")
+    return [ln.split(":", 1)[0].strip() for ln in env.split("\n") if ":" in ln]
+
+
+def own_key_unavailable(agent: str) -> str | None:
+    """Why this server cannot take a visitor's key for `agent`, or None. A host whose custom
+    headers carry a credential would have it sent in place of (or beside) the visitor's key."""
+    if any(n.lower() in CREDENTIAL_HEADERS for n in _host_header_names(agent)):
+        return "This console's server settings add their own credentials, so own keys are off here."
+    return None
+
+
+def _client(agent: str, api_key: str | None, http_client: Any = None) -> Any:
+    """The SDK client for one request, never retrying. Without `api_key` it is the host's,
+    configured from the host's environment. With one it is the visitor's: the key is passed
+    directly, and none of the host's SDK settings apply: not its endpoint, custom headers,
+    OpenAI organization or project, nor its proxy variables (`trust_env=False`)."""
+    sdk: Any = importlib.import_module("anthropic" if agent == "claude" else "openai")
+    if api_key is None:
+        extra = {} if http_client is None else {"http_client": http_client}
+        return (sdk.Anthropic if agent == "claude" else sdk.OpenAI)(max_retries=0, **extra)
+    reason = own_key_unavailable(agent)
+    if reason:
+        raise ConsoleError(reason)
+    # an `omit` value removes a header the SDK took from the host's custom-headers variable
+    drop: Any = dict.fromkeys(_host_header_names(agent), sdk.omit)
+    http = http_client if http_client is not None else sdk.DefaultHttpxClient(trust_env=False)
+    if agent == "claude":
+        return sdk.Anthropic(api_key=api_key, base_url=PUBLIC_URL[agent], max_retries=0,
+                             default_headers=drop, http_client=http)  # fmt: skip
+    client = sdk.OpenAI(api_key=api_key, base_url=PUBLIC_URL[agent], max_retries=0,
+                        default_headers=drop, http_client=http)  # fmt: skip
+    client.organization = client.project = None  # set from OPENAI_ORG_ID / OPENAI_PROJECT_ID
+    return client
+
+
+def live_create(agent: str, api_key: str | None = None) -> Create:
+    return _LiveCall(agent, api_key)
+
+
+def check_key(key: str) -> str:
+    """A visitor's key, trimmed, or ConsoleError. Only the shape is checked (the provider says
+    whether it is valid), and the message never repeats it."""
+    k = key.strip()
+    if not k or len(k) > MAX_KEY_CHARS or not k.isascii() or not k.isprintable() or " " in k:
+        raise ConsoleError("That does not look like an API key.")
+    return k
 
 
 class _ConsoleTool(QueryTool):
@@ -187,8 +262,9 @@ class Console:
         guard: Guard | None = None,
         aggregate: AggregateLog | None = None,
         views: ViewsConfig | None = None,
-        create_for: Callable[[str], Create] = live_create,
+        create_for: Callable[..., Create] = live_create,
         seed: int = 0,
+        host_agents: Collection[str] | None = None,
     ) -> None:
         self.db = db
         self.views = views or load_views_config()
@@ -199,6 +275,7 @@ class Console:
         self.guard = guard
         self.aggregate = aggregate
         self.create_for = create_for
+        self.host_agents = host_agents  # agents with a host key (None: all)
         self.system = system_prompt(self.views, db.snapshot, prompt_canary(db.snapshot, seed))
         self._n = 0
 
@@ -210,8 +287,11 @@ class Console:
         agent: str = "claude",
         session: str = "",
         passcode: str = "",
+        api_key: str = "",
     ) -> CaseResult:
-        """A sample replays (no API call); a question runs live behind the guard."""
+        """A sample replays (no API call); a question runs live behind the guard, on the host's
+        key and budget, or on `api_key`, the visitor's own key (passcode still required). A blank
+        `api_key` means the host's key: the page refuses a blank own key before calling this."""
         if (sample_id is None) == (question is None):
             raise ConsoleError("give either a sample or a question")
         if sample_id is not None:
@@ -228,27 +308,43 @@ class Console:
             raise ConsoleError(f"ask a question of 1 to {MAX_QUESTION_CHARS} characters")
         if self.guard is None:
             raise ConsoleError("live mode is off on this console; replay mode always works")
+        own = check_key(api_key) if api_key.strip() else ""
+        if own and (reason := own_key_unavailable(agent)):
+            raise ConsoleError(reason)
+        key = "own" if own else "host"
+        if not own and self.host_agents is not None and agent not in self.host_agents:
+            raise ConsoleError("This console has no key for that agent; use your own API key.")
         bound = request_bound_usd(AGENTS[agent][1])
+        ticket = None
         try:
-            ticket = self.guard.reserve(passcode, session, bound)
+            if own:
+                self.guard.admit_own_key(passcode, session, bound)
+            else:
+                ticket = self.guard.reserve(passcode, session, bound)
         except GuardRefused:
-            self._log({"mode": "live", "model": AGENTS[agent][0], "refused": True})
+            self._log({"mode": "live", "model": AGENTS[agent][0], "key": key, "refused": True})
             raise
         result = None
-        create = self.create_for(agent)
+        create = self.create_for(agent, own) if own else self.create_for(agent)
         try:
-            result = self._run("live", agent, q, create)
+            result = self._run("live", agent, q, create, key=key)
+            refused = getattr(create, "last_error", "") in _KEY_ERRORS
+            if own and result.stop_reason == "transport" and refused:
+                raise ConsoleError(KEY_REFUSED)
             return result
         finally:
             # settle to the actual cost; keep the whole hold when usage may be unseen: a crash,
             # or a transport stop whose failure could have been billed (an HTTP status error
             # was refused unbilled, so only the completed turns count)
-            unseen = result is None or (
-                result.stop_reason == "transport" and getattr(create, "billed_failure", True)
-            )
-            self.guard.settle(ticket, bound if unseen or result is None else result.cost_usd)
+            if ticket is not None:
+                unseen = result is None or (
+                    result.stop_reason == "transport" and getattr(create, "billed_failure", True)
+                )
+                self.guard.settle(ticket, bound if unseen or result is None else result.cost_usd)
 
-    def _run(self, mode: str, agent: str, question: str, create: Create) -> CaseResult:
+    def _run(
+        self, mode: str, agent: str, question: str, create: Create, key: str | None = None
+    ) -> CaseResult:
         model, prices, _key = AGENTS[agent]
         provider: Provider = (
             AnthropicProvider(model, create, max_tokens=LIVE_MAX_OUTPUT)
@@ -293,7 +389,7 @@ class Console:
                             t.cost_usd if mode == "live" else 0.0, t.stop_reason,
                             int((time.monotonic() - t0) * 1000))  # fmt: skip
         self._log({
-            "mode": mode, "model": model, "queries": len(decisions),
+            "mode": mode, "model": model, "key": key, "queries": len(decisions),
             "blocked": sum(d["decision"] == "blocked" for d in decisions),
             "allowed": sum(d["decision"] == "allowed" for d in decisions),
             "stop_reason": t.stop_reason, "latency_ms": result.latency_ms,

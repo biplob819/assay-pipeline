@@ -7,7 +7,13 @@ daily cap is enforced by reserving the request's exact upper bound (the most it 
 every call stops at its output limit and the executor enforces the bound) with one atomic
 UPDATE in a shared database (Postgres in production, D-53; SQLite for local use), so
 concurrent requests can never spend past it together and the counter survives app restarts.
+The table is `assay_spend`, not EvalKit's `demo_spend`, so the console can share EvalKit's
+demo Postgres (owner, 17 Nov 2026) without sharing its daily budget.
 After the call the reservation is settled to the actual cost.
+
+A request on the visitor's own API key (OWNER D-37) still needs the passcode and passes the
+session rate limit and the per-request cap, but holds nothing against the host's daily budget:
+the visitor's account pays. A console with no spend store serves own-key requests only.
 """
 
 from __future__ import annotations
@@ -37,6 +43,7 @@ STORE_DOWN = (
     "The live budget store is unavailable right now; try again later or use your own API keys. "
     "Replay mode always works."
 )
+NO_HOSTED = "This console has no hosted budget: use your own API key. Replay mode always works."
 LOG = logging.getLogger("assay_pipeline.console")
 
 
@@ -62,7 +69,7 @@ class SqliteSpend:
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as con:
             con.execute(
-                "CREATE TABLE IF NOT EXISTS demo_spend (day TEXT PRIMARY KEY, usd REAL NOT NULL)"
+                "CREATE TABLE IF NOT EXISTS assay_spend (day TEXT PRIMARY KEY, usd REAL NOT NULL)"
             )
 
     def _connect(self) -> sqlite3.Connection:
@@ -72,9 +79,9 @@ class SqliteSpend:
         con = self._connect()
         try:
             con.execute("BEGIN IMMEDIATE")  # one writer at a time: check and add together
-            con.execute("INSERT OR IGNORE INTO demo_spend (day, usd) VALUES (?, 0)", (day,))
+            con.execute("INSERT OR IGNORE INTO assay_spend (day, usd) VALUES (?, 0)", (day,))
             cur = con.execute(
-                "UPDATE demo_spend SET usd = usd + ? WHERE day = ? AND usd + ? <= ?",
+                "UPDATE assay_spend SET usd = usd + ? WHERE day = ? AND usd + ? <= ?",
                 (amount, day, amount, cap),
             )
             con.execute("COMMIT")
@@ -89,7 +96,7 @@ class SqliteSpend:
         con = self._connect()
         try:
             con.execute(
-                "UPDATE demo_spend SET usd = MAX(0, usd + ?) WHERE day = ?",
+                "UPDATE assay_spend SET usd = MAX(0, usd + ?) WHERE day = ?",
                 (actual - reserved, day),
             )
         finally:
@@ -98,7 +105,7 @@ class SqliteSpend:
     def spent(self, day: str) -> float:
         con = self._connect()
         try:
-            row = con.execute("SELECT usd FROM demo_spend WHERE day = ?", (day,)).fetchone()
+            row = con.execute("SELECT usd FROM assay_spend WHERE day = ?", (day,)).fetchone()
             return float(row[0]) if row else 0.0
         finally:
             con.close()
@@ -114,7 +121,7 @@ class PostgresSpend:
     Needs the `console` extra (psycopg). Connection string from `ASSAY_CONSOLE_DATABASE_URL`."""
 
     TABLE = (
-        "CREATE TABLE IF NOT EXISTS demo_spend (day DATE PRIMARY KEY, "
+        "CREATE TABLE IF NOT EXISTS assay_spend (day DATE PRIMARY KEY, "
         "usd NUMERIC(12, 6) NOT NULL DEFAULT 0)"  # exact cents: no float drift at the cap
     )
 
@@ -142,11 +149,11 @@ class PostgresSpend:
         self.ensure_table()
         with self._connect() as con:
             con.execute(
-                "INSERT INTO demo_spend (day, usd) VALUES (%s, 0) ON CONFLICT (day) DO NOTHING",
+                "INSERT INTO assay_spend (day, usd) VALUES (%s, 0) ON CONFLICT (day) DO NOTHING",
                 (day,),
             )
             row = con.execute(
-                "UPDATE demo_spend SET usd = usd + %s WHERE day = %s AND usd + %s <= %s "
+                "UPDATE assay_spend SET usd = usd + %s WHERE day = %s AND usd + %s <= %s "
                 "RETURNING usd",
                 (_dec(amount), day, _dec(amount), _dec(cap)),
             ).fetchone()
@@ -156,14 +163,14 @@ class PostgresSpend:
         self.ensure_table()
         with self._connect() as con:
             con.execute(
-                "UPDATE demo_spend SET usd = GREATEST(0, usd + %s) WHERE day = %s",
+                "UPDATE assay_spend SET usd = GREATEST(0, usd + %s) WHERE day = %s",
                 (_dec(actual) - _dec(reserved), day),
             )
 
     def spent(self, day: str) -> float:
         self.ensure_table()
         with self._connect() as con:
-            row = con.execute("SELECT usd FROM demo_spend WHERE day = %s", (day,)).fetchone()
+            row = con.execute("SELECT usd FROM assay_spend WHERE day = %s", (day,)).fetchone()
             return float(row[0]) if row else 0.0
 
 
@@ -179,7 +186,7 @@ class Guard:
     def __init__(
         self,
         passcode: str,
-        spend: SpendStore,
+        spend: SpendStore | None,
         *,
         per_request_cap: float,
         daily_cap: float = DAILY_CAP_USD,
@@ -258,10 +265,18 @@ class Guard:
             if self._hits.get(session) and self._hits[session][-1] == slot:
                 self._hits[session].pop()
 
+    def admit_own_key(self, passcode: str, session: str, hold_usd: float) -> None:
+        """Refuse (GuardRefused) or admit a request on the visitor's own key: the passcode, the
+        session rate limit and the per-request cap apply; no budget is held (OWNER D-37)."""
+        self.check_passcode(passcode, session)
+        self.admit(session, hold_usd)
+
     def reserve(self, passcode: str, session: str, hold_usd: float) -> Ticket:
         """Refuse (GuardRefused) or reserve `hold_usd`, the request's upper bound, against
         today's budget; nothing is called before this returns. Settle with the actual cost."""
         self.check_passcode(passcode, session)
+        if self.spend is None:
+            raise GuardRefused(NO_HOSTED)
         slot = self.admit(session, hold_usd)
         day = self._today()
         # The bound is what the request may spend at most, so that is what is held against
@@ -287,7 +302,9 @@ class Guard:
 
     def remaining_today(self) -> float | None:
         """Today's live budget not yet spent or held (for the page's budget line); None when
-        the store cannot be reached."""
+        the store cannot be reached or there is none."""
+        if self.spend is None:
+            return None
         try:
             return max(0.0, self.daily_cap - self.spend.spent(self._today()))
         except Exception as exc:
@@ -297,6 +314,8 @@ class Guard:
     def settle(self, ticket: Ticket, actual_usd: float) -> None:
         """Return the unused part of a reservation. If the store is down the whole reservation
         stays held: today's budget is overcounted, never undercounted."""
+        if self.spend is None:
+            return
         try:
             self.spend.settle(ticket.day, ticket.reserved, max(0.0, actual_usd))
         except Exception as exc:

@@ -518,6 +518,7 @@ A normal question is correct when `evalkit.scorers.sql_match` matches the gold r
 - `run_case()` (§4) powers a page in the shared Streamlit Community Cloud app `portfolio-demos`, the same host as EvalKit's demo (EvalKit D-7).
 - **Replay mode** is the default. Sample attacks play back from recorded trials, with their guard decisions and audit lines, and make no API calls.
 - **Live mode** needs the passcode. It reuses EvalKit's demo guard pattern: a per-session rate limit, a per-request cost cap, and a daily spend counter in Postgres reserved atomically (EvalKit D-53).
+- **Own key (OWNER D-37).** A visitor may run a live request on their own Anthropic or OpenAI key. The passcode is still required, and the session rate limit and per-request cap still apply. Nothing is held against the host's daily budget, because the visitor's account pays. The key goes to that request's SDK client only: it is never put in the process environment, written to disk, logged or shown. A console with a passcode but no hosted keys serves own-key requests only.
 - The console runs on its own copy of `agent.duckdb` and its own audit log, which reset when the app restarts. The page says so.
 - **Privacy (H14).** Visitor text appears in the session's own audit view and is held in memory only. Persistent logs keep aggregates: timestamp, model, guard decision, latency and cost. They never keep question text.
 - Secrets live in Streamlit's secret store. The browser receives rendered results only.
@@ -923,6 +924,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | DEM-02 | Live mode UI behind the passcode, with a budget line | US9 |
 | DEM-03 | Guard decision and new audit line shown together | US9 |
 | DEM-04 | Deployed to `portfolio-demos` with secrets in the host's store | NFR1 |
+| DEM-05 | Live mode with the visitor's own provider key: the passcode is still required, the rate limit and per-request cap still apply, nothing is held against the host's budget, and the key goes to that request's client only, never stored, logged or shown | OWNER D-37 |
 
 **D6.3 Compound explorer**
 
