@@ -5,7 +5,7 @@ Thanks for helping. The project is built node by node (Tech Spec §11): each cha
 ## Setup
 
 ```bash
-uv sync                      # Python 3.11-3.13
+uv sync                      # Python 3.11-3.15
 uv run python scripts/install_hooks.py   # secret scan and leak guard on commit
 uv run pytest -q
 ```

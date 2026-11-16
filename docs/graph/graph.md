@@ -10,7 +10,7 @@ Generated from Tech Spec §11.2 on 2026-11-15; edit here from now on and keep th
 
 | Node | Title | Depends on | Verified by | Deliverable | Stories |
 | --- | --- | --- | --- | --- | --- |
-| **W0.1** | Repo and harness | — | node_converge + verifier | Repo `assay-pipeline`, uv project (Python 3.11–3.13), CI on three OSes, ported harness scripts with `--self-test` on every gate, records seeded | — |
+| **W0.1** | Repo and harness | — | node_converge + verifier | Repo `assay-pipeline`, uv project (Python 3.11–3.15), CI on three OSes, ported harness scripts with `--self-test` on every gate, records seeded | — |
 
 ## Wave 1 — ingest and normalise
 

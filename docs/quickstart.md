@@ -5,7 +5,7 @@ Build a trusted snapshot of public EGFR IC50 data with no API keys, then (option
 ## 1. Install
 
 ```bash
-uv tool install assay-pipeline   # or: pip install assay-pipeline (Python 3.11 to 3.13)
+uv tool install assay-pipeline   # or: pip install assay-pipeline (Python 3.11 to 3.15)
 assay doctor                     # Python, keys (set or not), network, local state
 ```
 

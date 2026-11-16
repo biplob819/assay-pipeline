@@ -1,6 +1,6 @@
 # W0.1 acceptance criteria
 
-**HAR-01** `uv sync --locked` installs the project on Python 3.11–3.13; `assay --version` prints the installed package version and `assay` with no command prints help and exits 0; the import package is `assay_pipeline` and the distribution `assay-pipeline`; the licence is MIT; `.gitattributes` forces LF; `.env` files are ignored.
+**HAR-01** `uv sync --locked` installs the project on Python 3.11–3.15; `assay --version` prints the installed package version and `assay` with no command prints help and exits 0; the import package is `assay_pipeline` and the distribution `assay-pipeline`; the licence is MIT; `.gitattributes` forces LF; `.env` files are ignored.
 **HAR-02** `ci.yml` runs ruff check and format, pyright, pytest, the secret scan, graph eligibility, the gate self-test and `uv build` on every push and pull request, on ubuntu, macOS and Windows with Python 3.11, 3.12 and 3.13, with actions pinned by commit SHA, one `contents: read` permissions block and no secrets.
 **HAR-03** `verify_graph_eligibility.py` fails on a cycle, an unknown dependency and a node building ahead of a dependency, and passes on the live graph; its self-test passes.
 **HAR-04** `node_start.py` refuses a node whose dependencies are not green, whose spec, criteria or tasks are missing, that has several spec folders, or whose criteria lack a `**CAP-ID** text` line for any capability row; check-only mode writes nothing.

@@ -38,7 +38,7 @@ def test_network_failures_and_unsupported_python_fail(tmp_path):
     checks = _checks(tmp_path, offline=False, version=(3, 10),
                      reach=lambda u: None if "ebi.ac.uk" in u else "ConnectError")  # fmt: skip
     by = {c.name: c for c in checks}
-    assert by["python"].status == "fail" and "3.11 to 3.13" in by["python"].detail
+    assert by["python"].status == "fail" and "3.11 to 3.15" in by["python"].detail
     assert by["network ChEMBL"].status == "ok"
     assert by["network PubChem"].status == "fail" and "ConnectError" in by["network PubChem"].detail
     assert as_json(checks)["ok"] is False
@@ -79,6 +79,20 @@ def test_cli_doctor_exits_1_on_any_failure(tmp_path, capsys, monkeypatch):
     report = json.loads(capsys.readouterr().out)
     assert rc == 1 and report["ok"] is False
     assert any(c["name"] == "python" and c["status"] == "fail" for c in report["checks"])
+
+
+def test_a_python_newer_than_tested_warns_and_does_not_fail(tmp_path):
+    """uv installs a tool on its newest Python whatever `requires-python` says (L-40), so a
+    version past the tested range is a warning: the install works and doctor still exits 0."""
+    from assay_pipeline.doctor import SUPPORTED
+
+    hi = SUPPORTED[-1]
+    cases = ((hi, "ok"), ((hi[0], hi[1] + 1), "warn"), ((4, 0), "warn"), ((3, 10), "fail"))
+    for v, status in cases:
+        by = {c.name: c for c in _checks(tmp_path, offline=True, version=v)}
+        assert by["python"].status == status, v
+    newer = {c.name: c for c in _checks(tmp_path, offline=True, version=(hi[0], hi[1] + 1))}
+    assert "newer than tested, 3.11 to 3.15" in newer["python"].detail
 
 
 def test_the_report_names_the_version_and_platform(tmp_path):

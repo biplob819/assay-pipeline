@@ -25,7 +25,7 @@ Make the project usable and checkable by someone who has never seen it: a README
   - **Build:** checks the tag against the package version, builds, and smoke-tests the wheel.
   - **Publish:** publishes to PyPI by trusted publishing. Only the publish job gets `id-token: write`, in the `pypi` environment, and no token is stored.
   - **Smoke test:** runs `uvx --from assay-pipeline==<v> assay doctor` on Linux, macOS and Windows.
-- **Version:** 0.1.0, for Python 3.11 to 3.13 (`requires-python = ">=3.11,<3.14"`, matching what `assay doctor` accepts).
+- **Version:** 0.1.0 for Python 3.11 to 3.13; 0.1.1 (16 Nov 2026) is tested on 3.11 to 3.15 and drops the upper bound (`requires-python = ">=3.11"`), because uv installs a tool on its newest Python whatever an upper bound says; `assay doctor` passes the tested versions and warns, without failing, on a newer one.
 - **Private vulnerability reporting** enabled on the repository (2026-11-16); the code of conduct routes conduct reports through the same private channel.
 
 ## Owner actions

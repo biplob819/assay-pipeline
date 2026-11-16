@@ -1,12 +1,12 @@
 [project]
 name = "assay-pipeline"
-version = "0.1.0"
+version = "0.1.1"
 description = "EGFR bioactivity data with provenance and quality rules, read by an AI agent through a SQL guard and a hash-chained audit log."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Biplob Chakraborty" }]
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11"  # no cap: uv ignores one for tools (L-40); doctor warns past 3.15
 dependencies = [
     "anthropic>=2.8,<3",
     "duckdb>=1.4",

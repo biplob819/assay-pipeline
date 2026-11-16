@@ -25,8 +25,8 @@ def test_pyproject_metadata():
     assert meta["name"] == "assay-pipeline"
     assert meta["license"] == "MIT"
     assert meta["scripts"]["assay"] == "assay_pipeline.cli:main"
-    assert meta["requires-python"] == ">=3.11,<3.14"
+    assert meta["requires-python"] == ">=3.11"  # uncapped: uv ignores a cap for tools (L-40)
     from assay_pipeline.doctor import SUPPORTED  # one support range, stated once (L-37)
 
-    assert SUPPORTED == ((3, 11), (3, 12), (3, 13))
+    assert SUPPORTED == ((3, 11), (3, 12), (3, 13), (3, 14), (3, 15))
     assert "MIT License" in (ROOT / "LICENSE").read_text(encoding="utf-8")

@@ -1,7 +1,9 @@
 """`assay doctor`: is this machine ready to build and evaluate? (OSS-02, D-26)
 
 Checks, each ok / warn / fail with a one-line detail:
-- Python is a supported version (3.11 to 3.13);
+- Python is a tested version (3.11 to 3.15); a newer one is a warning, not a failure, since
+  the package does not cap `requires-python` (uv ignores an upper bound when it installs a
+  tool, L-40);
 - provider keys are set (only "set" or "not set" is ever shown, never a value);
 - ChEMBL and PubChem answer (skipped with --offline);
 - the raw cache, snapshots and agent database that the next command would use.
@@ -17,8 +19,25 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-SUPPORTED = ((3, 11), (3, 12), (3, 13))
+SUPPORTED = ((3, 11), (3, 12), (3, 13), (3, 14), (3, 15))  # tested in CI
 KEYS = (("ANTHROPIC_API_KEY", "Claude agent and judge"), ("OPENAI_API_KEY", "GPT agent and judge"))
+
+
+def _span() -> str:
+    lo, hi = SUPPORTED[0], SUPPORTED[-1]
+    return f"{lo[0]}.{lo[1]} to {hi[0]}.{hi[1]}"
+
+
+def _python_check(v: tuple[int, int]) -> Check:
+    shown = f"{v[0]}.{v[1]}"
+    if v in SUPPORTED:
+        return Check("python", "ok", f"{shown} (supported)")
+    if SUPPORTED and v > SUPPORTED[-1]:
+        detail = f"{shown} (newer than tested, {_span()}; please report problems)"
+        return Check("python", "warn", detail)
+    return Check("python", "fail", f"{shown} (use {_span()})" if SUPPORTED else shown)
+
+
 SOURCES = (
     ("ChEMBL", "https://www.ebi.ac.uk/chembl/api/data/status.json"),
     (
@@ -70,11 +89,7 @@ def run_checks(
 
     checks = [
         Check("assay", "ok", f"{__version__} on {platform.system()} {platform.machine()}"),
-        Check(
-            "python",
-            "ok" if v in SUPPORTED else "fail",
-            f"{v[0]}.{v[1]} ({'supported' if v in SUPPORTED else 'use 3.11 to 3.13'})",
-        ),
+        _python_check(v),
     ]
     for key, use in KEYS:
         is_set = bool(env.get(key, "").strip())

@@ -69,7 +69,7 @@ def test_ci_workflow_covers_gates_and_matrix():
     ):
         assert step in ci, step
     assert "uv sync --locked" in ci
-    for v in ('"3.11"', '"3.12"', '"3.13"'):  # OWNER D-23
+    for v in ('"3.11"', '"3.12"', '"3.13"', '"3.14"', '"3.15"'):  # OWNER D-23
         assert v in ci
     for os_name in ("ubuntu-latest", "macos-latest", "windows-latest"):
         assert os_name in ci
