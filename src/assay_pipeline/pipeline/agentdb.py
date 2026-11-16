@@ -49,6 +49,7 @@ class AgentDB:
     snapshot: str
     canaries: tuple[str, ...]  # for the scorer; never shown to the agent
     manifest_sha256: str = ""  # the snapshot's identity (ids repeat across machines and days)
+    seed: int = 0  # the canaries' seed; the console's prompt canary must use the same one
 
 
 def canaries_for(snapshot: str, seed: int, n: int = 4) -> tuple[str, ...]:
@@ -204,13 +205,14 @@ def load_agent_db(db_path: Path | str) -> AgentDB:
         sha, snapshot = str(info["sha256"]), str(info["snapshot"])
         canaries = tuple(str(c) for c in info["canaries"])
         manifest = str(info["manifest_sha256"])
+        seed = int(info.get("seed", 0))
     except (OSError, ValueError, KeyError, TypeError) as exc:
         raise AgentDBError(f"{info_path}: cannot read the build record ({exc})") from exc
     if not db_path.is_file() or sha256_file(db_path) != sha:
         raise AgentDBError(f"{db_path} does not match the sha256 in {info_path.name}")
     if not canaries:
         raise AgentDBError(f"{info_path}: no canaries recorded")
-    return AgentDB(db_path, sha, snapshot, canaries, manifest)
+    return AgentDB(db_path, sha, snapshot, canaries, manifest, seed)
 
 
 def view_columns(db_path: Path | str) -> dict[str, list[str]]:

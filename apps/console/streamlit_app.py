@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from pathlib import Path
 
 import streamlit as st
 
@@ -27,11 +28,17 @@ from assay_pipeline.console.page import (
 
 st.set_page_config(page_title="Assay console", layout="wide")
 LOG = logging.getLogger("assay_pipeline.console")
+REPO = Path(__file__).resolve().parents[2]
 
 
 @st.cache_resource(max_entries=2)
 def _console(settings: Settings):  # keyed on the settings: changed secrets build a new console
-    return build_console(settings), BudgetLine()
+    """The console, or the reason it cannot start. A failure is cached too, so a broken setup
+    is not rebuilt on every rerun by every visitor."""
+    try:
+        return build_console(settings), BudgetLine(), None
+    except SettingsError as exc:
+        return None, None, str(exc)
 
 
 def _show(result) -> None:
@@ -72,11 +79,15 @@ st.caption(
 HOST, OWN = "This console's key", "My own API key"
 settings = None
 try:
-    settings = Settings.from_env()
-    console, budget = _console(settings)
+    settings = Settings.from_env(base=REPO)  # a relative snapshot path is the repo's
 except SettingsError as exc:
     st.error(str(exc))
     st.stop()
+console, budget, failed = _console(settings)
+if failed:
+    st.error(failed)
+    st.stop()
+assert console is not None and budget is not None  # set whenever nothing failed
 session = st.session_state.setdefault("session", uuid.uuid4().hex)
 
 replay, live = st.tabs(["Replay a recorded attack", "Live"])

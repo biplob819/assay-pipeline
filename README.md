@@ -132,7 +132,7 @@ Build your own snapshot with no API keys: `assay ingest chembl`, `assay ingest p
 - [Console guide](apps/console/README.md): replay, live mode, your own key, settings and deployment
 - [Threat model](docs/threat-model.md) ([PDF](docs/threat-model.pdf), one page): assets, trust boundaries, OWASP and ATLAS mapping, controls, limits
 - [Data roadmap](docs/data-roadmap.md) ([PDF](docs/data-roadmap.pdf), one page): from snapshot to a training set
-- [Data card](docs/data/2026-11-15.1/DATA_CARD.md) and [data licence](docs/data/2026-11-15.1/DATA_LICENSE.md) for the published snapshot
+- Published snapshot: [the Parquet files and manifest](docs/data/2026-11-15.1/), with its [data card](docs/data/2026-11-15.1/DATA_CARD.md) and [data licence](docs/data/2026-11-15.1/DATA_LICENSE.md)
 - Published run: [bundle](docs/results/main-2026-11-16/bundle.json), [audit anchors and verify result](docs/results/main-2026-11-16/verify.json), [hand-read of real answers](docs/measurements/hand-read-main-2026-11-16.md)
 - [Decision log](docs/decisions.md), [lessons](docs/lessons.md) and [changelog](changelog.md)
 - [PRD](Trusted%20Assay%20Pipeline%20PRD.md) and [Tech Spec](Trusted%20Assay%20Pipeline%20Tech%20Spec.md), including the node graph the project was built by and the loophole review of the PRD

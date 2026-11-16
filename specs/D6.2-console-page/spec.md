@@ -30,6 +30,11 @@ Give a visitor (US9) a page where they can replay a recorded attack, or try thei
 - **Aggregate log:** a `key` field ("own" or "host"); never the key.
 - **Host agents:** a host-key request for an agent with no host key is refused before the guard, so it never holds budget (verifier note).
 
+## Startup build (DEM-04, OWNER D-39, 17 Nov 2026)
+- `Settings.snapshot` (`ASSAY_CONSOLE_SNAPSHOT`, resolved against the repository by `from_env(base=...)`). When `ASSAY_CONSOLE_DB` is not a file, `build_console` builds `work/built/agent.duckdb` from the snapshot with a 128-bit `secrets.randbits` seed (never 0). `AgentDB` now carries the seed from its build record, and the console's prompt canary always uses the database's own seed. A configured database wins. A damaged or missing snapshot is a `SettingsError` with no paths; a failed start removes the temp folder it made, and the page caches the failure instead of rebuilding on every rerun. `apps/console/requirements.txt` pins the locked versions (a test keeps it in step with `uv.lock`).
+- The published snapshot (`assay publish` output: three Parquet files, manifest, data card, licence) is committed in `docs/data/2026-11-15.1/`; a test checks it verifies and is the benchmark bundle's manifest.
+- Deploy steps for Community Cloud, with a placeholder secrets block, are in `apps/console/README.md`.
+
 ## Owner actions (DEM-04)
 - Choose the host. The Tech Spec names a `portfolio-demos` repository, which does not exist yet. Streamlit Community Cloud can deploy `apps/console/streamlit_app.py` straight from this repository.
 - In the host's secret store, set:

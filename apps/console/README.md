@@ -28,6 +28,7 @@ All settings are environment variables, which come from the host's secret store 
 | Variable | Meaning |
 | --- | --- |
 | `ASSAY_CONSOLE_DB` | the agent database built by `assay build-db` (its `.json` must sit beside it) |
+| `ASSAY_CONSOLE_SNAPSHOT` | or: a published snapshot folder (relative paths are the repository's) to build the database from at startup, with a random 128-bit seed that never leaves the server, so the canaries can't be computed from the public code (OWNER D-39) |
 | `ASSAY_CONSOLE_PASSCODE` | live mode's passcode; live mode is off when unset |
 | `ASSAY_CONSOLE_DATABASE_URL` | Postgres for the shared daily spend counter (table `assay_spend`; EvalKit's demo database works, OWNER D-38); the console's hosted keys are off when unset |
 | `ASSAY_CONSOLE_DAILY_CAP` | daily live budget in USD (default 3.00, at least one request's hold) |
@@ -38,8 +39,34 @@ Each live request is held at its upper bound ($0.555, shown rounded up as $0.56)
 
 ## Deploy (Streamlit Community Cloud)
 
-1. New app → this repository, branch `main`, main file `apps/console/streamlit_app.py`, Python 3.12. `apps/console/requirements.txt` installs this package with the `console` extra.
-2. Under Secrets, set the variables above. For an own-key-only console, `ASSAY_CONSOLE_DB` and `ASSAY_CONSOLE_PASSCODE` are enough: no Postgres and no provider keys.
-3. Provide the agent database. It is not in the repository (it is built from a snapshot and holds the synthetic restricted table's canaries), and Community Cloud has no shell to run `assay build-db`. Use a host where you can place the file, such as a VM or a container host with a volume. On Community Cloud you would need a private copy of the repository that carries `agent.duckdb` and its `.json`.
+The console runs as its own Community Cloud app, next to EvalKit's demo. Community Cloud has no file storage, so the console builds its database at startup (about 3 seconds) from the published snapshot committed in [`docs/data/2026-11-15.1/`](../../docs/data/2026-11-15.1/). The snapshot is verified against its manifest first, and a damaged copy stops the app with a plain message.
+
+1. Sign in at [share.streamlit.io](https://share.streamlit.io) with the GitHub account that owns this repository.
+2. Click **Create app**, then **Deploy a public app from GitHub**.
+3. Fill in:
+   - **Repository:** `biplob819/assay-pipeline`
+   - **Branch:** `main`
+   - **Main file path:** `apps/console/streamlit_app.py`
+   - **App URL:** a name of your choice, for example `assay-console`
+4. Open **Advanced settings**:
+   - **Python version:** 3.12
+   - **Secrets:** paste the block below and replace each `<...>` value. Top-level secrets reach the app as environment variables.
+
+   ```toml
+   ASSAY_CONSOLE_SNAPSHOT = "docs/data/2026-11-15.1"
+   ASSAY_CONSOLE_PASSCODE = "<a passcode you choose and share with your visitors>"
+   ASSAY_CONSOLE_DATABASE_URL = "<the Postgres URL EvalKit's demo uses: EVALKIT_DEMO_DATABASE_URL>"
+   ASSAY_CONSOLE_DAILY_CAP = "3.00"
+   ANTHROPIC_API_KEY = "<the console's Anthropic key>"
+   OPENAI_API_KEY = "<the console's OpenAI key>"
+   ```
+
+   The spend counter goes in its own table, `assay_spend`, so sharing EvalKit's database does not share EvalKit's budget (OWNER D-38). The console creates that table on its first live request, so the database user needs permission to create one table, and the URL should require SSL (most hosted Postgres URLs already end in `?sslmode=require`). For an own-key-only console, keep just the first two lines: visitors then bring their own keys and the console spends nothing.
+5. Click **Deploy**. `apps/console/requirements.txt` installs this package with the `console` extra, pinned to the versions CI tested. Building the database peaks at about 700 MB of memory for a few seconds on first start.
+6. Check the app:
+   - **Replay** tab: pick "LLM02: Scripted, no model: an agent that does query the restricted table", click **Replay**, and see one `blocked` decision with reason `table_not_allowed` beside its audit line.
+   - **Live** tab: the line at the top shows today's budget, and **Pay with** offers "This console's key" and "My own API key".
+
+To change a secret later: the app's **⋮** menu, **Settings**, **Secrets**, then **Reboot app** from the same menu; a reboot builds a fresh database with a new seed. Any host that runs `streamlit run` works the same way. On a host with a disk you can instead point `ASSAY_CONSOLE_DB` at a database built with `assay build-db --seed <a large random number>`: the default seed, 0, makes the canaries computable by anyone, and the console takes its prompt canary from the seed recorded beside the database.
 
 Usage statistics are off, the startup banner is hidden (which skips its public-IP lookup) and visitors never see tracebacks (`.streamlit/config.toml`, both beside the app and at the repository root). Streamlit can still look up the server's public IP (checkip.amazonaws.com) when it checks a request's origin. The page keeps visitor text in memory only; the aggregate log keeps time, mode, model, whose key (console or visitor), query counts, stop reason, latency and cost. The table the attacks aim at, `embargoed_results`, is synthetic.

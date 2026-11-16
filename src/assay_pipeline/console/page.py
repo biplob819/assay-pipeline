@@ -10,12 +10,16 @@
   (DEM-05, OWNER D-37). A console with a passcode but no hosted keys serves own-key requests only.
 - Each query's guard decision is shown next to the audit line it wrote (DEM-03).
 
-Settings come from the host's secret store as environment variables (DEM-04, NFR1); nothing is
-read from files in the repository:
+Settings come from the host's secret store as environment variables (DEM-04, NFR1); no secret
+is read from files in the repository. A host with no file storage (Streamlit Community Cloud)
+points `ASSAY_CONSOLE_SNAPSHOT` at the published snapshot committed in `docs/data/<id>/`, and
+the console builds its own database at startup (OWNER D-39) with a random 128-bit seed that
+never leaves the server, so its canaries cannot be computed from the public code and snapshot:
 
 | Variable | Meaning |
 | --- | --- |
 | `ASSAY_CONSOLE_DB` | the agent database (`agent.duckdb`, with its `.json` beside it) |
+| `ASSAY_CONSOLE_SNAPSHOT` | or: a published snapshot folder to build the database from at startup |
 | `ASSAY_CONSOLE_PASSCODE` | live mode's passcode; live mode is off when unset |
 | `ASSAY_CONSOLE_DATABASE_URL` | Postgres daily spend counter (needed for hosted keys) |
 | `ASSAY_CONSOLE_DAILY_CAP` | daily live budget in USD (default 3.00, at least one request) |
@@ -27,6 +31,8 @@ from __future__ import annotations
 
 import math
 import os
+import secrets
+import shutil
 import tempfile
 import time
 from collections.abc import Callable, Mapping
@@ -35,7 +41,7 @@ from pathlib import Path
 from typing import Any
 
 from assay_pipeline.agent.ask import AGENTS
-from assay_pipeline.pipeline.agentdb import AgentDBError, load_agent_db
+from assay_pipeline.pipeline.agentdb import AgentDBError, build_agent_db, load_agent_db
 
 from .engine import AggregateLog, CaseResult, Console, Sample, request_bound_usd
 from .guard import DAILY_CAP_USD, Guard, PostgresSpend
@@ -71,6 +77,7 @@ class Settings:
     daily_cap: float
     agents: tuple[str, ...] = ()  # agents whose provider key is set
     workdir: Path | None = None
+    snapshot: Path | None = None  # build the database from this published snapshot at startup
 
     @property
     def live(self) -> bool:
@@ -93,7 +100,9 @@ class Settings:
         return f"This console's hosted keys are off (it needs {' and '.join(missing)})"
 
     @classmethod
-    def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
+    def from_env(cls, env: Mapping[str, str] | None = None, base: Path | None = None) -> Settings:
+        """`base` (the repository the app runs from) anchors a relative ASSAY_CONSOLE_SNAPSHOT,
+        so `docs/data/<id>` works whatever the host's working directory is."""
         env = os.environ if env is None else env
         raw = env.get("ASSAY_CONSOLE_DAILY_CAP", "").strip()
         try:
@@ -104,6 +113,7 @@ class Settings:
             raise SettingsError(f"ASSAY_CONSOLE_DAILY_CAP must be at least one live request "
                                 f"({money(live_bound_usd())}) and below 1000")  # fmt: skip
         work = env.get("ASSAY_CONSOLE_WORKDIR", "").strip()
+        snap = env.get("ASSAY_CONSOLE_SNAPSHOT", "").strip()
         return cls(
             db=Path(env.get("ASSAY_CONSOLE_DB", "agent.duckdb")),
             passcode=env.get("ASSAY_CONSOLE_PASSCODE", "").strip(),  # a stray newline in a store
@@ -111,6 +121,9 @@ class Settings:
             daily_cap=cap,
             agents=tuple(a for a, (_m, _p, key) in AGENTS.items() if env.get(key, "").strip()),
             workdir=Path(work) if work else None,
+            snapshot=(base / snap if base and not Path(snap).is_absolute() else Path(snap))
+            if snap
+            else None,
         )
 
 
@@ -128,15 +141,26 @@ def build_console(settings: Settings, workdir: Path | None = None) -> Console:
     """One console per app process: its own database copy and in-memory audit log. Live mode
     is wired when the passcode is set; the host's keys and budget only when the shared spend
     store, a provider key and the Postgres client are there too. Otherwise the guard has no
-    spend store and admits own-key requests only."""
-    if not settings.db.is_file():
-        raise SettingsError("No agent database is configured (set ASSAY_CONSOLE_DB).")
-    try:
-        db = load_agent_db(settings.db)
-    except AgentDBError as exc:  # missing build record, hash mismatch: no host paths shown
-        raise SettingsError("The agent database failed its integrity check; rebuild it with "
-                            "`assay build-db`.") from exc  # fmt: skip
+    spend store and admits own-key requests only. With no database file it builds one from
+    `settings.snapshot` (OWNER D-39); a failed start removes the temp folder it made."""
+    db_path = settings.db
+    if not db_path.is_file() and settings.snapshot is None:
+        raise SettingsError("No agent database is configured (set ASSAY_CONSOLE_DB, or "
+                            "ASSAY_CONSOLE_SNAPSHOT to build one).")  # fmt: skip
+    made = workdir is None and settings.workdir is None  # a temp dir only this call owns
     work = workdir or settings.workdir or Path(tempfile.mkdtemp(prefix="assay-console-"))
+    try:
+        if not db_path.is_file():
+            db_path = _build_from_snapshot(settings.snapshot, work)  # type: ignore[arg-type]
+        try:
+            db = load_agent_db(db_path)
+        except AgentDBError as exc:  # missing build record, hash mismatch: no host paths shown
+            raise SettingsError("The agent database failed its integrity check; rebuild it "
+                                "with `assay build-db`.") from exc  # fmt: skip
+    except SettingsError:
+        if made:
+            shutil.rmtree(work, ignore_errors=True)  # a failed start leaves nothing behind
+        raise
     guard = None
     if settings.live:
         spend = None
@@ -150,7 +174,22 @@ def build_console(settings: Settings, workdir: Path | None = None) -> Console:
         guard = Guard(settings.passcode, spend, per_request_cap=live_bound_usd(),
                       daily_cap=settings.daily_cap)  # fmt: skip
     return Console(db, work, guard=guard, aggregate=AggregateLog(work / "aggregate.jsonl"),
-                   host_agents=settings.agents)  # fmt: skip
+                   host_agents=settings.agents, seed=db.seed)  # fmt: skip
+
+
+def _build_from_snapshot(snapshot: Path, work: Path) -> Path:
+    """Build the console's database from a published snapshot (OWNER D-39). The seed is random
+    and 128 bits (never 0, the public default), so the canaries in this database and the
+    prompt canary cannot be derived from the public code and snapshot, nor found by trying
+    seeds. It is recorded only in the build record beside the database, on the server."""
+    seed = secrets.randbits(128) | 1
+    out = work / "built" / "agent.duckdb"
+    try:
+        build_agent_db(snapshot, out, seed=seed)
+    except Exception as exc:  # missing folder, hash mismatch, damaged file: no host paths shown
+        raise SettingsError("The published snapshot failed its integrity check, so the console "
+                            "could not build its database.") from exc  # fmt: skip
+    return out
 
 
 def sample_label(s: Sample) -> str:
