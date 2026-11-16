@@ -23,4 +23,4 @@
   - **Live judging:** 192 calls for $0.72. Both judges agree with all 24 labels and with each other on 94 of 96 verdicts. Kappa is undefined or 0, because almost every answer passes (`docs/measurements/behaviour-2026-11-16.md`).
   - **Two accuracy views:** reading answers showed the strict query match misses right answers given from breakdown queries. Claude states the gold value in 100% of single-number trials but matches by query 60% of the time; Sol 73% and 70%. The second view is now reported beside the strict one (D-36), with a test.
 - 2026-11-16 — green: converged twice; verifier pass done; live judging and hand labels recorded.
-- 2026-11-16 — after green: the hand labels first drew two held-out questions (nq-26, nq-30) whose reasons were pushed in cf791ed; labels redrawn from public questions (judges still agree with all 24), a test added, D-12 update recorded.
+- 2026-11-16 — after green: the hand labels first drew two held-out questions (nq-26, nq-30) whose reasons were pushed in bfe3cb8; labels redrawn from public questions (judges still agree with all 24), a test added, D-12 update recorded.

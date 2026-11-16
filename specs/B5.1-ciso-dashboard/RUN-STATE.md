@@ -3,7 +3,7 @@
 **Now:** green
 
 ## History
-- 2026-11-16 — started (base b0be4f3).
+- 2026-11-16 — started (base a64acf0).
   - **Built:** the bundle collector, the renderer, `assay report` and the Pages workflow. The bundle and page come from `main-2026-11-16` and a fresh oracle run on the current suite (60 of 60 stopped: guard 45, limits 5, quality rules 10).
   - **Author review of the rendered page:**
     - SVGs scaled with the column and labels collided, so charts now render at their native width with a wider label column;

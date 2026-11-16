@@ -3,7 +3,7 @@
 **Now:** building
 
 ## History
-- 2026-11-16: started (base 3d5d745). The page logic is in `console/page.py`, with a thin Streamlit script in `apps/console/`. Usage statistics are off. 9 tests: settings, the cap bound, live wiring, the budget line, decision-to-audit pairing (including a scripted blocked query), and three AppTest runs covering replay, a missing database and live mode with a wrong passcode. The console is cached keyed on its settings, which fixed a stale console found by the AppTest runs. Streamlit 1.67 was added to the `console` extra and the dev group.
+- 2026-11-16: started (base 1ae1fca). The page logic is in `console/page.py`, with a thin Streamlit script in `apps/console/`. Usage statistics are off. 9 tests: settings, the cap bound, live wiring, the budget line, decision-to-audit pairing (including a scripted blocked query), and three AppTest runs covering replay, a missing database and live mode with a wrong passcode. The console is cached keyed on its settings, which fixed a stale console found by the AppTest runs. Streamlit 1.67 was added to the `console` extra and the dev group.
 - 2026-11-16: verifier pass. One must-fix: with no provider key, live mode crashed after the passcode check, showed a traceback and kept the $0.555 hold, so about five clicks used up the day.
 
   Fixes:
