@@ -2,6 +2,9 @@
 
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
+## 2026-11-17
+- [FIX] [B5.3] — one-page PDFs (threat model, data roadmap) are written uncompressed, so they rebuild byte-identically whatever zlib the interpreter has; Windows Python 3.14+ ships zlib-ng and failed the check (L-41).
+
 ## 2026-11-16
 - [RELEASE] [B5.3] — 0.1.1: tested on Python 3.11 to 3.15 on all three OSes, with no upper bound on `requires-python`; `assay doctor` warns, without failing, on a newer Python (OWNER D-23 update). The v0.1.0 release smoke test failed on Ubuntu and macOS because uv installed the tool on 3.14 and 3.15 despite `<3.14` (L-40). v0.1.0 is on PyPI and works on 3.11 to 3.13.
 - [FEAT] [D6.2] — console page (`apps/console/streamlit_app.py` over `console/page.py`). Replay is the default: six recorded attacks plus two scripted guard demos, with no API call. Live mode sits behind the passcode, offers only agents with keys and shows a cached budget line. Each guard decision is shown beside its audit line. Usage statistics, the IP-lookup banner and tracebacks are off. Deploying waits on the owner choosing a host and setting secrets (DEM-04).

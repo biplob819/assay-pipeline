@@ -74,6 +74,7 @@ def _blocks(text: str) -> list[tuple[str, object]]:
 def _render(blocks: list[tuple[str, object]], size: float, sha: str) -> FPDF:
     pdf = FPDF(orientation="L", unit="mm", format="A4")
     pdf.set_creation_date(FIXED_DATE)
+    pdf.set_compression(False)  # zlib output differs by build (zlib-ng on Windows 3.14+): L-41
     pdf.set_keywords(f"source-sha256:{sha}")
     pdf.set_margins(9, 8, 9)
     pdf.set_auto_page_break(True, margin=8)

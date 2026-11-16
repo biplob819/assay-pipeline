@@ -2,7 +2,9 @@
 
 Layout: <root>/<source>/<release>/<key[:2]>/<key>.json.gz plus index.jsonl (one `RawResponse`
 per stored body) and cursor.json (resume state). Bodies are gzip with mtime 0, so the same
-response always gives the same file bytes.
+response gives the same file bytes on one zlib build (CPython 3.14+ on Windows uses zlib-ng,
+which compresses differently, L-41); integrity rests on `body_sha256` over the uncompressed
+body, which holds everywhere.
 """
 
 from __future__ import annotations
