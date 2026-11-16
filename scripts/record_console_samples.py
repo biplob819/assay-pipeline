@@ -77,6 +77,13 @@ def main(db_path: str, out: str) -> None:
                      "question": question, "responses": rec.responses})  # fmt: skip
         print(sid, agent, result.stop_reason, [d["decision"] for d in result.decisions],
               f"${result.cost_usd:.4f}")  # fmt: skip
+    # the scripted guard demos (ids "guard-...", labelled "Scripted, no model") are not
+    # recorded from a model; keep them from the existing file
+    old = Path(out)
+    if old.is_file():
+        rows += [
+            r for r in json.loads(old.read_text(encoding="utf-8")) if r["id"].startswith("guard-")
+        ]
     Path(out).write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
     print(f"spent ${spent:.4f}")
 

@@ -16,4 +16,4 @@ The threat model (`docs/threat-model.md`, one page) lists the assets, trust boun
 
 ## Privacy
 
-No telemetry. The tools send data only to ChEMBL and PubChem (to build snapshots, and when `assay doctor` checks they can be reached) and to the model providers whose keys you set (to run agents and judges). A hosted console's live mode also keeps a daily spend counter in the Postgres database its operator configures. The public console keeps visitor text in memory only; its persistent log holds aggregates (time, model, guard counts, latency, cost).
+No telemetry. The tools send data only to ChEMBL and PubChem (to build snapshots, and when `assay doctor` checks they can be reached) and to the model providers whose keys you set (to run agents and judges). A hosted console's live mode also keeps a daily spend counter in the Postgres database its operator configures. Streamlit, which serves the console, has its usage statistics turned off, but it can look up the server's public IP when it checks a request's origin. The public console keeps visitor text in memory only; its persistent log holds aggregates (time, model, guard counts, latency, cost).

@@ -81,7 +81,7 @@ Build your own snapshot with no API keys: `assay ingest chembl`, `assay ingest p
 
 ## Privacy
 
-No telemetry. The tools send data only to ChEMBL and PubChem (when building a snapshot, and when `assay doctor` checks they can be reached) and to the model providers whose keys you set (when running agents and judges). If you host the console, its live mode also keeps a daily spend counter in the Postgres database you configure. Keys are read from your environment only and are never printed or logged. The public console keeps visitor text in memory only. See [SECURITY.md](SECURITY.md).
+No telemetry. The tools send data only to ChEMBL and PubChem (when building a snapshot, and when `assay doctor` checks they can be reached) and to the model providers whose keys you set (when running agents and judges). If you host the console, its live mode also keeps a daily spend counter in the Postgres database you configure. Streamlit, which serves the console, has its usage statistics turned off, but it can look up the server's public IP when it checks a request's origin. Keys are read from your environment only and are never printed or logged. The public console keeps visitor text in memory only. See [SECURITY.md](SECURITY.md).
 
 ## Licence and attribution
 

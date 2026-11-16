@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-16
+- [FEAT] [D6.2] — console page (`apps/console/streamlit_app.py` over `console/page.py`). Replay is the default: six recorded attacks plus two scripted guard demos, with no API call. Live mode sits behind the passcode, offers only agents with keys and shows a cached budget line. Each guard decision is shown beside its audit line. Usage statistics, the IP-lookup banner and tracebacks are off. Deploying waits on the owner choosing a host and setting secrets (DEM-04).
 - [FIX] [B5.3] — the published-markdown list in `test_release.py` now uses posix paths, so the link and command checks pass on Windows CI.
 - [FIX] [B5.3] — `doctor.py` formatting, which failed CI's format check. The convergence ruff gate now also runs `ruff format --check`, as CI does (L-38).
 - [FEAT] [B5.3] — open-source release prep, v0.1.0. README results are generated from the published bundle, with a three-line byte-identical rebuild. Also: four user docs, CONTRIBUTING, SECURITY with private vulnerability reporting, the code of conduct and templates, and `assay doctor`. The run's audit anchors and verify result are published, as are the data card and licence, plus a public-only hand-read with five findings. ABL1 builds end to end from config on recorded responses, and a release workflow publishes by PyPI trusted publishing. The tag waits on the owner registering the pending publisher (REL-06, OSS-01).

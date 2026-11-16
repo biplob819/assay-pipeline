@@ -1,0 +1,3 @@
+# Streamlit Community Cloud reads this file (the entrypoint folder comes first): install
+# this repository with the console extra (Streamlit and the Postgres client).
+.[console]

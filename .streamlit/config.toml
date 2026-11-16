@@ -1,0 +1,15 @@
+# No telemetry (README, SECURITY): Streamlit's usage statistics are off, and the startup
+# banner is hidden, which also skips its public-IP lookup. Visitors never see tracebacks.
+# The same file sits beside apps/console/streamlit_app.py (read by Streamlit >= 1.46) and at the
+# repository root (the working directory on Streamlit Community Cloud).
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = "none"
+
+[logger]
+hideWelcomeMessage = true
+
+[server]
+headless = true

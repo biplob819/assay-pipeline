@@ -29,6 +29,7 @@ assay = "assay_pipeline.cli:main"
 [project.optional-dependencies]
 console = [
     "psycopg[binary]>=3.2",
+    "streamlit>=1.46",
 ]
 
 [dependency-groups]
@@ -40,6 +41,7 @@ dev = [
     "types-pyyaml>=6.0.12.20261113",
     "fpdf2>=2.8",
     "psycopg[binary]>=3.2",
+    "streamlit>=1.46",
 ]
 
 [build-system]
