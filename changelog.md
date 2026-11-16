@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-17
+- [RELEASE] [B5.3] — v0.1.1 published to PyPI by trusted publishing; the uvx `assay doctor` smoke test passed on Linux, macOS and Windows on each runner's newest Python. REL-06 and OSS-01 green: B5.3 complete.
 - [DOCS] [B5.3] — README for the release: screenshots of the dashboard, explorer and console, a get-started guide, the console's own-key mode, and an all-links table.
 - [HARNESS] [A4.3] — git history rewritten (owner): the six hand-label lines that paraphrased two held-out questions are gone from every commit; `main` and `v0.1.0` force-pushed; commit ids quoted in run states, `.base` files and the decision log remapped (D-12 update).
 - [FEAT] [D6.2] — console live mode on the visitor's own Anthropic or OpenAI key (OWNER D-37, DEM-05): the passcode is still required, the rate limit and per-request cap still apply, nothing is held against the host's budget, and the key goes to that request's SDK client only (never the environment, disk, logs or the page). A console with only a passcode serves own-key requests.
