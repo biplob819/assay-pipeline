@@ -49,6 +49,10 @@ class Turn:
     raw: dict[str, Any]
     cache_write_tokens: int = 0  # of tokens_in: written to the prompt cache (Anthropic 1.25x)
     cache_read_tokens: int = 0  # of tokens_in: read from the prompt cache (Anthropic 0.1x)
+    # Reported, never priced (DSH-09): what the provider says it served from cache, and the
+    # reasoning share of tokens_out where the provider reports one (OpenAI); None if unknown.
+    cached_tokens: int | None = None
+    reasoning_tokens: int | None = None
 
 
 class Provider(Protocol):
@@ -139,9 +143,11 @@ class AnthropicProvider:
         self._messages.append({"role": "assistant", "content": raw["content"]})
         u = msg.usage
         write, read = u.cache_creation_input_tokens or 0, u.cache_read_input_tokens or 0
+        details = u.output_tokens_details  # the thinking share of output_tokens, when reported
         # input_tokens counts only the uncached part; cached input is billed too (S3.3 verifier)
         return Turn(text, tuple(calls), stop, u.input_tokens + write + read, u.output_tokens, raw,
-                    cache_write_tokens=write, cache_read_tokens=read)  # fmt: skip
+                    cache_write_tokens=write, cache_read_tokens=read, cached_tokens=read,
+                    reasoning_tokens=details.thinking_tokens if details else None)  # fmt: skip
 
     def add_results(self, results: Sequence[tuple[ToolCall, str]]) -> None:
         self._messages.append(
@@ -235,6 +241,8 @@ class OpenAIProvider:
             usage.input_tokens if usage else 0,
             usage.output_tokens if usage else 0,
             raw,
+            cached_tokens=usage.input_tokens_details.cached_tokens if usage else None,
+            reasoning_tokens=usage.output_tokens_details.reasoning_tokens if usage else None,
         )
 
     def add_results(self, results: Sequence[tuple[ToolCall, str]]) -> None:

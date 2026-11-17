@@ -9,6 +9,7 @@ published (D-12). Raw trajectories, judge reasons and behaviour rows stay in `ru
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,63 @@ AUDIT_TAIL = 30  # recent public audit lines shown on the dashboard
 
 class ReportError(RuntimeError):
     """The run or snapshot is incomplete for a report."""
+
+
+def _lines(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    return [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
+
+
+def _pct(values: list[int], p: float) -> int:
+    """Nearest-rank percentile of a non-empty list."""
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(p / 100 * len(ordered)) - 1)]
+
+
+def efficiency(run_dir: Path) -> list[dict[str, Any]]:
+    """Per-agent cost and, when every scored trial recorded it, token use and latency (DSH-09,
+    EvalKit D-67). Aggregates only: no case id leaves this function. A rerun's later line for
+    the same trial replaces the earlier one, as the resume does."""
+    trials: dict[tuple[str, str, int], dict[str, Any]] = {}
+    spent: dict[str, float] = {}  # every attempt, reruns included, as the run's spend counts it
+    for r in _lines(run_dir / "trials.jsonl"):
+        trials[(r["case_id"], r["model"], r["trial"])] = r
+        spent[r["model"]] = spent.get(r["model"], 0.0) + r["cost_usd"]
+    usage = {(r["case_id"], r["model"], r["trial"]): r["usage"]
+             for r in _lines(run_dir / "trials-trajectories.jsonl") if r.get("usage")}  # fmt: skip
+    out = []
+    for model in sorted({k[1] for k in trials} - {"pipeline"}):
+        rows = {k: r for k, r in trials.items() if k[1] == model}
+        scored = {k: r for k, r in rows.items() if r["status"] == "scored"}
+        graded = [r for r in scored.values() if r.get("answer_correct") is not None]
+        correct = sum(1 for r in graded if r["answer_correct"])
+        graded_cost = sum(r["cost_usd"] for r in graded)
+        row: dict[str, Any] = {
+            "model": model, "trials": len(rows), "scored": len(scored),
+            "errors": sum(1 for r in rows.values() if r["status"] in ("transport", "void")),
+            "cost_usd": round(spent[model], 6),  # all attempts; per-case means use the last
+            "cost_per_case": round(sum(r["cost_usd"] for r in scored.values()) / len(scored), 6)
+            if scored else None,
+            "graded": len(graded), "correct": correct,
+            "cost_per_correct": round(graded_cost / correct, 6) if correct else None,
+        }  # fmt: skip
+        used = [usage[k] for k in scored if k in usage]
+        if scored and len(used) == len(scored):  # partial coverage would bias the means
+            n = len(used)
+            for key in ("tokens_in", "tokens_out", "tokens_cached", "tokens_reasoning"):
+                vals = [u.get(key) for u in used]
+                row[f"{key}_per_case"] = (None if any(v is None for v in vals)
+                                          else round(sum(vals) / n))  # type: ignore[arg-type]  # fmt: skip
+            cached = [u.get("tokens_cached") for u in used]
+            total_in = sum(u["tokens_in"] for u in used)
+            row["cache_hit_share"] = (None if any(v is None for v in cached) or not total_in
+                                      else round(sum(cached) / total_in, 6))  # type: ignore[arg-type]  # fmt: skip
+            lat = [u["latency_ms"] for u in used]
+            row.update(latency_p50=_pct(lat, 50), latency_p95=_pct(lat, 95),
+                       latency_p99=_pct(lat, 99))  # fmt: skip
+        out.append(row)
+    return out
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -97,6 +155,7 @@ def collect(
         "manifest_sha256": sha256_file(manifest_path),
         "summary": {k: v for k, v in summary.items() if k != "trials_sha256"},
         "ablation": _json(ablation) if ablation.is_file() else None,
+        "efficiency": efficiency(run_dir),
         "oracle": _public_oracle(_json(oracle), public) if oracle is not None else None,
         "audit": {
             "verify_ok": check.ok,

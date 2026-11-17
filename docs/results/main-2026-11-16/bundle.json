@@ -738,6 +738,30 @@
   ],
   "verify_ok": true
  },
+ "efficiency": [
+  {
+   "correct": 38,
+   "cost_per_case": 0.008945,
+   "cost_per_correct": 0.027235,
+   "cost_usd": 2.146899,
+   "errors": 0,
+   "graded": 66,
+   "model": "claude-sonnet-5-5",
+   "scored": 240,
+   "trials": 240
+  },
+  {
+   "correct": 50,
+   "cost_per_case": 0.005644,
+   "cost_per_correct": 0.011782,
+   "cost_usd": 1.35449,
+   "errors": 0,
+   "graded": 66,
+   "model": "gpt-6.1-sol",
+   "scored": 240,
+   "trials": 240
+  }
+ ],
  "manifest_sha256": "75ca936e307989c5de99a2e0bc8087d9f1df6de507f3921e6fc350f75c45a68d",
  "oracle": {
   "cases": 60,

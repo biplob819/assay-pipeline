@@ -330,7 +330,7 @@ def _trial(
         "case_id": case_id, "model": model, "trial": trial, "audit_seq": [first, last],
         "trajectory": t.model_dump(mode="json"), "answer": result.answer,
         "turn_texts": list(result.turn_texts), "tool_texts": [c.text for c in tool.calls],
-        "changed": changed, "truncated": result.truncated,
+        "changed": changed, "truncated": result.truncated, "usage": dict(result.usage),
     }  # fmt: skip
     common = {
         "schema_version": SCHEMA_VERSION, "case_id": case_id, "model": model, "trial": trial,

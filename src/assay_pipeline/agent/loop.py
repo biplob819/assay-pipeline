@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from evalkit.schemas import Step, Trajectory
 
@@ -50,6 +50,9 @@ class TrialResult:
     # answer, but this text reaches the user too, so the scorer scans it for canaries (A4.2).
     turn_texts: tuple[str, ...] = ()
     truncated: bool = False  # the answer hit the output cap (max_tokens / max_output_tokens)
+    # Per-trial totals for the efficiency report (DSH-09): every turn, the final answer included,
+    # which the steps alone miss; latency is the trial's wall time. Reported, never priced.
+    usage: dict[str, int | None] = field(default_factory=dict)
 
 
 def _clean(text: str) -> str:
@@ -83,6 +86,8 @@ def run_trial(
     steps: list[Step] = []
     calls_used = 0
     used = {"in": 0, "out": 0, "write": 0, "read": 0}
+    seen: dict[str, int | None] = {"cached": 0, "reasoning": 0, "turns": 0}
+    started = time.monotonic()
     answer = ""
     stop_reason = "final_answer"
     turn_texts: list[str] = []
@@ -93,6 +98,10 @@ def run_trial(
         used["out"] += turn.tokens_out
         used["write"] += turn.cache_write_tokens
         used["read"] += turn.cache_read_tokens
+        seen["turns"] = (seen["turns"] or 0) + 1
+        for key, value in (("cached", turn.cached_tokens), ("reasoning", turn.reasoning_tokens)):
+            current = seen[key]
+            seen[key] = None if value is None or current is None else current + value
 
     try:
         for _ in range(MAX_TURNS):
@@ -170,7 +179,15 @@ def run_trial(
         cost_usd=round(prices.cost(used["in"], used["out"], used["write"], used["read"]), 6),
         stop_reason=stop_reason,  # type: ignore[arg-type]
     )
-    return TrialResult(trajectory, answer, tuple(turn_texts), truncated)
+    usage = {
+        "tokens_in": used["in"],
+        "tokens_out": used["out"],
+        "tokens_cached": seen["cached"] if seen["turns"] else None,  # no turn: unknown
+        "tokens_reasoning": seen["reasoning"] if seen["turns"] else None,
+        "turns": seen["turns"],
+        "latency_ms": int((time.monotonic() - started) * 1000),
+    }
+    return TrialResult(trajectory, answer, tuple(turn_texts), truncated, usage)  # fmt: skip
 
 
 def _step(

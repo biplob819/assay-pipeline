@@ -18,3 +18,4 @@
 - 2026-11-15 — prompt rule 4 now defines censored as relation <, <=, > or >= and names unknown relations separately (A4.1 verifier, D-33).
 - 2026-11-17: reopened for hand-read follow-up 2 (OWNER D-40, AGT-08): the prompt line on `flags`, only when a view has the column; its two example tests pass the guard. 1 test in `tests/agent/test_agent.py`. AGT-08 building until the verifier pass.
 - 2026-11-17: verifier pass: both example tests run on the real snapshot (`flags` is VARCHAR[], ids QC1 to QC5, counts match `list_contains`); canary, seed and recordings untouched. AGT-08 green.
+- 2026-11-17: DSH-09 (B5.1, OWNER D-42) touched the agent: providers report cached and reasoning tokens apart from pricing, and `run_trial` returns per-trial usage totals and wall time. Trajectories, cost and the golden replay are unchanged (tests in `tests/agent/test_agent.py`).

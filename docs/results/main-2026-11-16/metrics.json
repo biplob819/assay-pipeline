@@ -561,6 +561,68 @@
    "value": true
   },
   {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "cost_per_case",
+   "unit": "USD",
+   "value": 0.008945
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 38,
+   "name": "cost_per_correct",
+   "unit": "USD",
+   "value": 0.027235
+  },
+  {
+   "k": 0,
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "error_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "cost_per_case",
+   "unit": "USD",
+   "value": 0.005644
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 50,
+   "name": "cost_per_correct",
+   "unit": "USD",
+   "value": 0.011782
+  },
+  {
+   "k": 0,
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "error_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
    "name": "system_cost",
    "unit": "USD",
    "value": 3.501389

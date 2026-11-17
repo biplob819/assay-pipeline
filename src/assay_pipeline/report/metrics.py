@@ -100,6 +100,28 @@ def metrics_summary(bundle: dict[str, Any]) -> dict[str, Any]:
     metrics.append(
         {"name": "audit_log_verified", "unit": "bool", "value": bool(audit["verify_ok"])}
     )
+    for e in bundle.get("efficiency") or []:  # EvalKit D-67's per-model efficiency block
+        lab = {"model": e["model"], "mode": "live"}
+        if e.get("cost_per_case") is not None:
+            metrics.append({"name": "cost_per_case", "unit": "USD", "value": e["cost_per_case"],
+                            "n": e["scored"], "labels": lab})  # fmt: skip
+        if e.get("cost_per_correct") is not None:
+            metrics.append({"name": "cost_per_correct", "unit": "USD",
+                            "value": e["cost_per_correct"], "n": e["correct"],
+                            "labels": lab})  # fmt: skip
+        metrics.append(_rate("error_rate", e["errors"], e["trials"], **lab))
+        for key in ("tokens_in", "tokens_out", "tokens_cached", "tokens_reasoning"):
+            if e.get(f"{key}_per_case") is not None:
+                metrics.append({"name": f"{key}_per_case", "unit": "count",
+                                "value": e[f"{key}_per_case"], "n": e["scored"],
+                                "labels": lab})  # fmt: skip
+        if e.get("cache_hit_share") is not None:
+            metrics.append({"name": "cache_hit_share", "unit": "rate",
+                            "value": e["cache_hit_share"], "labels": lab})  # fmt: skip
+        for p in ("latency_p50", "latency_p95", "latency_p99"):
+            if e.get(p) is not None:
+                metrics.append({"name": p, "unit": "ms", "value": e[p], "n": e["scored"],
+                                "labels": lab})  # fmt: skip
     # EvalKit's standard cost names (its D-67): system_cost is the agents, eval_overhead_cost the
     # judges. Per-model tokens, latency and retries need a bundle that carries them (next run).
     costs = {"system_cost": s["spent_usd"], "eval_overhead_cost": s.get("judging_spent_usd", 0.0),

@@ -574,3 +574,45 @@ def test_the_prompt_says_flags_is_a_list_and_its_examples_pass_the_guard():
         v.model_copy(update={"columns": tuple(c for c in v.columns if c != "flags")})
         for v in VIEWS.views)})  # fmt: skip
     assert "`flags`" not in system_prompt(no_flags, "2026-11-15.1", "C")
+
+
+# ---- DSH-09: per-trial usage for the efficiency report ----
+
+
+def test_a_trial_totals_every_turns_tokens_and_reports_cache_and_reasoning(db, tmp_path):
+    """Totals cover the final answer's turn, which the steps miss; cached and reasoning tokens
+    are reported as the provider gives them and never change the price."""
+    first, last = resp([fcall(COUNT_SQL)], tin=1000, tout=60), resp([omsg("16 rows.")], tin=1300)
+    first["usage"]["input_tokens_details"]["cached_tokens"] = 800
+    first["usage"]["output_tokens_details"]["reasoning_tokens"] = 40
+    last["usage"]["input_tokens_details"]["cached_tokens"] = 1000
+    result, _ = trial(db, tmp_path, OpenAIProvider("gpt-6.1-sol", Replay([first, last])))
+    u = result.usage
+    assert (u["tokens_in"], u["tokens_out"], u["turns"]) == (2300, 110, 2)
+    assert (u["tokens_cached"], u["tokens_reasoning"]) == (1800, 40)
+    assert sum(s.tokens_out for s in result.trajectory.steps) < (u["tokens_out"] or 0)
+    assert isinstance(u["latency_ms"], int) and u["latency_ms"] >= 0
+    plain, _ = trial(
+        db,
+        tmp_path / "b",
+        OpenAIProvider(
+            "gpt-6.1-sol",
+            Replay(
+                [resp([fcall(COUNT_SQL)], tin=1000, tout=60), resp([omsg("16 rows.")], tin=1300)]
+            ),
+        ),
+    )
+    assert plain.trajectory.cost_usd == result.trajectory.cost_usd  # reported, never priced
+
+
+def test_claude_reports_cache_reads_and_its_thinking_tokens(db, tmp_path):
+    first = msg([tool_use(COUNT_SQL)])
+    first["usage"]["cache_read_input_tokens"] = 900
+    first["usage"]["output_tokens_details"] = {"thinking_tokens": 30}
+    last = msg([text("16 rows.")], "end_turn")
+    last["usage"]["output_tokens_details"] = {"thinking_tokens": 12}
+    result, _ = trial(db, tmp_path, AnthropicProvider("claude-sonnet-5-5", Replay([first, last])))
+    assert result.usage["tokens_cached"] == 900 and result.usage["tokens_reasoning"] == 42
+    old, _ = trial(db, tmp_path / "old", AnthropicProvider("claude-sonnet-5-5", Replay(
+        [msg([tool_use(COUNT_SQL)]), msg([text("16 rows.")], "end_turn")])))  # fmt: skip
+    assert old.usage["tokens_reasoning"] is None  # a recording without the details: unknown
