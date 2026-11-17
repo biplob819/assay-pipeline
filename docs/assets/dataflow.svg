@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="t">Trusted Assay Pipeline: data flow</title>
+  <desc id="d">Public ChEMBL and PubChem data is ingested, normalised, flagged by quality rules and written as a hashed snapshot. The snapshot builds a read-only agent database. A question or attack goes to the agent, whose SQL passes the guard before an isolated read-only executor runs it. Every step is written to a hash-chained audit log, scored with EvalKit and two judges, and published as a results bundle, dashboard and release gates.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b42318"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#334155;stroke-width:1.5}
+      .data{fill:#eef4ff}.sec{fill:#fff4ed}.ev{fill:#effaf3}.out{fill:#f8fafc}
+      .guard{fill:#fff1f0;stroke:#b42318;stroke-width:2.5}
+      .h{font-size:15px;font-weight:600;fill:#0f172a}
+      .s{font-size:12.5px;fill:#334155}
+      .row{font-size:13px;font-weight:600;fill:#475569;letter-spacing:.04em}
+      .lbl{font-size:12px;fill:#334155}
+      .red{font-size:12px;fill:#b42318;font-weight:600}
+      .ln{stroke:#334155;stroke-width:1.6;fill:none}
+      .lnr{stroke:#b42318;stroke-width:1.6;fill:none;stroke-dasharray:5 4}
+    </style>
+  </defs>
+  <rect width="1200" height="700" fill="#ffffff"/>
+  <text x="30" y="38" font-size="22" font-weight="700" fill="#0f172a">Trusted Assay Pipeline: data flow</text>
+  <text x="30" y="62" class="s">From public assay data to a hashed snapshot, then to an agent that can reach the data only through the SQL guard, with every step audited and scored.</text>
+
+  <!-- Row 1: data side -->
+  <text x="30" y="98" class="row">DATA SIDE: PIPELINE (NO MODEL, NO API KEYS)</text>
+  <rect x="30" y="110" width="150" height="92" rx="10" class="box data"/>
+  <text x="105" y="140" text-anchor="middle" class="h">Public sources</text>
+  <text x="105" y="162" text-anchor="middle" class="s">ChEMBL API</text>
+  <text x="105" y="180" text-anchor="middle" class="s">PubChem API</text>
+
+  <rect x="220" y="110" width="170" height="92" rx="10" class="box data"/>
+  <text x="305" y="140" text-anchor="middle" class="h">Ingest</text>
+  <text x="305" y="162" text-anchor="middle" class="s">content-addressed</text>
+  <text x="305" y="180" text-anchor="middle" class="s">raw cache, hashed</text>
+
+  <rect x="430" y="110" width="180" height="92" rx="10" class="box data"/>
+  <text x="520" y="140" text-anchor="middle" class="h">Normalise</text>
+  <text x="520" y="162" text-anchor="middle" class="s">RDKit parent, InChIKey</text>
+  <text x="520" y="180" text-anchor="middle" class="s">units to nM, pIC50</text>
+
+  <rect x="650" y="110" width="180" height="92" rx="10" class="box data"/>
+  <text x="740" y="140" text-anchor="middle" class="h">Quality rules</text>
+  <text x="740" y="162" text-anchor="middle" class="s">QC1 to QC5 flag rows</text>
+  <text x="740" y="180" text-anchor="middle" class="s">never delete a row</text>
+
+  <rect x="870" y="110" width="300" height="92" rx="10" class="box data"/>
+  <text x="1020" y="140" text-anchor="middle" class="h">Snapshot</text>
+  <text x="1020" y="162" text-anchor="middle" class="s">deterministic Parquet, hashed manifest</text>
+  <text x="1020" y="180" text-anchor="middle" class="s">data card and licence</text>
+
+  <path d="M180,156 H216" class="ln" marker-end="url(#a)"/>
+  <path d="M390,156 H426" class="ln" marker-end="url(#a)"/>
+  <path d="M610,156 H646" class="ln" marker-end="url(#a)"/>
+  <path d="M830,156 H866" class="ln" marker-end="url(#a)"/>
+
+  <!-- hand-off -->
+  <path d="M1020,202 V276" class="ln" marker-end="url(#a)"/>
+  <text x="1030" y="236" class="lbl">build-db: the only hand-off</text>
+  <text x="1030" y="252" class="lbl">from data to agent</text>
+
+  <!-- Row 2: security side -->
+  <text x="30" y="268" class="row">SECURITY SIDE: AGENT BEHIND A GUARD</text>
+  <rect x="30" y="280" width="150" height="92" rx="10" class="box sec"/>
+  <text x="105" y="310" text-anchor="middle" class="h">Question</text>
+  <text x="105" y="332" text-anchor="middle" class="s">user, attack suite</text>
+  <text x="105" y="350" text-anchor="middle" class="s">or scripted attacker</text>
+
+  <rect x="220" y="280" width="170" height="92" rx="10" class="box sec"/>
+  <text x="305" y="310" text-anchor="middle" class="h">Agent</text>
+  <text x="305" y="332" text-anchor="middle" class="s">Claude Sonnet 5.5</text>
+  <text x="305" y="350" text-anchor="middle" class="s">or GPT-6.1 Sol, one SQL tool</text>
+
+  <rect x="430" y="280" width="180" height="92" rx="10" class="box guard"/>
+  <text x="520" y="310" text-anchor="middle" class="h">SQL guard</text>
+  <text x="520" y="332" text-anchor="middle" class="s">parse, allow-listed views</text>
+  <text x="520" y="350" text-anchor="middle" class="s">and functions, row limits</text>
+
+  <rect x="650" y="280" width="180" height="92" rx="10" class="box sec"/>
+  <text x="740" y="310" text-anchor="middle" class="h">Read-only executor</text>
+  <text x="740" y="332" text-anchor="middle" class="s">isolated child process</text>
+  <text x="740" y="350" text-anchor="middle" class="s">timeout, memory cap</text>
+
+  <rect x="870" y="280" width="300" height="92" rx="10" class="box sec"/>
+  <text x="1020" y="310" text-anchor="middle" class="h">agent.duckdb</text>
+  <text x="1020" y="332" text-anchor="middle" class="s">four approved views, read-only</text>
+  <text x="1020" y="350" text-anchor="middle" class="s">plus a synthetic restricted table</text>
+
+  <path d="M180,326 H216" class="ln" marker-end="url(#a)"/>
+  <path d="M390,326 H426" class="ln" marker-end="url(#a)"/>
+  <text x="408" y="316" text-anchor="middle" class="lbl">SQL</text>
+  <path d="M610,326 H646" class="ln" marker-end="url(#a)"/>
+  <path d="M830,326 H866" class="ln" marker-end="url(#a)"/>
+
+  <!-- Row 3: evidence -->
+  <text x="30" y="438" class="row">EVIDENCE: AUDIT, SCORING, REPORTING</text>
+  <path d="M520,372 V446" class="lnr" marker-end="url(#r)"/>
+  <text x="530" y="406" class="red">blocked</text>
+  <path d="M700,372 L600,446" class="ln" marker-end="url(#a)"/>
+  <text x="664" y="414" class="lbl">result</text>
+
+  <rect x="430" y="450" width="180" height="92" rx="10" class="box ev"/>
+  <text x="520" y="480" text-anchor="middle" class="h">Audit log</text>
+  <text x="520" y="502" text-anchor="middle" class="s">every question, query</text>
+  <text x="520" y="520" text-anchor="middle" class="s">and answer; hash chain</text>
+
+  <rect x="650" y="450" width="180" height="92" rx="10" class="box ev"/>
+  <text x="740" y="480" text-anchor="middle" class="h">Scoring</text>
+  <text x="740" y="502" text-anchor="middle" class="s">EvalKit scorers</text>
+  <text x="740" y="520" text-anchor="middle" class="s">two blinded judges</text>
+
+  <rect x="870" y="450" width="300" height="92" rx="10" class="box ev"/>
+  <text x="1020" y="480" text-anchor="middle" class="h">Results bundle</text>
+  <text x="1020" y="502" text-anchor="middle" class="s">rates with 95% intervals and bounds</text>
+  <text x="1020" y="520" text-anchor="middle" class="s">bundle.json and metrics.json, no held-out text</text>
+
+  <path d="M610,496 H646" class="ln" marker-end="url(#a)"/>
+  <path d="M830,496 H866" class="ln" marker-end="url(#a)"/>
+
+  <!-- Row 4: outputs -->
+  <text x="30" y="590" class="row">PUBLISHED</text>
+  <rect x="870" y="604" width="140" height="66" rx="10" class="box out"/>
+  <text x="940" y="632" text-anchor="middle" class="h">Dashboard</text>
+  <text x="940" y="652" text-anchor="middle" class="s">GitHub Pages</text>
+  <rect x="1030" y="604" width="140" height="66" rx="10" class="box out"/>
+  <text x="1100" y="632" text-anchor="middle" class="h">Release gates</text>
+  <text x="1100" y="652" text-anchor="middle" class="s">evalkit gate</text>
+  <path d="M940,542 V600" class="ln" marker-end="url(#a)"/>
+  <path d="M1100,542 V600" class="ln" marker-end="url(#a)"/>
+
+  <rect x="30" y="604" width="360" height="66" rx="10" class="box out"/>
+  <text x="210" y="632" text-anchor="middle" class="h">Compound explorer</text>
+  <text x="210" y="652" text-anchor="middle" class="s">the snapshot, filterable, linked to every source record</text>
+  <rect x="430" y="604" width="400" height="66" rx="10" class="box out"/>
+  <text x="630" y="632" text-anchor="middle" class="h">Console (Streamlit)</text>
+  <text x="630" y="652" text-anchor="middle" class="s">replays attacks through the real guard; live mode behind a passcode</text>
+</svg>

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="t">Trusted Assay Pipeline: technical architecture</title>
+  <desc id="d">Two zones separated by a trust boundary. The pipeline zone ingests, normalises, flags and snapshots the data and builds the agent database; it never calls a model and holds no API keys. The agent zone runs the agent loop, the SQL guard, a read-only executor, the hash-chained audit log and EvalKit scoring; it cannot write to the snapshot. The only crossing is a read-only copy of the agent database. Results ship to GitHub Pages, Streamlit Community Cloud and PyPI, tested in CI on three operating systems.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <style>
+      .zone1{fill:#eef4ff;stroke:#3b6fd4;stroke-width:1.5}
+      .zone2{fill:#fff4ed;stroke:#c2570c;stroke-width:1.5}
+      .box{fill:#ffffff;stroke:#334155;stroke-width:1.3}
+      .guard{fill:#fff1f0;stroke:#b42318;stroke-width:2.5}
+      .out{fill:#f8fafc;stroke:#334155;stroke-width:1.3}
+      .zt{font-size:16px;font-weight:700;fill:#0f172a}
+      .zs{font-size:12.5px;fill:#475569}
+      .h{font-size:14px;font-weight:600;fill:#0f172a}
+      .s{font-size:12.5px;fill:#334155}
+      .row{font-size:13px;font-weight:600;fill:#475569;letter-spacing:.04em}
+      .ln{stroke:#334155;stroke-width:1.6;fill:none}
+    </style>
+  </defs>
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="30" y="38" font-size="22" font-weight="700" fill="#0f172a">Trusted Assay Pipeline: technical architecture</text>
+  <text x="30" y="62" class="s">The pipeline never calls a model, and nothing in the agent zone can write to the data. Layers hold even when the one above them fails; the model's judgement is the last layer, not the first.</text>
+
+  <!-- Pipeline zone -->
+  <rect x="30" y="84" width="520" height="452" rx="14" class="zone1"/>
+  <text x="54" y="114" class="zt">Pipeline zone</text>
+  <text x="54" y="134" class="zs">Python, uv; no model calls, no API keys</text>
+
+  <rect x="54" y="150" width="472" height="62" rx="9" class="box"/>
+  <text x="72" y="176" class="h">Ingest</text>
+  <text x="72" y="197" class="s">chembl_webresource_client, httpx for PubChem PUG-REST; hashed raw cache</text>
+  <rect x="54" y="224" width="472" height="62" rx="9" class="box"/>
+  <text x="72" y="250" class="h">Normalise</text>
+  <text x="72" y="271" class="s">RDKit parent structure and InChIKey; units to nM; pIC50</text>
+  <rect x="54" y="298" width="472" height="62" rx="9" class="box"/>
+  <text x="72" y="324" class="h">Quality rules QC1 to QC5</text>
+  <text x="72" y="345" class="s">pandas and DuckDB; flag suspect rows, never delete them</text>
+  <rect x="54" y="372" width="472" height="62" rx="9" class="box"/>
+  <text x="72" y="398" class="h">Snapshot</text>
+  <text x="72" y="419" class="s">deterministic Parquet, SHA-256 manifest, data card, licence</text>
+  <rect x="54" y="446" width="472" height="62" rx="9" class="box"/>
+  <text x="72" y="472" class="h">build-db</text>
+  <text x="72" y="493" class="s">agent.duckdb: approved views, synthetic restricted table, canaries</text>
+
+  <!-- Trust boundary -->
+  <path d="M600,84 V536" stroke="#b42318" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <rect x="566" y="92" width="68" height="40" rx="6" fill="#ffffff"/>
+  <text x="600" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#b42318">TRUST</text>
+  <text x="600" y="124" text-anchor="middle" font-size="12" font-weight="700" fill="#b42318">BOUNDARY</text>
+  <path d="M526,477 H572 V329 H670" class="ln" marker-end="url(#a)"/>
+  <rect x="578" y="372" width="70" height="56" rx="6" fill="#ffffff"/>
+  <text x="613" y="390" text-anchor="middle" font-size="12" fill="#334155">read-only</text>
+  <text x="613" y="406" text-anchor="middle" font-size="12" fill="#334155">copy of</text>
+  <text x="613" y="422" text-anchor="middle" font-size="12" fill="#334155">the DB</text>
+
+  <!-- Agent zone -->
+  <rect x="650" y="84" width="520" height="452" rx="14" class="zone2"/>
+  <text x="674" y="114" class="zt">Agent zone</text>
+  <text x="674" y="134" class="zs">read-only; every query checked, run in isolation and logged</text>
+
+  <rect x="674" y="150" width="472" height="62" rx="9" class="box"/>
+  <text x="692" y="176" class="h">Agent loop</text>
+  <text x="692" y="197" class="s">anthropic and openai SDKs; one SQL tool; step budget; untrusted data rule</text>
+  <rect x="674" y="224" width="472" height="62" rx="9" class="guard"/>
+  <text x="692" y="250" class="h">SQL guard</text>
+  <text x="692" y="271" class="s">sqlglot parse; allow-listed views and functions; resource bounds; limits</text>
+  <rect x="674" y="298" width="472" height="62" rx="9" class="box"/>
+  <text x="692" y="324" class="h">Executor</text>
+  <text x="692" y="345" class="s">DuckDB read_only in a child process; timeout and memory cap</text>
+  <rect x="674" y="372" width="472" height="62" rx="9" class="box"/>
+  <text x="692" y="398" class="h">Audit log</text>
+  <text x="692" y="419" class="s">append-only JSONL; SHA-256 hash chain; anchors kept outside the log</text>
+  <rect x="674" y="446" width="472" height="62" rx="9" class="box"/>
+  <text x="692" y="472" class="h">Scoring</text>
+  <text x="692" y="493" class="s">EvalKit scorers; two blinded judges (Claude and GPT); 95% bounds</text>
+
+  <!-- Delivery -->
+  <text x="30" y="580" class="row">DELIVERY</text>
+  <rect x="30" y="594" width="270" height="92" rx="10" class="out"/>
+  <text x="165" y="624" text-anchor="middle" class="h">GitHub Pages</text>
+  <text x="165" y="646" text-anchor="middle" class="s">CISO dashboard and</text>
+  <text x="165" y="664" text-anchor="middle" class="s">compound explorer</text>
+  <rect x="320" y="594" width="270" height="92" rx="10" class="out"/>
+  <text x="455" y="624" text-anchor="middle" class="h">Streamlit Community Cloud</text>
+  <text x="455" y="646" text-anchor="middle" class="s">console: replay, and live mode</text>
+  <text x="455" y="664" text-anchor="middle" class="s">behind a passcode</text>
+  <rect x="610" y="594" width="270" height="92" rx="10" class="out"/>
+  <text x="745" y="624" text-anchor="middle" class="h">PyPI</text>
+  <text x="745" y="646" text-anchor="middle" class="s">assay-pipeline, the assay CLI</text>
+  <text x="745" y="664" text-anchor="middle" class="s">trusted publishing</text>
+  <rect x="900" y="594" width="270" height="92" rx="10" class="out"/>
+  <text x="1035" y="624" text-anchor="middle" class="h">Continuous integration</text>
+  <text x="1035" y="646" text-anchor="middle" class="s">Linux, macOS, Windows</text>
+  <text x="1035" y="664" text-anchor="middle" class="s">Python 3.11 to 3.15</text>
+</svg>

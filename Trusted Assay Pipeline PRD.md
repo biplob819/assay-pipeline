@@ -175,13 +175,13 @@ The dashboard answers a CISO's two questions, "did anything get through?" and "w
 
 ## Data flow
 
-&#91;embedded content: data flow · public sources to snapshot to audited agent\]
+![Data flow: public sources to snapshot to audited agent](docs/assets/dataflow.svg)
 
 The top row is the data side; the second and third rows are the security side. The snapshot is the hand-off between them, and the guard is the only path from the agent to any row.
 
 ## Technical architecture
 
-&#91;embedded content: technical architecture · trust boundary around the agent\]
+![Technical architecture: trust boundary around the agent](docs/assets/architecture.svg)
 
 - **Data pipeline.** Python 3.12 with uv; `chembl_webresource_client` for ChEMBL; `httpx` for PubChem PUG-REST; RDKit to standardise structures and compute InChIKeys; pandas and DuckDB for normalising and quality rules; Parquet snapshots with SHA-256 hashes.
 - **Agent zone.** DuckDB opened with `read_only=True`; `sqlglot` parses every statement for the guard; the anthropic and openai SDKs for the agent; an append-only JSONL audit log with a hash chain. EvalKit, pinned, scores attack outcomes.

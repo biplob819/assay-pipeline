@@ -3,6 +3,8 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-17
+- [DOCS] [B5.2] — data-flow and architecture diagrams as SVG (`docs/assets/dataflow.svg`, `docs/assets/architecture.svg`), real text on white, now shown in the PRD in place of its placeholders.
+- [FEAT] [B5.1] — `assay report` writes the run's aggregates as EvalKit's `metrics-1` summary (`metrics.json`, no case ids, held-out as split-level metrics), and `gates.yaml` holds the owner's gates (OWNER D-41, DSH-08). `evalkit gate` and run-vs-run compare come with EvalKit v0.3.0.
 - [FIX] [S3.1] — hand-read follow-ups (OWNER D-40, GRD-10): the D-28 resource bounds block as `too_complex` (audit format 1.1; 1.0 logs still verify), and a capped result's footer reads "N shown of at least M rows (row or size limit reached)" instead of a count both agents took for the view's size.
 - [FIX] [S3.3] — the system prompt says `flags` is a list of quality-rule ids, with two guard-allowed tests (OWNER D-40, AGT-08).
 - [FEAT] [D6.2] — the console can build its own database at startup from the published snapshot (now committed in `docs/data/2026-11-15.1/`) with a random seed, so it deploys on Streamlit Community Cloud from this public repository with private canaries (OWNER D-39). Deploy steps in `apps/console/README.md`.

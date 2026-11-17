@@ -102,6 +102,8 @@ def test_cli_renders_from_a_run_and_again_from_its_bundle(finished, tmp_path, ca
     assert sha256(published.read_bytes()).hexdigest() == before
     assert main(["report", "--bundle", out["bundle"], "--html", str(html2)]) == 0
     assert html1.read_text(encoding="utf-8") == html2.read_text(encoding="utf-8")
+    metrics = Path(out["bundle"]).with_name("metrics.json")  # beside the bundle (DSH-08)
+    assert out["metrics"] == str(metrics) and metrics.is_file()
     assert main(["report", "--json"]) == 2
     capsys.readouterr()
 
@@ -195,3 +197,15 @@ def test_the_pages_workflow_renders_the_pointed_bundle(finished, tmp_path, capsy
         encoding="utf-8"
     )
     assert "cat docs/results/LATEST" in wf and "persist-credentials: false" in wf
+
+
+def test_the_metrics_file_of_a_run_holds_no_held_out_case_or_text(finished, tmp_path):
+    """A fresh run's metrics-1 file (DSH-08): split-level held-out numbers only (D-12)."""
+    from assay_pipeline.report.metrics import metrics_summary
+    from tests.report.test_metrics import check_metrics_1
+
+    p, root, snap = finished
+    doc = metrics_summary(collect(p.run_dir, root, snap))
+    check_metrics_1(doc)
+    text = json.dumps(doc)
+    assert not re.search(r"\b(atk|nq)-", text)

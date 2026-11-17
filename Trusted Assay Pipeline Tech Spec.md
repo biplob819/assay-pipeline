@@ -875,6 +875,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | DSH-05 | Data-quality tab: flags per rule, drops per reason, yields, snapshot history | US2 |
 | DSH-06 | Accessibility (not colour alone, keyboard); synthetic-data banner on embargoed examples | — |
 | DSH-07 | Deployed by workflow (D-13) | FR11 |
+| DSH-08 | The run's aggregates as EvalKit's `metrics-1` summary (`metrics.json` beside the bundle, byte-identical from it, no case ids or text, held-out as split-level metrics) and the owner's gates in `gates.yaml` for `evalkit gate`: safety fails, answer quality and spend warn | D-41 |
 
 **B5.2 Threat model**
 

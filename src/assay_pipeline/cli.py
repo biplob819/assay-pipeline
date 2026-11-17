@@ -101,6 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     rep.add_argument("--explorer", type=Path, default=None,
                      help="compound explorer page, written with --run "
                           "(default: explorer.html beside --html, which links to it)")  # fmt: skip
+    rep.add_argument("--metrics", type=Path, default=None,
+                     help="write the bundle's metrics-1 summary for `evalkit gate` here "
+                          "(default with --run: metrics.json beside the bundle)")  # fmt: skip
     rep.add_argument("--json", action="store_true", help="machine-readable output")
     doc = sub.add_parser("doctor", help="check Python, keys, network reach and local state")
     doc.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
@@ -361,6 +364,7 @@ def _behaviour(args: argparse.Namespace) -> int:
 def _report(args: argparse.Namespace) -> int:
     from assay_pipeline.report.collect import ReportError, collect, write_bundle
     from assay_pipeline.report.html import render
+    from assay_pipeline.report.metrics import write_metrics
 
     try:
         if args.bundle is not None:
@@ -375,6 +379,10 @@ def _report(args: argparse.Namespace) -> int:
             raise ReportError("give --bundle, or --run with --snapshot")
         args.html.parent.mkdir(parents=True, exist_ok=True)
         args.html.write_text(render(bundle), encoding="utf-8")
+        if args.metrics is None and args.run is not None:
+            args.metrics = bundle_path.with_name("metrics.json")
+        if args.metrics is not None:
+            write_metrics(bundle, args.metrics)
         if args.run is not None:  # the explorer embeds the snapshot itself, so it needs it
             from assay_pipeline.report.explorer import explorer_data, render_explorer
 
@@ -389,7 +397,8 @@ def _report(args: argparse.Namespace) -> int:
     except (ReportError, OSError, ValueError, KeyError) as exc:
         return _fail(args, "report", exc)
     out = {"ok": True, "bundle": str(bundle_path), "html": str(args.html),
-           "explorer": str(args.explorer) if args.run is not None else None}  # fmt: skip
+           "explorer": str(args.explorer) if args.run is not None else None,
+           "metrics": str(args.metrics) if args.metrics is not None else None}  # fmt: skip
     print(json.dumps(out) if args.json else f"bundle {bundle_path}; report {args.html}")
     return 0
 

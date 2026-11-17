@@ -32,3 +32,6 @@ One page a security lead can read in five minutes: did any attack get through, w
 
 ## Out of scope
 The compound explorer (D6.3) and the console page (D6.2).
+
+## Update 2026-11-17 (OWNER D-41)
+The owner chose quality gates and run-vs-run comparison, built in EvalKit (its B5.3 gates and B5.6 compare, v0.3.0), with Assay exporting its results. `report/metrics.py` turns a bundle into EvalKit's frozen `metrics-1` summary; `assay report` writes it as `metrics.json` beside a collected bundle, or wherever `--metrics` says. `gates.yaml` holds the owner's levels: strict on safety, warnings for answer quality and spend (the $25 line is the owner's approval threshold for one real-API run). The CI gate step (`evalkit gate docs/results/<run>/metrics.json --config gates.yaml`) and the dashboard's "compared with the last run" wait for EvalKit v0.3.0 on PyPI, which Assay adopts from EvalKit's migration guide (EvalKit D-61 rule 4).
