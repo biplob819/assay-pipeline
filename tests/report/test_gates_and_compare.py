@@ -1,0 +1,111 @@
+"""DSH-10 (OWNER D-41): the release gate and run-vs-run compare through EvalKit 0.3's public
+API (`evalkit.gates.run_gate`, `evalkit.compare`). EvalKit computes every verdict; these tests
+check that Assay's published file passes its own gates, that a bad run fails them, and that the
+comparison reaches the bundle and the dashboard without paths or case ids. No model calls."""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+from evalkit.gates import run_gate
+
+from assay_pipeline.report.compare import compare_metrics
+from assay_pipeline.report.html import render
+from tests.report.test_metrics import LATEST, METRICS
+
+ROOT = Path(__file__).resolve().parents[2]
+GATES = ROOT / "gates.yaml"
+
+
+def _variant(tmp_path: Path, name: str, change) -> Path:
+    doc = json.loads(METRICS.read_text(encoding="utf-8"))
+    doc["run_id"] = name
+    for m in doc["metrics"]:
+        change(m)
+    out = tmp_path / f"{name}.json"
+    out.write_text(json.dumps(doc), encoding="utf-8")
+    return out
+
+
+def test_the_published_run_passes_every_gate():
+    report = run_gate(METRICS, GATES)
+    assert report.exit_code == 0 and report.verdict == "pass" and not report.errors
+
+
+def test_one_attack_success_fails_the_release_gate(tmp_path):
+    def one_success(m):
+        if m["name"] == "attack_trial_success_rate" and m["labels"] == {"model": "gpt-6.1-sol"}:
+            m["k"], m["value"] = 1, round(1 / 150, 6)
+        if m["name"] == "attack_successes" and m["labels"] == {"model": "gpt-6.1-sol",
+                                                               "split": "public"}:  # fmt: skip
+            m["value"] = 1
+
+    report = run_gate(_variant(tmp_path, "bad", one_success), GATES)
+    assert report.exit_code == 1
+
+
+def test_a_quality_drop_only_warns(tmp_path):
+    def worse_b1(m):
+        if m["name"] == "behaviour_rate" and m["labels"] == {"model": "gpt-6.1-sol", "rule": "B1"}:
+            m["k"], m["value"] = 30, round(30 / 56, 6)
+
+    report = run_gate(_variant(tmp_path, "meh", worse_b1), GATES)
+    warned = [r for r in report.rows if r.result == "warn"]
+    assert report.exit_code == 0 and report.verdict == "pass"  # warnings never fail a release
+    assert [(r.metric, r.labels) for r in warned] == [
+        ("behaviour_rate", {"model": "gpt-6.1-sol", "rule": "B1"})
+    ]
+
+
+def test_the_comparison_keeps_changed_rows_only_without_paths_or_ids(tmp_path):
+    def worse_b1(m):
+        if m["name"] == "behaviour_rate" and m["labels"] == {"model": "gpt-6.1-sol", "rule": "B1"}:
+            m["k"], m["value"] = 30, round(30 / 56, 6)
+
+    new = _variant(tmp_path, "next-run", worse_b1)
+    c = compare_metrics(METRICS, new, GATES)
+    assert c == compare_metrics(METRICS, new, GATES)  # deterministic: seeded
+    assert c["previous_run"] == "main-2026-11-16" and c["rows"] > 50
+    (row,) = c["changed"]
+    assert row["metric"] == "behaviour_rate" and row["diff"] < 0 and row["gate"] == "warn"
+    assert row["pairing"] == "unpaired" and row["ci_high"] < 0
+    text = json.dumps(c)
+    assert str(tmp_path) not in text and not re.search(r"\b(atk|nq)-", text)
+
+
+def test_the_dashboard_shows_the_comparison_only_when_there_is_one(tmp_path):
+    bundle = json.loads(LATEST.read_text(encoding="utf-8"))
+    assert "Compared with the last run" not in render(bundle)  # the first run's page is unchanged
+    new = _variant(tmp_path, "next-run", lambda m: None)
+    bundle["compare"] = compare_metrics(METRICS, new, GATES)
+    page = render(bundle)
+    assert "Compared with the last run" in page and "No metric changed." in page
+    assert "main-2026-11-16" in page
+
+
+def test_an_older_baseline_is_compared_without_gates_and_says_why(tmp_path):
+    """Verifier finding: a previous run from before a gated metric existed made the whole
+    comparison an unexplained "error"; it now compares without gates and says so."""
+    old = _variant(tmp_path, "older", lambda m: None)
+    doc = json.loads(old.read_text(encoding="utf-8"))
+    doc["metrics"] = [m for m in doc["metrics"] if m["name"] != "attack_trials_unscored"]
+    old.write_text(json.dumps(doc), encoding="utf-8")
+    c = compare_metrics(old, METRICS, GATES)
+    assert c["exit_code"] != 2 and c["gates"].startswith("not applied: ")
+    assert "attack_trials_unscored" in c["gates"] and c["missing"] >= 1
+    assert str(tmp_path) not in json.dumps(c)
+
+
+def test_an_unreadable_baseline_is_reported_on_the_page_not_raised(tmp_path):
+    bad = tmp_path / "prev-run" / "metrics.json"
+    bad.parent.mkdir()
+    bad.write_text("{not json", encoding="utf-8")
+    c = compare_metrics(bad, METRICS, GATES)
+    assert c["exit_code"] == 2 and c["errors"] and c["previous_run"] == "prev-run"
+    assert str(tmp_path) not in json.dumps(c)
+    bundle = json.loads(LATEST.read_text(encoding="utf-8"))
+    page = render({**bundle, "compare": c})
+    assert "could not be completed" in page and "not valid JSON" in page
+    assert "this is not the release gate" in page

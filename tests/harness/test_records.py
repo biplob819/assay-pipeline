@@ -66,6 +66,8 @@ def test_ci_workflow_covers_gates_and_matrix():
         "verify_graph_eligibility.py",
         "node_converge.py --self-test",
         "leak_guard.py --self-test",
+        "uv run evalkit gate",  # the release gate on the published run (DSH-10)
+        "--config gates.yaml",
     ):
         assert step in ci, step
     assert "uv sync --locked" in ci

@@ -209,3 +209,29 @@ def test_the_metrics_file_of_a_run_holds_no_held_out_case_or_text(finished, tmp_
     check_metrics_1(doc)
     text = json.dumps(doc)
     assert not re.search(r"\b(atk|nq)-", text)
+
+
+def test_a_second_run_is_compared_with_the_one_published_before_it(finished, tmp_path, capsys):
+    """DSH-10: `assay report --run` finds the previous run through LATEST and puts EvalKit's
+    comparison in the new bundle and page; --previous is refused with --bundle."""
+    import shutil
+    from pathlib import Path
+
+    p, root, snap = finished
+    second = tmp_path / "second-run"
+    shutil.copytree(p.run_dir, second)
+    results, html = tmp_path / "results", tmp_path / "index.html"
+    base = ["report", "--snapshots", str(root), "--snapshot", snap, "--results", str(results),
+            "--html", str(html), "--json"]  # fmt: skip
+    assert main([*base, "--run", str(p.run_dir)]) == 0
+    first = json.loads(capsys.readouterr().out)
+    assert "compare" not in json.loads(Path(first["bundle"]).read_text(encoding="utf-8"))
+    assert main([*base, "--run", str(second)]) == 0
+    out = json.loads(capsys.readouterr().out)
+    bundle = json.loads(Path(out["bundle"]).read_text(encoding="utf-8"))
+    assert bundle["compare"]["previous_run"] == p.run_dir.name
+    assert bundle["compare"]["changed"] == []  # the same trials: nothing changed
+    assert "Compared with the last run" in html.read_text(encoding="utf-8")
+    assert main(["report", "--bundle", out["bundle"], "--previous", out["metrics"],
+                 "--html", str(tmp_path / "x.html")]) == 2  # fmt: skip
+    capsys.readouterr()

@@ -30,4 +30,11 @@ jobs:
       - run: uv run python scripts/verify_graph_eligibility.py
       - run: uv run python scripts/node_converge.py --self-test
       - run: uv run python scripts/leak_guard.py --self-test
+      # The release gate (OWNER D-41): EvalKit judges the published run against gates.yaml.
+      - name: evalkit gate on the published run
+        shell: bash
+        run: >-
+          uv run evalkit gate
+          "docs/results/$(dirname "$(cat docs/results/LATEST)")/metrics.json"
+          --config gates.yaml --out "$RUNNER_TEMP/gate.json"
       - run: uv build

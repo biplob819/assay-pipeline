@@ -38,3 +38,6 @@ The owner chose quality gates and run-vs-run comparison, built in EvalKit (its B
 
 ## Update 2026-11-17 (OWNER D-42)
 The owner asked for parallel lanes and chose the efficiency lane for Assay (and B5.11 in EvalKit as a second lane). EvalKit standardised a per-model efficiency block (its D-67). The published run's trials already hold each trial's cost, so the bundle gains cost per case, cost per correct answer and the error rate now; tokens and latency were only recorded per tool step (the final answer's turn is missing), so they start with the next recorded run, which records per-trial totals. `retry_rate` is not reported: the SDKs retry internally and do not say how often.
+
+## Update 2026-11-17 (EvalKit v0.3.0 adopted)
+EvalKit v0.3.0 is on PyPI with gates (B5.3) and compare (B5.6), so Assay pins `evalkit-harness>=0.3,<0.4`, as the migration guide says (public names only; nothing to replace). The gate runs in CI on the published `metrics.json`. The comparison needs a second run, so the published dashboard does not show it yet; the comparison is unpaired, because `metrics.json` carries no per-case values (a public-only `cases.jsonl` sidecar would allow paired comparison later).

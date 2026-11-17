@@ -107,7 +107,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=2.8,<3" },
     { name = "duckdb", specifier = ">=1.4" },
-    { name = "evalkit-harness", specifier = "==0.1.0" },
+    { name = "evalkit-harness", specifier = ">=0.3,<0.4" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "openai", specifier = ">=3.51,<4" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'console'", specifier = ">=3.2" },
@@ -348,15 +348,15 @@ wheels = [
 
 [[package]]
 name = "evalkit-harness"
-version = "0.1.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/75/7a4ae643a1b7ebd5388e08f137f6afebf1a658bfd23887453ffddf4a9951/evalkit_harness-0.1.0.tar.gz", hash = "sha256:6066685e09b63e483debe7df37548cfd2108a0b499365429e1c2ba78b6c9ee89", size = 190168, upload-time = "2026-11-15T09:34:56.202Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/88/9fc0e7a89adc0904d3f6bf67d9994ef632fd39f9e4f6faffc7364c2af9d5/evalkit_harness-0.3.0.tar.gz", hash = "sha256:fd9ee78f0fb8aa04c2871a6ca604684b4226c8f876232a940f7bf49ebad1e155", size = 396069, upload-time = "2026-11-17T17:13:03.504Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/a9/aa6e1f70009b03bcb5658a3b32206da8cb5a705a6e353bf41699b3607411/evalkit_harness-0.1.0-py3-none-any.whl", hash = "sha256:8921677faf675e0b5ce95962e6d2644f833e51da8c70ff27997abec772bbcc2d", size = 248224, upload-time = "2026-11-15T09:34:54.904Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/3c/3b32f8bbc002e997b8e8613738d9017ae5837a8219170db556b5d9b1554d/evalkit_harness-0.3.0-py3-none-any.whl", hash = "sha256:0fe817a353f6da97d4796c1e39eda7d1a8badd01856d47c157dd69cca7baf0f7", size = 463418, upload-time = "2026-11-17T17:13:02.294Z" },
 ]
 
 [[package]]
@@ -471,8 +471,8 @@ name = "httpcore2"
 version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "python_full_version < '3.12' or sys_platform != 'emscripten'" },
-    { name = "truststore", marker = "python_full_version < '3.12' or sys_platform != 'emscripten'" },
+    { name = "h11", marker = "sys_platform != 'emscripten'" },
+    { name = "truststore", marker = "sys_platform != 'emscripten'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c0/61/afa9d6b7452f9eca73f73d45324eb0bb52f098fd5e6049bf6b8263be9b4e/httpcore2-2.16.0.tar.gz", hash = "sha256:c72cd0413563b17e1cd8354677dff887466f8ec2551679759e93126534428643", size = 69886, upload-time = "2026-10-21T07:09:45.31Z" }
 wheels = [

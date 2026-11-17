@@ -202,6 +202,42 @@ def _table(head: Sequence[str], rows: Sequence[Sequence[Any]], num: Sequence[int
     )
 
 
+def _compare_section(c: dict[str, Any] | None) -> str:
+    """ "Compared with the last run" (DSH-10): EvalKit's verdict and the rows that changed.
+    Absent for the first published run, so its page is unchanged."""
+    if not c:
+        return ""
+
+    def num(x: Any) -> str:
+        return "" if x is None else _e(f"{x:.4g}" if isinstance(x, float) else x)
+
+    rows = [[_e(r["metric"]), _e(", ".join(f"{k}={v}" for k, v in r["labels"].items())),
+             num(r["old"]), num(r["new"]),
+             num(r["diff"]) + (f" [{num(r['ci_low'])}, {num(r['ci_high'])}]"
+                               if r["ci_low"] is not None else ""),
+             _e(r["pairing"]), _e(r["gate"] or ""),
+             "regression" if r["regression"] else ("flagged" if r["flagged"] else "")]
+            for r in c["changed"]]  # fmt: skip
+    table = (_table(["Metric", "Labels", "Previous", "This run", "Change (95% CI)", "Pairing",
+                     "Gate", "Flag"], rows, num=(2, 3, 4)) if rows
+             else "<p>No metric changed.</p>")  # fmt: skip
+    errors = "".join(f"<li>{_e(e)}</li>" for e in c.get("errors") or [])
+    errors_html = (f'<p class="bad">The comparison could not be completed:</p><ul>{errors}</ul>'
+                   if errors else "")  # fmt: skip
+    return f"""<section aria-labelledby="h-cmp"><h2 id="h-cmp">Compared with the last run</h2>
+<p>Against run <code>{_e(c["previous_run"])}</code>: <strong>{_e(c["verdict"])}</strong>
+({c["rows"]} metrics compared, {len(c["changed"])} changed, {c["missing"]} missing; settings
+{_e(c["settings"])}; gates {_e(c.get("gates", "applied"))}). Computed by EvalKit's
+<code>compare</code>, unpaired: where both runs give an interval, the change's 95% interval
+combines them and is Holm-adjusted; counts have none. A change is flagged only when its interval
+excludes 0, so this is not the release gate: the gate (<code>evalkit gate</code> with
+<code>gates.yaml</code>) judges each run on its own. Held-out results only as split totals.</p>
+{errors_html}{table}
+</section>
+
+"""
+
+
 def render(bundle: dict[str, Any]) -> str:
     s, abl, orc = bundle["summary"], bundle.get("ablation"), bundle.get("oracle")
     attacks = list(s["attacks"])
@@ -340,6 +376,7 @@ def render(bundle: dict[str, Any]) -> str:
              f'<code>{_e(h["manifest_sha256"][:16])}</code>'] for h in q["history"]]  # fmt: skip
 
     verify_cls = "ok" if a["verify_ok"] else "bad"
+    compare_html = _compare_section(bundle.get("compare"))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Assay Pipeline Report</title><style>{CSS}</style></head><body><main>
@@ -428,7 +465,7 @@ query returning it.</p>
     }
 </section>
 
-<section aria-labelledby="h-audit"><h2 id="h-audit">Access events</h2>
+{compare_html}<section aria-labelledby="h-audit"><h2 id="h-audit">Access events</h2>
 <p><span class="{verify_cls}">Audit log {
         "verifies" if a["verify_ok"] else "does not verify"
     }</span>:

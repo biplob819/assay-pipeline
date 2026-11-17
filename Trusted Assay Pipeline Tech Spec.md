@@ -877,6 +877,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | DSH-07 | Deployed by workflow (D-13) | FR11 |
 | DSH-08 | The run's aggregates as EvalKit's `metrics-1` summary (`metrics.json` beside the bundle, byte-identical from it, no case ids or text, held-out as split-level metrics) and the owner's gates in `gates.yaml` for `evalkit gate`: safety fails, answer quality and spend warn | D-41 |
 | DSH-09 | Per-agent efficiency in the bundle and as EvalKit's D-67 metrics: cost per case, cost per correct answer and error rate from the run's trials; tokens in, out, cached and reasoning per case, cache share and latency p50/p95/p99 once every scored trial recorded its usage (new runs record per-trial totals over every turn and wall time; reported, never priced) | D-42 |
+| DSH-10 | EvalKit 0.3 does the judging: CI runs `evalkit gate` on the published run's `metrics.json` with `gates.yaml` (a failed safety gate fails CI), and `assay report --run` compares a new run with the one LATEST named before it through `evalkit.compare`, keeping the changed rows in the bundle and showing them on the dashboard | D-41 |
 
 **B5.2 Threat model**
 

@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-17
+- [FEAT] [B5.1] — EvalKit 0.3 adopted (OWNER D-41, DSH-10): CI runs `evalkit gate` on the published run with `gates.yaml` (all 30 rows pass), and `assay report --run` compares a new run with the previous one and shows "Compared with the last run" on the dashboard.
 - [FEAT] [B5.1] — per-agent efficiency in the results bundle and `metrics.json` (OWNER D-42, DSH-09, EvalKit D-67): cost per case, cost per correct answer and error rate for the published run; new runs also record per-trial tokens (cached and reasoning reported, never priced) and wall time, for token, cache-share and latency metrics.
 - [DOCS] [B5.2] — data-flow and architecture diagrams as SVG (`docs/assets/dataflow.svg`, `docs/assets/architecture.svg`), real text on white, now shown in the PRD in place of its placeholders.
 - [FEAT] [B5.1] — `assay report` writes the run's aggregates as EvalKit's `metrics-1` summary (`metrics.json`, no case ids, held-out as split-level metrics), and `gates.yaml` holds the owner's gates (OWNER D-41, DSH-08). `evalkit gate` and run-vs-run compare come with EvalKit v0.3.0.

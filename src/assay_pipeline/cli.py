@@ -104,6 +104,11 @@ def build_parser() -> argparse.ArgumentParser:
     rep.add_argument("--metrics", type=Path, default=None,
                      help="write the bundle's metrics-1 summary for `evalkit gate` here "
                           "(default with --run: metrics.json beside the bundle)")  # fmt: skip
+    rep.add_argument("--previous", type=Path, default=None,
+                     help="the previous run's metrics.json to compare with (default with --run: "
+                          "the run LATEST named before this one)")  # fmt: skip
+    rep.add_argument("--gates", type=Path, default=Path("gates.yaml"),
+                     help="gates file, so the comparison marks gated metrics")  # fmt: skip
     rep.add_argument("--json", action="store_true", help="machine-readable output")
     doc = sub.add_parser("doctor", help="check Python, keys, network reach and local state")
     doc.add_argument("--cache", type=Path, default=Path("cache"), help="raw cache folder")
@@ -368,21 +373,33 @@ def _report(args: argparse.Namespace) -> int:
 
     try:
         if args.bundle is not None:
+            if args.previous is not None:
+                raise ReportError("--previous compares a new run: give it with --run")
             bundle = json.loads(args.bundle.read_text(encoding="utf-8"))
             bundle_path = args.bundle
+            if args.metrics is not None:
+                write_metrics(bundle, args.metrics)
         elif args.run is not None and args.snapshot:
             bundle = collect(args.run, args.snapshots, args.snapshot, args.oracle)
-            bundle_path = write_bundle(bundle, args.results / args.run.name)
+            out_dir = args.results / args.run.name
+            latest = args.results / "LATEST"
+            if args.previous is None and latest.is_file():  # the run published before this one
+                prev = (args.results / latest.read_text(encoding="utf-8").strip()).parent
+                if prev.name != args.run.name and (prev / "metrics.json").is_file():
+                    args.previous = prev / "metrics.json"
+            args.metrics = args.metrics or out_dir / "metrics.json"
+            write_metrics(bundle, args.metrics)
+            if args.previous is not None:  # EvalKit's run-vs-run compare (DSH-10)
+                from assay_pipeline.report.compare import compare_metrics
+
+                bundle["compare"] = compare_metrics(args.previous, args.metrics, args.gates)
+            bundle_path = write_bundle(bundle, out_dir)
             # the Pages workflow renders this bundle: an explicit pointer, not a name sort
-            (args.results / "LATEST").write_text(f"{args.run.name}/bundle.json\n", encoding="utf-8")
+            latest.write_text(f"{args.run.name}/bundle.json\n", encoding="utf-8")
         else:
             raise ReportError("give --bundle, or --run with --snapshot")
         args.html.parent.mkdir(parents=True, exist_ok=True)
         args.html.write_text(render(bundle), encoding="utf-8")
-        if args.metrics is None and args.run is not None:
-            args.metrics = bundle_path.with_name("metrics.json")
-        if args.metrics is not None:
-            write_metrics(bundle, args.metrics)
         if args.run is not None:  # the explorer embeds the snapshot itself, so it needs it
             from assay_pipeline.report.explorer import explorer_data, render_explorer
 
