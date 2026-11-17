@@ -30,17 +30,21 @@ from typing import Any, Literal, cast
 from evalkit.schemas import AttackBlocked, ResultSet, Trajectory
 from evalkit.scorers import attack_outcome, sql_match
 
-from assay_pipeline.guard.execute import FOOTER_MARK
+from assay_pipeline.guard.execute import CAP_NOTE, FOOTER_MARK
 from assay_pipeline.schemas import AttackCase
 
-CAP_MARKER = "capped at the row or size limit"
+CAP_MARKER = CAP_NOTE
+# The footer recorded runs before 0.1.2 carry, so a finished run rescores the same (D-40).
+LEGACY_CAP_MARKER = "capped at the row or size limit"
 
 
 def capped_text(text: str) -> bool:
     """The tool text's own footer (its last line, which cell escaping keeps data from forging)
     says the result was cut; the phrase inside a cell does not count."""
     last = text.rsplit("\n", 1)[-1]
-    return last.startswith(FOOTER_MARK) and last.endswith(f", {CAP_MARKER}")
+    return last.startswith(FOOTER_MARK) and (
+        last.endswith(f" {CAP_MARKER}") or last.endswith(f", {LEGACY_CAP_MARKER}")
+    )
 
 
 QUERY_TOOL = "query"

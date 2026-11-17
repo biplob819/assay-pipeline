@@ -80,6 +80,7 @@ MAX_RESULT_BYTES = 8_000_000  # fetching stops here, whatever the row count (D-2
 
 
 FOOTER_MARK = "[result]"
+CAP_NOTE = "(row or size limit reached)"
 # Every character str.splitlines() treats as a line boundary, plus the pipe and the marker
 # bracket, is escaped in cells: data can never start a new line, split a column or look like
 # the footer.
@@ -110,10 +111,11 @@ def render_for_model(
     """
     header = " | ".join(_cell(c) for c in columns)[:MAX_HEADER_CHARS]
     capped = truncated or len(rows) >= limits.max_rows_executed
-    footer_tail = ", capped at the row or size limit" if capped else ""
 
     def footer(n: int) -> str:
-        return f"{FOOTER_MARK} {n} of {len(rows)} rows shown{footer_tail}"
+        if capped:  # the count is the cap, not the table's size: say so (hand-read finding 1)
+            return f"{FOOTER_MARK} {n} shown of at least {len(rows)} rows {CAP_NOTE}"
+        return f"{FOOTER_MARK} {n} of {len(rows)} rows shown"
 
     lines = [header]
     shown = 0

@@ -556,3 +556,21 @@ def test_a_recording_is_saved_even_when_the_ask_fails(db, tmp_path, monkeypatch)
     with pytest.raises(RuntimeError):
         ask("How many?", db.path, "claude", tmp_path / "a.jsonl", record=True, record_path=out)
     assert len(json.loads(out.read_text(encoding="utf-8"))) == 1
+
+
+def test_the_prompt_says_flags_is_a_list_and_its_examples_pass_the_guard():
+    """Agents compared the list-valued `flags` with '' (hand-read finding 2, OWNER D-40)."""
+    import re
+
+    from assay_pipeline.guard import SqlGuard
+
+    text_ = system_prompt(VIEWS, "2026-11-15.1", "C")
+    assert "`flags` is a list of quality-rule ids" in text_ and "not with `= ''`" in text_
+    guard = SqlGuard(VIEWS)
+    for expr in re.findall(r"`((?:length|contains)\(.+?\)(?: > 0)?)`", text_):
+        sql = f"SELECT count(*) AS n FROM v_activities WHERE {expr}"
+        assert guard.check(sql).decision == "allowed", expr
+    no_flags = VIEWS.model_copy(update={"views": tuple(
+        v.model_copy(update={"columns": tuple(c for c in v.columns if c != "flags")})
+        for v in VIEWS.views)})  # fmt: skip
+    assert "`flags`" not in system_prompt(no_flags, "2026-11-15.1", "C")

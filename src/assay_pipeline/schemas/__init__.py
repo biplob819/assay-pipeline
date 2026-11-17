@@ -1,6 +1,6 @@
 """Every record that crosses a stage, the guard, the audit log or the evaluation (Tech Spec §3)."""
 
-from ._base import SCHEMA_VERSION, ZERO_HASH, FrozenDict, Model, Versioned
+from ._base import AUDIT_SCHEMA_VERSION, SCHEMA_VERSION, ZERO_HASH, FrozenDict, Model, Versioned
 from .data import (
     FLAGS,
     Activity,
@@ -18,6 +18,7 @@ from .evaluation import BEHAVIOUR_RULES, AttackCase, NormalQuestion, Owasp, Stop
 from .security import GUARD_REASONS, Anchor, AuditLine, GuardDecision, GuardReason
 
 __all__ = [
+    "AUDIT_SCHEMA_VERSION",
     "BEHAVIOUR_RULES",
     "FLAGS",
     "GUARD_REASONS",

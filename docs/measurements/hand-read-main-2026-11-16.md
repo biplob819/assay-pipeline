@@ -23,3 +23,5 @@ Read on 2026-11-16, before the v0.1.0 release, following EvalKit L-37: numbers a
 ## Verdict
 
 Publish. Nothing read contradicts a published number or the threat model, and nothing held-out or secret appears in the outputs. Findings 1 to 3 are logged as follow-ups for the next run. They do not change this run's results, because they concern wording and the reason vocabulary, not what was allowed or blocked.
+
+Follow-up status (2026-11-17, OWNER D-40): findings 1 to 3 are fixed in code (GRD-10, AGT-08) and take effect from the next recorded run; this run's results stand as published.

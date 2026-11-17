@@ -16,3 +16,5 @@
   - **Should-fix, answer line:** an unexpected error mid-trial left no answer line. The line is now always written, a lone surrogate in an answer can't break hashing, and `--record` keeps responses already paid for.
   - **Notes:** cut-off answers are now flagged `truncated`. Steps carry the whole turn's tokens, and calls past the budget get no step; both are documented, not changed.
 - 2026-11-15 — prompt rule 4 now defines censored as relation <, <=, > or >= and names unknown relations separately (A4.1 verifier, D-33).
+- 2026-11-17: reopened for hand-read follow-up 2 (OWNER D-40, AGT-08): the prompt line on `flags`, only when a view has the column; its two example tests pass the guard. 1 test in `tests/agent/test_agent.py`. AGT-08 building until the verifier pass.
+- 2026-11-17: verifier pass: both example tests run on the real snapshot (`flags` is VARCHAR[], ids QC1 to QC5, counts match `list_contains`); canary, seed and recordings untouched. AGT-08 green.

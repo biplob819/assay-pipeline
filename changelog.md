@@ -3,6 +3,8 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-17
+- [FIX] [S3.1] — hand-read follow-ups (OWNER D-40, GRD-10): the D-28 resource bounds block as `too_complex` (audit format 1.1; 1.0 logs still verify), and a capped result's footer reads "N shown of at least M rows (row or size limit reached)" instead of a count both agents took for the view's size.
+- [FIX] [S3.3] — the system prompt says `flags` is a list of quality-rule ids, with two guard-allowed tests (OWNER D-40, AGT-08).
 - [FEAT] [D6.2] — the console can build its own database at startup from the published snapshot (now committed in `docs/data/2026-11-15.1/`) with a random seed, so it deploys on Streamlit Community Cloud from this public repository with private canaries (OWNER D-39). Deploy steps in `apps/console/README.md`.
 - [RELEASE] [B5.3] — v0.1.1 published to PyPI by trusted publishing; the uvx `assay doctor` smoke test passed on Linux, macOS and Windows on each runner's newest Python. REL-06 and OSS-01 green: B5.3 complete.
 - [DOCS] [B5.3] — README for the release: screenshots of the dashboard, explorer and console, a get-started guide, the console's own-key mode, and an all-links table.

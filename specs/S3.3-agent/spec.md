@@ -38,3 +38,6 @@ The owner supplied API keys (copied from EvalKit's `.env` into this repo's git-i
 
 ## Out of scope
 The attack suite and scoring (A4.x), the console (D6.x).
+
+## Update 2026-11-17 (OWNER D-40)
+Hand-read finding 2: three Claude queries compared the list-valued `flags` with `''`. The system prompt now adds one line, only when a view has `flags`, saying it is a list of quality-rule ids and giving two guard-allowed tests. The published run (main-2026-11-16) used the earlier prompt; the next recorded run uses this one.

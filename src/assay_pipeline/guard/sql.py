@@ -159,7 +159,7 @@ class SqlGuard:
         tables = tuple(sorted({t.name.lower() for t in ast.find_all(exp.Table) if t.name}))
         funcs = tuple(sorted({type(f).__name__.lower() for f in ast.find_all(exp.Func)}))
         if _too_big(ast):
-            return _blocked("not_select", tables, funcs)
+            return _blocked("too_complex", tables, funcs)  # node count or depth (D-28)
 
         for w in ast.find_all(exp.With):
             if w.args.get("recursive"):
@@ -197,7 +197,7 @@ class SqlGuard:
                 views_read.add(table.name.lower())
         tables = tuple(sorted(views_read))  # only the approved views actually read
         if scopes and _expanded_tables(scopes[-1], {}) > MAX_EXPANDED_TABLES:
-            return _blocked("not_select", tables, funcs)  # CTE fan-out (D-28)
+            return _blocked("too_complex", tables, funcs)  # CTE fan-out (D-28)
 
         for col in ast.find_all(exp.Column):
             if not col.table and col.name.lower() in KEYWORD_FUNCTIONS:
@@ -208,14 +208,14 @@ class SqlGuard:
                 and owner.args.get("from_") is None
                 and owner.args.get("from") is None
             ):
-                return _blocked("not_select", tables, funcs)  # a column with nothing to come from
+                return _blocked("too_complex", tables, funcs)  # nothing to come from (D-28)
         if (
             _lateral_alias(ast)
             or _too_many_concat_operands(ast)
             or (scopes and _derived_depth(scopes[-1]) > MAX_DERIVED_DEPTH)
             or any(_max_growth(s, {}) > MAX_GROWTH for s in scopes)
         ):
-            return _blocked("not_select", tables, funcs)  # bind/plan or memory blow-up (D-28)
+            return _blocked("too_complex", tables, funcs)  # bind/plan or memory blow-up (D-28)
 
         allowed_funcs: list[str] = []
         for f in ast.find_all(exp.Func):
@@ -238,9 +238,9 @@ class SqlGuard:
             # Renaming outside the select list (column lists, * REPLACE / * RENAME) would hide
             # where an output column comes from; refused so growth tracing stays exact (D-28).
             if isinstance(node, exp.TableAlias) and node.args.get("columns"):
-                return _blocked("not_select", tables, funcs)
+                return _blocked("too_complex", tables, funcs)
             if isinstance(node, exp.Star) and (node.args.get("replace") or node.args.get("rename")):
-                return _blocked("not_select", tables, funcs)
+                return _blocked("too_complex", tables, funcs)
 
         for clause in ast.find_all(exp.Limit, exp.Offset):
             value = clause.expression

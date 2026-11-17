@@ -24,7 +24,7 @@ from typing import IO, Any
 
 from pydantic import ValidationError
 
-from assay_pipeline.schemas import SCHEMA_VERSION, ZERO_HASH, Anchor, AuditLine
+from assay_pipeline.schemas import AUDIT_SCHEMA_VERSION, ZERO_HASH, Anchor, AuditLine
 
 RESERVED_FIELDS = frozenset({"seq", "prev_hash", "hash", "at", "run_id", "schema_version"})
 MAX_LOG_BYTES = 1 << 30  # verify refuses larger files rather than exhausting memory
@@ -387,7 +387,7 @@ class AuditLog:
         draft = {
             **empty,
             **fields,
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": AUDIT_SCHEMA_VERSION,
             "run_id": self.run_id,
             "at": at.isoformat(),
         }
@@ -431,7 +431,7 @@ class AuditLog:
     def _anchor_locked(self) -> Anchor:
         self._check_open()
         a = Anchor(
-            schema_version=SCHEMA_VERSION,
+            schema_version=AUDIT_SCHEMA_VERSION,
             log=self.path.name,
             seq=self._seq,
             hash=self._last_hash,

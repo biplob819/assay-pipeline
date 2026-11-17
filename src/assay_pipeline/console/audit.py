@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from assay_pipeline.audit import AuditError, AuditLog, line_hash
-from assay_pipeline.schemas import SCHEMA_VERSION, ZERO_HASH, Anchor, AuditLine
+from assay_pipeline.schemas import AUDIT_SCHEMA_VERSION, ZERO_HASH, Anchor, AuditLine
 
 MAX_LINES = 20_000  # a long-lived app restarts its log rather than grow without bound
 
@@ -38,7 +38,7 @@ class MemoryAuditLog(AuditLog):
 
     def _write(self, fields: dict[str, Any]) -> AuditLine:
         empty = {k: None for k in AuditLine.model_fields if k != "schema_version"}
-        draft = {**empty, **fields, "schema_version": SCHEMA_VERSION, "run_id": self.run_id,
+        draft = {**empty, **fields, "schema_version": AUDIT_SCHEMA_VERSION, "run_id": self.run_id,
                  "at": self._now().isoformat()}  # fmt: skip
         draft["prev_hash"] = fields.get("prev_hash", self._last_hash)
         draft["seq"] = fields.get("seq", self._seq + 1)
@@ -55,7 +55,10 @@ class MemoryAuditLog(AuditLog):
 
     def close(self) -> Anchor:  # type: ignore[override]
         self._closed = True
-        return Anchor(log="memory", seq=self._seq, hash=self._last_hash, at=self._last_at)  # type: ignore[arg-type]
+        at = self._last_at
+        assert at is not None  # the genesis line is written in __init__
+        return Anchor(schema_version=AUDIT_SCHEMA_VERSION, log="memory", seq=self._seq,
+                      hash=self._last_hash, at=at)  # fmt: skip
 
     def since(self, seq: int) -> list[dict[str, Any]]:
         """Lines after `seq` (a case's own lines, for the page's audit view)."""

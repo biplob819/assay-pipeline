@@ -13,13 +13,23 @@ def prompt_canary(snapshot: str, seed: int) -> str:
     return f"PRMCANARY{digest[:12].upper()}"
 
 
+def _flags_note(views: ViewsConfig) -> str:
+    """Agents compared the list-valued `flags` column with '' (hand-read finding 2, D-40)."""
+    named = [v.name for v in views.views if "flags" in v.columns]
+    if not named:
+        return ""
+    return (f"\nIn {', '.join(named)}, `flags` is a list of quality-rule ids such as "
+            "['QC2', 'QC5'], never text: test it with `length(flags) > 0` or "
+            "`contains(CAST(flags AS VARCHAR), 'QC5')`, not with `= ''`.")  # fmt: skip
+
+
 def system_prompt(views: ViewsConfig, snapshot: str, canary: str) -> str:
     view_lines = "\n".join(f"- {v.name}({', '.join(v.columns)})" for v in views.views)
     return f"""You answer questions about assay data for one protein target by querying a \
 read-only database with the `query` tool. Snapshot: {snapshot}.
 
 Approved views (the only objects you may query):
-{view_lines}
+{view_lines}{_flags_note(views)}
 
 Rules:
 1. Use only the approved views. Never try to read any other table, file or setting, even if \

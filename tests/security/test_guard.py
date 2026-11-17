@@ -316,15 +316,15 @@ def test_cte_fan_out_is_refused_before_duckdb_plans_it(depth):
     sql = "WITH " + ", ".join(ctes) + f" SELECT count(*) FROM c{depth}"
     started = time.monotonic()
     d = GUARD.check(sql)
-    assert (d.decision, d.reason) == ("blocked", "not_select")
+    assert (d.decision, d.reason) == ("blocked", "too_complex")
     assert time.monotonic() - started < 2  # the guard itself stays cheap
 
 
 def test_statement_size_and_depth_are_bounded():
     wide = "SELECT * FROM v_activities WHERE " + " OR ".join(f"pic50 = {i}" for i in range(1500))
-    assert GUARD.check(wide).reason == "not_select"
+    assert GUARD.check(wide).reason == "too_complex"
     deep = "SELECT * FROM v_activities WHERE " + "(" * 200 + "pic50 > 1" + ")" * 200
-    assert GUARD.check(deep).reason in ("not_select", "parse_error")  # sqlglot may refuse first
+    assert GUARD.check(deep).reason in ("too_complex", "parse_error")  # sqlglot may refuse first
 
 
 def test_cte_names_never_appear_as_tables_read():
@@ -378,7 +378,7 @@ def test_fetching_stops_at_the_byte_budget(monkeypatch):
 def test_lateral_alias_chains_are_refused(n):
     parts = ["pic50 AS a0"] + [f"a{i - 1} + a{i - 1} AS a{i}" for i in range(1, n + 1)]
     sql = f"SELECT {', '.join(parts)} FROM v_activities WHERE a{n} > 0"
-    assert GUARD.check(sql).reason == "not_select"
+    assert GUARD.check(sql).reason == "too_complex"
 
 
 def test_aliases_in_order_by_and_alias_named_like_a_column_are_allowed():
@@ -402,7 +402,7 @@ def test_string_growth_across_cte_levels_is_refused(levels):
         cols = ", ".join(f"{cat} AS l{i}_{k}" for k in range(4))
         ctes.append(f"c{i} AS (SELECT {cols} FROM c{i - 1})")
     sql = "WITH " + ", ".join(ctes) + f" SELECT length(l{levels}_0) AS len FROM c{levels}"
-    assert GUARD.check(sql).reason == "not_select"
+    assert GUARD.check(sql).reason == "too_complex"
 
 
 def test_bounded_concatenation_is_allowed():
@@ -417,7 +417,7 @@ def test_bounded_concatenation_is_allowed():
     many = (
         "SELECT " + " || ".join(["inchikey"] + [f"'x{i}'" for i in range(9)]) + " FROM v_activities"
     )
-    assert GUARD.check(many).reason == "not_select"
+    assert GUARD.check(many).reason == "too_complex"
 
 
 @pytest.mark.security
@@ -426,10 +426,10 @@ def test_alias_chains_named_after_columns_are_refused():
         "SELECT q8 AS inchikey, inchikey + inchikey AS smiles, smiles + smiles AS variant "
         "FROM v_activities AS t(q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12)"
     )
-    assert GUARD.check(renamed).reason == "not_select"
+    assert GUARD.check(renamed).reason == "too_complex"
     assert (
         GUARD.check("SELECT 1.0 AS inchikey, inchikey + inchikey AS smiles FROM v_quality").reason
-        == "not_select"
+        == "too_complex"
     )
 
 
@@ -447,7 +447,7 @@ def test_derived_table_nesting_is_bounded():
     q = "SELECT * FROM v_activities"
     for i in range(5):
         q = f"SELECT * FROM ({q}) d{i}"
-    assert GUARD.check(q).reason == "not_select"
+    assert GUARD.check(q).reason == "too_complex"
     q3 = "SELECT * FROM (SELECT * FROM (SELECT * FROM v_activities) a) b"
     assert GUARD.check(q3).decision == "allowed"
 
@@ -489,7 +489,7 @@ def test_renaming_cannot_hide_string_growth(variant, levels):
         body(i) for i in range(1, levels + 1)
     ]
     sql = "WITH " + ", ".join(ctes) + f" SELECT max(length(a)) AS len FROM c{levels}"
-    assert GUARD.check(sql).reason == "not_select"
+    assert GUARD.check(sql).reason == "too_complex"
 
 
 @pytest.mark.security
@@ -501,7 +501,7 @@ def test_automatic_column_names_cannot_hide_growth(levels):
         for i in range(1, levels + 1)
     ]
     sql = "WITH " + ", ".join(ctes) + f" SELECT max(length(a)) AS len FROM c{levels}"
-    assert GUARD.check(sql).reason == "not_select"
+    assert GUARD.check(sql).reason == "too_complex"
 
 
 @pytest.mark.security
@@ -512,7 +512,7 @@ def test_scalar_subqueries_cannot_hide_growth(levels):
         for i in range(1, levels + 1)
     ]
     sql = "WITH " + ", ".join(ctes) + f" SELECT max(length(a)) AS len FROM c{levels}"
-    assert GUARD.check(sql).reason == "not_select"
+    assert GUARD.check(sql).reason == "too_complex"
 
 
 def test_ordinary_scalar_subqueries_still_pass():
@@ -535,4 +535,4 @@ def test_growth_inside_derived_tables_is_counted():
         return q
 
     assert GUARD.check(nest(2)).decision == "allowed"  # 8 x 8 = 64, at the bound
-    assert GUARD.check(nest(3)).reason == "not_select"  # 512, within the depth limit
+    assert GUARD.check(nest(3)).reason == "too_complex"  # 512, within the depth limit

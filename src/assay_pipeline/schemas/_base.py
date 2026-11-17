@@ -23,6 +23,8 @@ from pydantic import (
 )
 
 SCHEMA_VERSION = "1.0"
+# Audit lines and anchors: 1.1 adds the `too_complex` guard reason (hand-read follow-up, D-40).
+AUDIT_SCHEMA_VERSION = "1.1"
 VERSION_PATTERN = r"^[0-9]+\.[0-9]+$"
 
 

@@ -23,6 +23,7 @@ GuardReason = Literal[
     "parse_error",
     "multiple_statements",
     "not_select",
+    "too_complex",  # a D-28 resource bound; audit format 1.1 and later
     "recursive_cte",
     "table_not_allowed",
     "cte_shadows_view",
@@ -51,6 +52,10 @@ class GuardDecision(Model):
         elif self.reason is None or self.rendered_sql is not None or self.limit_applied is not None:
             raise ValueError("a blocked decision has a reason, and no rendered_sql or limit")
         return self
+
+
+def _minor(version: str) -> int:
+    return int(version.split(".", 1)[1])
 
 
 _QUERY_FIELDS = (
@@ -117,6 +122,8 @@ class AuditLine(Versioned):
         if self.guard_decision == "blocked":
             if self.guard_reason is None:
                 raise ValueError("a blocked query line names the guard reason")
+            if self.guard_reason == "too_complex" and _minor(self.schema_version) < 1:
+                raise ValueError("the too_complex reason needs audit format 1.1 or later")
             if self._set(
                 "rendered_sql", "rows_returned", "rows_shown", "result_sha256", "db_error_class"
             ):
