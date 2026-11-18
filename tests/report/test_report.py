@@ -162,6 +162,21 @@ def test_tiles_bound_each_agent_and_count_all_spend(finished):
     assert "95% upper bound on the success rate per trial" in page
 
 
+def test_a_public_only_run_does_not_claim_held_out_cases(finished):
+    p, root, snap = finished
+    bundle = collect(p.run_dir, root, snap)
+    assert "public and held-out, agents and pipeline" in render(bundle)  # the fixture has both
+    s = bundle["summary"]
+    public = {**bundle, "summary": {**s, "attacks": [r for r in s["attacks"]
+                                                     if r["split"] == "public"]}}  # fmt: skip
+    page = render(public)
+    assert "public only, agents and pipeline" in page and "public and held-out, agents" not in page
+    assert " main, public cases, k=" in page and " main, all cases, k=" not in page
+    assert "(the counts above include them)" not in page  # no held-out queries to count
+    both = render(bundle)
+    assert " main, all cases, k=" in both and "(the counts above include them)" in both
+
+
 def test_the_bound_chart_never_pools_splits_and_never_cuts_a_bound(finished):
     p, root, snap = finished
     bundle = collect(p.run_dir, root, snap)

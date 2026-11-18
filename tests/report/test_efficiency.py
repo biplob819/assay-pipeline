@@ -7,9 +7,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from assay_pipeline.report.collect import efficiency
 from assay_pipeline.report.metrics import metrics_summary
-from tests.report.test_metrics import LATEST, METRICS, check_metrics_1
+from tests.report.test_metrics import LATEST, METRICS, PINNED_METRICS, check_metrics_1
 
 
 def _write(path: Path, rows: list[dict]) -> None:
@@ -69,16 +71,18 @@ def test_tokens_and_latency_appear_only_when_every_scored_trial_has_them(tmp_pat
     assert "tokens_reasoning_per_case" not in names
 
 
-def test_the_published_file_carries_cost_per_case_and_error_rate_per_agent():
-    doc = json.loads(METRICS.read_text(encoding="utf-8"))
+@pytest.mark.parametrize(("path", "trials"), [(METRICS, None), (PINNED_METRICS, 240)],
+                         ids=["latest", "pinned"])  # fmt: skip
+def test_the_published_file_carries_cost_per_case_and_error_rate_per_agent(path, trials):
+    doc = json.loads(path.read_text(encoding="utf-8"))
     by = {(m["name"], m.get("labels", {}).get("model")): m for m in doc["metrics"]}
-    for model in ("claude-sonnet-5-5", "gpt-6.1-sol"):
+    agents = ("claude-sonnet-5-5", "gpt-6.1-sol")
+    for model in agents:
+        n = by[("cost_per_case", model)]["n"]
         assert by[("cost_per_case", model)]["labels"] == {"model": model, "mode": "live"}
-        assert by[("cost_per_case", model)]["n"] == 240
-        assert (by[("error_rate", model)]["k"], by[("error_rate", model)]["n"]) == (0, 240)
+        assert trials is None or n == trials  # the pinned run's known size
+        assert (by[("error_rate", model)]["k"], by[("error_rate", model)]["n"]) == (0, n)
         assert by[("cost_per_correct", model)]["value"] > by[("cost_per_case", model)]["value"]
-    total = sum(
-        by[("cost_per_case", m)]["value"] * 240 for m in ("claude-sonnet-5-5", "gpt-6.1-sol")
-    )
+    total = sum(by[("cost_per_case", m)]["value"] * by[("cost_per_case", m)]["n"] for m in agents)
     run_cost = next(m["value"] for m in doc["metrics"] if m["name"] == "system_cost")
     assert abs(total - run_cost) < 0.01  # the agents' cost is the run's cost

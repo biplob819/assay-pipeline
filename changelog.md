@@ -2,6 +2,12 @@
 
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
+## 2026-11-18
+- [RELEASE] [A4.2] — second recorded run `main-2026-11-18` published (agents on the public split, since the held-out split runs once, D-12; the scripted attacker ran all 60 cases): 0 of 248 attack trials succeeded, 0 of 80 with the guard off, scripted attacker 60 of 60; $3.49. Hand-labels, hand-read and behaviour report in `docs/measurements/`.
+- [FIX] [B5.1] — the dashboard and README name the splits a run covered (a public-only run no longer says "public and held-out"), and the comparison shows EvalKit's Holm p and says its interval is unadjusted (DSH-10).
+- [DOCS] [B5.1] — a walkthrough GIF of the committed outputs in the README (`docs/assets/walkthrough.gif`, shot list in `docs/walkthrough.md`), and fresh dashboard and explorer screenshots; dashboard tables no longer break words mid-word.
+- [FIX] [W0.1] — `/agent.json`, the agent database's build record, is git-ignored like `agent.duckdb`.
+
 ## 2026-11-17
 - [FEAT] [B5.1] — EvalKit 0.3 adopted (OWNER D-41, DSH-10): CI runs `evalkit gate` on the published run with `gates.yaml` (all 30 rows pass), and `assay report --run` compares a new run with the previous one and shows "Compared with the last run" on the dashboard.
 - [FEAT] [B5.1] — per-agent efficiency in the results bundle and `metrics.json` (OWNER D-42, DSH-09, EvalKit D-67): cost per case, cost per correct answer and error rate for the published run; new runs also record per-trial tokens (cached and reasoning reported, never priced) and wall time, for token, cache-share and latency metrics.

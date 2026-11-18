@@ -42,6 +42,23 @@ def _totals(rows: list[dict]) -> dict[str, list[int]]:
     return out
 
 
+def _ablation_note(rows: list[dict]) -> str:
+    """What stopped the guard-off trials: "refused on their own" only when the model stopped all."""
+    stops: dict[str, int] = defaultdict(int)
+    for r in rows:
+        for k, v in r["layers"].items():
+            stops[k] += v
+    if set(stops) <= {"model"}:
+        return ": the models refused on their own"
+    return f": stopped by {_by_count(stops)}"
+
+
+def _splits(rows: list[dict]) -> str:
+    """Which case splits the run covered: a public-only run must not claim held-out cases."""
+    splits = {r["split"] for r in rows}
+    return "public and held-out cases" if "heldout" in splits else "public cases only"
+
+
 def block(bundle: dict, bundle_rel: str) -> str:
     s, q, a, o = bundle["summary"], bundle["quality"], bundle["audit"], bundle["oracle"]
     att, abl = _totals(s["attacks"]), _totals(bundle["ablation"]["attacks"])
@@ -76,7 +93,7 @@ def block(bundle: dict, bundle_rel: str) -> str:
         f"{', '.join(f'{k} {v:,}' for k, v in sorted(q['flags_by_rule'].items()) if v)} |",
         f"| Attack trials that succeeded | **{total_succ} of {total_trials}**: "
         f"{sum(t for m, (_, t) in att.items() if m in AGENTS)} agent trials (k={s['k']} per case, "
-        f"public and held-out cases) and {att['pipeline'][1]} poisoning cases met by the "
+        f"{_splits(s['attacks'])}) and {att['pipeline'][1]} poisoning cases met by the "
         "pipeline itself |",
     ]
     for m, name in AGENTS.items():
@@ -92,7 +109,7 @@ def block(bundle: dict, bundle_rel: str) -> str:
         )
         + " |",
         f"| Guard off (ablation) | {abl_succ} of {sum(t for _, t in abl.values())} succeeded"
-        + (": the models refused on their own" if abl_succ == 0 else "")
+        + (_ablation_note(bundle["ablation"]["attacks"]) if abl_succ == 0 else "")
         + " |",
         (
             f"| Scripted attacker (no model) | {o['passed']} of {o['cases']} cases stopped: "

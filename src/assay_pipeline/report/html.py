@@ -46,7 +46,7 @@ padding:18px 20px;margin:18px 0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px;margin:16px 0}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .tile b{display:block;font-size:24px;line-height:1.2}.tile span{color:var(--ink2);font-size:13px}
-table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0;overflow-wrap:normal}
 th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--ink2);font-weight:600}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .wrap{overflow-x:auto}code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -215,12 +215,13 @@ def _compare_section(c: dict[str, Any] | None) -> str:
              num(r["old"]), num(r["new"]),
              num(r["diff"]) + (f" [{num(r['ci_low'])}, {num(r['ci_high'])}]"
                                if r["ci_low"] is not None else ""),
-             _e(r["pairing"]), _e(r["gate"] or ""),
+             num(r.get("p_holm")), _e(r["gate"] or ""),
              "regression" if r["regression"] else ("flagged" if r["flagged"] else "")]
             for r in c["changed"]]  # fmt: skip
-    table = (_table(["Metric", "Labels", "Previous", "This run", "Change (95% CI)", "Pairing",
-                     "Gate", "Flag"], rows, num=(2, 3, 4)) if rows
+    table = (_table(["Metric", "Labels", "Previous", "This run", "Change (95% CI)", "Holm p",
+                     "Gate", "Flag"], rows, num=(2, 3, 4, 5)) if rows
              else "<p>No metric changed.</p>")  # fmt: skip
+    pairing = " or ".join(sorted({r["pairing"] for r in c["changed"]})) or "unpaired"
     errors = "".join(f"<li>{_e(e)}</li>" for e in c.get("errors") or [])
     errors_html = (f'<p class="bad">The comparison could not be completed:</p><ul>{errors}</ul>'
                    if errors else "")  # fmt: skip
@@ -228,9 +229,14 @@ def _compare_section(c: dict[str, Any] | None) -> str:
 <p>Against run <code>{_e(c["previous_run"])}</code>: <strong>{_e(c["verdict"])}</strong>
 ({c["rows"]} metrics compared, {len(c["changed"])} changed, {c["missing"]} missing; settings
 {_e(c["settings"])}; gates {_e(c.get("gates", "applied"))}). Computed by EvalKit's
-<code>compare</code>, unpaired: where both runs give an interval, the change's 95% interval
-combines them and is Holm-adjusted; counts have none. A change is flagged only when its interval
-excludes 0, so this is not the release gate: the gate (<code>evalkit gate</code> with
+<code>compare</code>, every row {_e(pairing)}: where both runs give an interval, the change's 95%
+interval combines them (unadjusted); counts have none. A change is flagged only when it also
+survives Holm adjustment across the compared rows that have enough cases (Holm p at or below
+0.05) and its interval excludes 0, so an interval that excludes 0 is not by itself a flagged
+change; Holm p is blank for a row with no interval or too few cases. Rows without a split label
+pool every case each run ran, so a change there can come from which cases ran. This is not the
+release gate: the
+gate (<code>evalkit gate</code> with
 <code>gates.yaml</code>) judges each run on its own. Held-out results only as split totals.</p>
 {errors_html}{table}
 </section>
@@ -251,8 +257,11 @@ def render(bundle: dict[str, Any]) -> str:
         by_model[r["model"]][1] += r["trials"]
     k = s.get("k", 1)
     n_agent = sum(r["trials"] for r in agent_rows)
-    tiles = [(f"{n_succ_all} of {n_all}", "attack trials got through (main run, public and "
-              "held-out, agents and pipeline)")]  # fmt: skip
+    covered = (
+        "public and held-out" if any(r["split"] == "heldout" for r in attacks) else "public only"
+    )
+    tiles = [(f"{n_succ_all} of {n_all}", f"attack trials got through (main run, {covered}, "
+              "agents and pipeline)")]  # fmt: skip
     for model, (succ, n) in sorted(by_model.items()):
         tiles.append((f"&lt; {_pct(upper_bound(succ, n), 1)}",
                       f"{_e(SHORT.get(model, model))}: 95% upper bound on the success rate per "
@@ -286,11 +295,12 @@ def render(bundle: dict[str, Any]) -> str:
 
     stack: list[tuple[str, dict[str, int]]] = []
     seen_layers: set[str] = set()
+    scope = "all cases" if any(r["split"] == "heldout" for r in attacks) else "public cases"
     for owasp in sorted({r["owasp"] for r in attacks}):
         models = sorted({r["model"] for r in attacks if r["owasp"] == owasp})
         for m in models:
             stack.append(
-                (f"{owasp} main, all cases, k={k} · {SHORT.get(m, m)}", layers_of(s, owasp, m))
+                (f"{owasp} main, {scope}, k={k} · {SHORT.get(m, m)}", layers_of(s, owasp, m))
             )
         if abl:
             for m in sorted({r["model"] for r in abl["attacks"] if r["owasp"] == owasp}):
@@ -357,6 +367,8 @@ def render(bundle: dict[str, Any]) -> str:
 
     tail = [qrow(x) for x in reversed(a["tail"])]
     blocked_rows = [qrow(x) for x in reversed(a.get("blocked", []))]
+    held_note = (" (the counts above include them)"
+                 if any(r["split"] == "heldout" for r in attacks) else "")  # fmt: skip
     decisions = sorted(a.get("decisions", {}).items(),
                        key=lambda kv: (-(kv[1]["attack"] + kv[1]["question"]), kv[0]))  # fmt: skip
     decision_rows = [[_e(key), f"{v['attack']:,}", f"{v['question']:,}"] for key, v in decisions]
@@ -484,8 +496,9 @@ in normal questions. Blocks in normal questions are the guard's cost to honest u
 {_table(["Seq", "Case", "Model", "SQL", "Guard", "Reason"], blocked_rows, num=(0,))}
 <h3>Most recent queries</h3>
 {_table(["Seq", "Case", "Model", "SQL", "Guard", "Reason"], tail, num=(0,))}
-<p class="small">Query lines from public cases only; held-out prompts and queries are never published
-(the counts above include them).</p>
+<p class="small">Query lines from public cases only; held-out prompts and queries are never published{
+        held_note
+    }.</p>
 </section>
 
 <section aria-labelledby="h-data"><h2 id="h-data">Data quality</h2>

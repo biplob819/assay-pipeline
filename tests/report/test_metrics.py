@@ -20,6 +20,11 @@ from assay_pipeline.report.metrics import metrics_summary
 ROOT = Path(__file__).resolve().parents[2]
 LATEST = ROOT / "docs/results" / (ROOT / "docs/results/LATEST").read_text(encoding="utf-8").strip()
 METRICS = LATEST.with_name("metrics.json")
+# A frozen published run with known numbers (both splits, 150 attack trials per agent). Tests of
+# exact values pin to it, so publishing a newer run never rewrites them; LATEST is whatever the
+# README and dashboard currently show.
+PINNED = ROOT / "docs/results/main-2026-11-16/bundle.json"
+PINNED_METRICS = PINNED.with_name("metrics.json")
 GATES = yaml.safe_load((ROOT / "gates.yaml").read_text(encoding="utf-8"))
 TOP = {"schema_version", "project", "run_id", "created_at", "simulated", "provenance", "metrics"}
 UNITS = {"count", "rate", "bool", "ratio", "ms", "s"}
@@ -74,8 +79,8 @@ def test_the_published_metrics_file_is_the_bundles_and_valid():
     assert doc["run_id"] == bundle["run"] and doc["provenance"]["snapshot"] == bundle["snapshot"]
 
 
-def test_the_file_says_what_the_readme_says():
-    doc = json.loads(METRICS.read_text(encoding="utf-8"))
+def test_the_pinned_run_file_has_its_known_numbers():
+    doc = json.loads(PINNED_METRICS.read_text(encoding="utf-8"))
     get = {(m["name"], tuple(sorted(m.get("labels", {}).items()))): m for m in doc["metrics"]}
     for model in ("claude-sonnet-5-5", "gpt-6.1-sol"):
         r = get[("attack_trial_success_rate", (("model", model),))]
@@ -90,6 +95,23 @@ def test_the_file_says_what_the_readme_says():
     assert round(get[("spend_total", ())]["value"], 2) == 4.60
     b1 = get[("behaviour_rate", (("model", "gpt-6.1-sol"), ("rule", "B1")))]
     assert round(b1["value"], 2) == 0.80
+
+
+def test_the_published_file_says_what_the_readme_says():
+    """The README results block and the published metrics file come from the same bundle."""
+    doc = json.loads(METRICS.read_text(encoding="utf-8"))
+    get = {(m["name"], tuple(sorted(m.get("labels", {}).items()))): m for m in doc["metrics"]}
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    block = readme.split("<!-- results:start -->", 1)[1].split("<!-- results:end -->", 1)[0]
+    assert f"`{doc['run_id']}`" in block
+    for model, name in (("claude-sonnet-5-5", "Claude Sonnet 5.5"), ("gpt-6.1-sol", "GPT-6.1 Sol")):
+        r = get[("attack_trial_success_rate", (("model", model),))]
+        bound = f"{100 * upper_bound(r['k'], r['n']):.1f}%"
+        assert f"| {name} | {r['k']} of {r['n']}; 95% upper bound {bound} per trial |" in block
+    succ = sum(m["value"] for m in doc["metrics"] if m["name"] == "attack_successes")
+    trials = sum(m["n"] for m in doc["metrics"] if m["name"] == "attack_successes")
+    assert f"**{succ} of {trials}**" in block
+    assert f"${get[('spend_total', ())]['value']:.2f} for the run" in block
 
 
 def test_no_case_id_or_question_text_is_in_the_file():
@@ -127,7 +149,7 @@ def test_every_gate_matches_a_metric_and_safety_fails_while_quality_warns():
 
 def test_one_attack_success_reaches_the_file_for_evalkit_to_fail():
     """EvalKit's test for Assay's case: 1 of 150 must fail both safety gates (exit 1)."""
-    bundle = json.loads(LATEST.read_text(encoding="utf-8"))
+    bundle = json.loads(PINNED.read_text(encoding="utf-8"))
     row = next(r for r in bundle["summary"]["attacks"]
                if r["model"] == "gpt-6.1-sol" and r["split"] == "public")  # fmt: skip
     row["successes"] += 1

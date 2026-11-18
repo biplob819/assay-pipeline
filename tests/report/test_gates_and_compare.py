@@ -13,14 +13,14 @@ from evalkit.gates import run_gate
 
 from assay_pipeline.report.compare import compare_metrics
 from assay_pipeline.report.html import render
-from tests.report.test_metrics import LATEST, METRICS
+from tests.report.test_metrics import LATEST, METRICS, PINNED, PINNED_METRICS
 
 ROOT = Path(__file__).resolve().parents[2]
 GATES = ROOT / "gates.yaml"
 
 
 def _variant(tmp_path: Path, name: str, change) -> Path:
-    doc = json.loads(METRICS.read_text(encoding="utf-8"))
+    doc = json.loads(PINNED_METRICS.read_text(encoding="utf-8"))
     doc["run_id"] = name
     for m in doc["metrics"]:
         change(m)
@@ -32,6 +32,18 @@ def _variant(tmp_path: Path, name: str, change) -> Path:
 def test_the_published_run_passes_every_gate():
     report = run_gate(METRICS, GATES)
     assert report.exit_code == 0 and report.verdict == "pass" and not report.errors
+
+
+def test_the_published_comparison_completed_and_names_an_earlier_run():
+    bundle = json.loads(LATEST.read_text(encoding="utf-8"))
+    c = bundle.get("compare")
+    if len(list((ROOT / "docs/results").glob("*/metrics.json"))) == 1:
+        assert c is None  # the first published run has nothing to compare with
+        return
+    assert c is not None, "a second published run must carry its comparison"
+    assert not c["errors"] and c["exit_code"] in (0, 1)
+    prev = c["previous_run"]
+    assert prev != bundle["run"] and (ROOT / "docs/results" / prev / "metrics.json").exists()
 
 
 def test_one_attack_success_fails_the_release_gate(tmp_path):
@@ -65,24 +77,27 @@ def test_the_comparison_keeps_changed_rows_only_without_paths_or_ids(tmp_path):
             m["k"], m["value"] = 30, round(30 / 56, 6)
 
     new = _variant(tmp_path, "next-run", worse_b1)
-    c = compare_metrics(METRICS, new, GATES)
-    assert c == compare_metrics(METRICS, new, GATES)  # deterministic: seeded
+    c = compare_metrics(PINNED_METRICS, new, GATES)
+    assert c == compare_metrics(PINNED_METRICS, new, GATES)  # deterministic: seeded
     assert c["previous_run"] == "main-2026-11-16" and c["rows"] > 50
     (row,) = c["changed"]
     assert row["metric"] == "behaviour_rate" and row["diff"] < 0 and row["gate"] == "warn"
     assert row["pairing"] == "unpaired" and row["ci_high"] < 0
+    # an interval that excludes 0 is not a flag by itself: Holm runs across every compared row
+    assert 0 <= row["p_holm"] <= 1 and row["flagged"] == (row["p_holm"] < 0.05)
     text = json.dumps(c)
     assert str(tmp_path) not in text and not re.search(r"\b(atk|nq)-", text)
 
 
 def test_the_dashboard_shows_the_comparison_only_when_there_is_one(tmp_path):
-    bundle = json.loads(LATEST.read_text(encoding="utf-8"))
+    bundle = json.loads(PINNED.read_text(encoding="utf-8"))
     assert "Compared with the last run" not in render(bundle)  # the first run's page is unchanged
     new = _variant(tmp_path, "next-run", lambda m: None)
-    bundle["compare"] = compare_metrics(METRICS, new, GATES)
+    bundle["compare"] = compare_metrics(PINNED_METRICS, new, GATES)
     page = render(bundle)
     assert "Compared with the last run" in page and "No metric changed." in page
     assert "main-2026-11-16" in page
+    assert "Holm p" in page and "is Holm-adjusted" not in page  # the shown interval is unadjusted
 
 
 def test_an_older_baseline_is_compared_without_gates_and_says_why(tmp_path):
@@ -92,7 +107,7 @@ def test_an_older_baseline_is_compared_without_gates_and_says_why(tmp_path):
     doc = json.loads(old.read_text(encoding="utf-8"))
     doc["metrics"] = [m for m in doc["metrics"] if m["name"] != "attack_trials_unscored"]
     old.write_text(json.dumps(doc), encoding="utf-8")
-    c = compare_metrics(old, METRICS, GATES)
+    c = compare_metrics(old, PINNED_METRICS, GATES)
     assert c["exit_code"] != 2 and c["gates"].startswith("not applied: ")
     assert "attack_trials_unscored" in c["gates"] and c["missing"] >= 1
     assert str(tmp_path) not in json.dumps(c)
@@ -108,4 +123,4 @@ def test_an_unreadable_baseline_is_reported_on_the_page_not_raised(tmp_path):
     bundle = json.loads(LATEST.read_text(encoding="utf-8"))
     page = render({**bundle, "compare": c})
     assert "could not be completed" in page and "not valid JSON" in page
-    assert "this is not the release gate" in page
+    assert "This is not the release gate" in " ".join(page.split())

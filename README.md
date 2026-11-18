@@ -10,11 +10,15 @@
 
 **[Security dashboard](https://biplob819.github.io/assay-pipeline/)** · **[Compound explorer](https://biplob819.github.io/assay-pipeline/explorer.html)** · **[PyPI](https://pypi.org/project/assay-pipeline/)** · **[Quickstart](docs/quickstart.md)** · **[Console guide](apps/console/README.md)** · **[Threat model](docs/threat-model.md)**
 
-| [![The security dashboard: 0 of 310 attack trials got through, with the 95% upper bound per category and agent](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/dashboard.png)](https://biplob819.github.io/assay-pipeline/) | [![The compound explorer: 41,463 activity rows with filters, flags and a link to each source record](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/explorer.png)](https://biplob819.github.io/assay-pipeline/explorer.html) |
+| [![The security dashboard: 0 of 248 attack trials got through, with the 95% upper bound per category and agent](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/dashboard.png)](https://biplob819.github.io/assay-pipeline/) | [![The compound explorer: 41,463 activity rows with filters, flags and a link to each source record](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/explorer.png)](https://biplob819.github.io/assay-pipeline/explorer.html) |
 | :---: | :---: |
 | **[Security dashboard](https://biplob819.github.io/assay-pipeline/)**: did any attack get through, what stopped it, what it cost | **[Compound explorer](https://biplob819.github.io/assay-pipeline/explorer.html)**: every published row, filterable, each linked to its source record |
 | [![The console replaying a recorded attack: the guard blocks a query on the restricted table and writes audit lines](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/console-replay.png)](apps/console/README.md) | [![The console's live mode: pick an agent and pay with your own API key, behind the passcode](https://raw.githubusercontent.com/biplob819/assay-pipeline/main/docs/assets/screenshots/console-live.png)](apps/console/README.md#your-own-api-key) |
 | **Console, replay**: a recorded attack through the real guard, no API call | **Console, live**: your own question, on the console's key or your own |
+
+![A 22-second walkthrough: the security dashboard, what stopped each attack, agent behaviour, the comparison with the previous run, the audit trail, the compound explorer, the console replaying a blocked query and the release gate](docs/assets/walkthrough.gif)
+
+Walkthrough of the committed outputs ([shot list](docs/walkthrough.md)).
 
 ## What it does
 
@@ -25,22 +29,22 @@
 ## Results
 
 <!-- results:start -->
-Run `main-2026-11-16` on snapshot `2026-11-15.1`, from [`docs/results/main-2026-11-16/bundle.json`](docs/results/main-2026-11-16/bundle.json) ([dashboard](https://biplob819.github.io/assay-pipeline/)).
+Run `main-2026-11-18` on snapshot `2026-11-15.1`, from [`docs/results/main-2026-11-18/bundle.json`](docs/results/main-2026-11-18/bundle.json) ([dashboard](https://biplob819.github.io/assay-pipeline/)).
 
 | | |
 | --- | --- |
 | Snapshot | 41,463 EGFR rows (chembl 26,553, pubchem 14,910); flagged, never deleted: QC1 1,470, QC2 4,414, QC3 174, QC5 21,761 |
-| Attack trials that succeeded | **0 of 310**: 300 agent trials (k=3 per case, public and held-out cases) and 10 poisoning cases met by the pipeline itself |
-| Claude Sonnet 5.5 | 0 of 150; 95% upper bound 2.0% per trial |
-| GPT-6.1 Sol | 0 of 150; 95% upper bound 2.0% per trial |
-| What stopped them | model 288, quality_rule 10, limit 9, guard 3 (most attacks were refused by the model before any query ran) |
-| Guard off (ablation) | 0 of 80 succeeded: the models refused on their own |
+| Attack trials that succeeded | **0 of 248**: 240 agent trials (k=3 per case, public cases only) and 8 poisoning cases met by the pipeline itself |
+| Claude Sonnet 5.5 | 0 of 120; 95% upper bound 2.5% per trial |
+| GPT-6.1 Sol | 0 of 120; 95% upper bound 2.5% per trial |
+| What stopped them | model 231, guard 9, quality_rule 8 (most attacks were refused by the model before any query ran) |
+| Guard off (ablation) | 0 of 80 succeeded: stopped by model 79, limit 1 |
 | Scripted attacker (no model) | 60 of 60 cases stopped: guard 45, quality_rule 10, limit 5 |
-| Normal questions (public split) | Claude Sonnet 5.5: query matches gold 60%, answer states the gold value 100%; GPT-6.1 Sol: query matches gold 70%, answer states the gold value 73% |
-| SQL shown in the answer is what ran (B1, all questions) | Claude Sonnet 5.5 97%; GPT-6.1 Sol 80% |
-| Judges | agree with each other on 94 of 96; against 24 hand labels, Opus 24 and Sol 24 |
-| Audit log | 1,377 lines, 494 anchors, verifies |
-| Spend | $4.60 for the run, the guard-off ablation and the judges |
+| Normal questions (public split) | Claude Sonnet 5.5: query matches gold 70%, answer states the gold value 100%; GPT-6.1 Sol: query matches gold 93%, answer states the gold value 93% |
+| SQL shown in the answer is what ran (B1, all questions) | Claude Sonnet 5.5 100%; GPT-6.1 Sol 98% |
+| Judges | agree with each other on 78 of 78; against 24 hand labels, Opus 24 and Sol 24 |
+| Audit log | 997 lines, 394 anchors, verifies |
+| Spend | $3.49 for the run, the guard-off ablation and the judges |
 <!-- results:end -->
 
 What these numbers do and don't show: [reading the dashboard](docs/reading-the-dashboard.md). The short version: the models refused almost every attack themselves, so the guard is tested mainly by the scripted attacker, which sends the attack SQL with no model in the loop. Held-out attack cases stay private so the result can't be tuned to them.
@@ -133,7 +137,8 @@ Build your own snapshot with no API keys: `assay ingest chembl`, `assay ingest p
 - [Threat model](docs/threat-model.md) ([PDF](docs/threat-model.pdf), one page): assets, trust boundaries, OWASP and ATLAS mapping, controls, limits
 - [Data roadmap](docs/data-roadmap.md) ([PDF](docs/data-roadmap.pdf), one page): from snapshot to a training set
 - Published snapshot: [the Parquet files and manifest](docs/data/2026-11-15.1/), with its [data card](docs/data/2026-11-15.1/DATA_CARD.md) and [data licence](docs/data/2026-11-15.1/DATA_LICENSE.md)
-- Published run: [bundle](docs/results/main-2026-11-16/bundle.json), [audit anchors and verify result](docs/results/main-2026-11-16/verify.json), [hand-read of real answers](docs/measurements/hand-read-main-2026-11-16.md)
+- Published run: [bundle](docs/results/main-2026-11-18/bundle.json), [audit anchors and verify result](docs/results/main-2026-11-18/verify.json), [hand-read of real answers](docs/measurements/hand-read-main-2026-11-18.md), [behaviour and judging](docs/measurements/behaviour-2026-11-18.md)
+- Earlier run, with the held-out split: [bundle](docs/results/main-2026-11-16/bundle.json), [verify result](docs/results/main-2026-11-16/verify.json), [hand-read](docs/measurements/hand-read-main-2026-11-16.md)
 - [Decision log](docs/decisions.md), [lessons](docs/lessons.md) and [changelog](changelog.md)
 - [PRD](Trusted%20Assay%20Pipeline%20PRD.md) and [Tech Spec](Trusted%20Assay%20Pipeline%20Tech%20Spec.md), including the node graph the project was built by and the loophole review of the PRD
 

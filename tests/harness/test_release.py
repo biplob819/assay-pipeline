@@ -168,11 +168,36 @@ def test_the_release_workflow_publishes_by_trusted_publishing_only():
     assert "uvx" in text and "assay doctor" in text and 'test "v$v" = "$GITHUB_REF_NAME"' in text
 
 
-def test_the_hand_read_names_public_cases_only():
+def test_every_hand_read_names_public_cases_only():
     from assay_pipeline.attack.suite import load_suite
 
     suite = load_suite()  # the packaged, public suite
     public = {c.id for c in [*suite.attacks, *suite.questions] if c.split == "public"}
-    text = _read("docs/measurements/hand-read-main-2026-11-16.md")
-    named = set(re.findall(r"\b(?:atk-llm\d\d-\d\d|nq-\d\d)\b", text))
-    assert named and named <= public, named - public
+    reads = sorted((ROOT / "docs/measurements").glob("hand-read-*.md"))
+    rel, _ = _bundle()
+    assert f"hand-read-{Path(rel).parent}.md" in {r.name for r in reads}  # the published run's
+    for doc in reads:
+        named = set(
+            re.findall(r"\b(?:atk-llm\d\d-\d\d|nq-\d\d)\b", doc.read_text(encoding="utf-8"))
+        )
+        assert named and named <= public, (doc.name, named - public)
+
+
+def test_the_readme_says_which_splits_the_published_run_covered():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "readme_results", ROOT / "scripts/readme_results.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod._splits([{"split": "public"}]) == "public cases only"
+    assert mod._splits([{"split": "public"}, {"split": "heldout"}]) == "public and held-out cases"
+    assert mod._ablation_note([{"layers": {"model": 3}}]) == ": the models refused on their own"
+    assert mod._ablation_note([{"layers": {"model": 3}}, {"layers": {"limit": 1}}]) == (
+        ": stopped by model 3, limit 1"
+    )
+    _, bundle = _bundle()
+    expected = mod._splits(bundle["summary"]["attacks"])
+    assert f"per case, {expected})" in _read("README.md")

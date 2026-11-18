@@ -50,7 +50,7 @@ def compare_metrics(old: Path, new: Path, gates: Path | None = None) -> dict[str
     changed = [
         {"metric": x.metric, "labels": dict(x.labels), "unit": x.unit, "old": _r(x.old),
          "new": _r(x.new), "diff": _r(x.diff), "ci_low": _r(x.ci_low), "ci_high": _r(x.ci_high),
-         "pairing": x.pairing, "flagged": bool(x.flagged), "gate": x.gate,
+         "p_holm": _r(x.p_holm), "pairing": x.pairing, "flagged": bool(x.flagged), "gate": x.gate,
          "regression": bool(x.regression)}
         for x in c.changes if x.diff not in (0, None) or x.flagged or x.regression
     ]  # fmt: skip

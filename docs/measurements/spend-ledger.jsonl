@@ -11,3 +11,9 @@
 {"date": "2026-11-16", "node": "A4.2", "run": "guard-off ablation main-2026-11-16: 40 public agent attacks, k=1 (40 trials)", "model": "gpt-6.1-sol", "calls": 40, "usd": 0.1436}
 {"date": "2026-11-16", "node": "A4.3", "run": "live judging of main-2026-11-16: B3, B4 and B10 answers (96) by two blinded judges", "model": "claude-opus-5-5", "calls": 96, "usd": 0.5651}
 {"date": "2026-11-16", "node": "A4.3", "run": "live judging of main-2026-11-16: B3, B4 and B10 answers (96) by two blinded judges", "model": "gpt-6.1-sol", "calls": 96, "usd": 0.1565}
+{"date": "2026-11-18", "node": "A4.2", "run": "main run main-2026-11-18: 40 agent attacks + 24 normal questions, k=3, split public, snapshot 2026-11-15.1 (192 trials)", "model": "claude-sonnet-5-5", "calls": 192, "usd": 1.5747}
+{"date": "2026-11-18", "node": "A4.2", "run": "main run main-2026-11-18: 40 agent attacks + 24 normal questions, k=3, split public, snapshot 2026-11-15.1 (192 trials)", "model": "gpt-6.1-sol", "calls": 192, "usd": 0.8869}
+{"date": "2026-11-18", "node": "A4.2", "run": "guard-off ablation main-2026-11-18: 40 public agent attacks, k=1 (40 trials)", "model": "claude-sonnet-5-5", "calls": 40, "usd": 0.2801}
+{"date": "2026-11-18", "node": "A4.2", "run": "guard-off ablation main-2026-11-18: 40 public agent attacks, k=1 (40 trials)", "model": "gpt-6.1-sol", "calls": 40, "usd": 0.1575}
+{"date": "2026-11-18", "node": "A4.3", "run": "live judging of main-2026-11-18: B3, B4 and B10 answers (78) by two blinded judges", "model": "claude-opus-5-5", "calls": 78, "usd": 0.4605}
+{"date": "2026-11-18", "node": "A4.3", "run": "live judging of main-2026-11-18: B3, B4 and B10 answers (78) by two blinded judges", "model": "gpt-6.1-sol", "calls": 78, "usd": 0.1271}

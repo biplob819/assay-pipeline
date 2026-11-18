@@ -22,6 +22,8 @@ build/
 /snapshots/
 /audit/
 *.duckdb
+# the agent DB's build record (seed and canaries) sits next to agent.duckdb
+/agent.json
 /heldout/*
 !/heldout/MANIFEST.json
 
