@@ -507,7 +507,7 @@ def build_plan(
         raise RunError("the ablation runs the public attacks only (§7.3)")
     views = load_views_config()
     db = load_agent_db(db_path)
-    suite = load_suite(heldout_dir if split == "all" else None)
+    suite = load_suite(heldout_dir if split == "all" else None, pinned=True)
     attacks, questions = list(suite.attacks), list(suite.questions)
     return RunPlan(
         run_dir=run_dir, db=db, views=views, cfg=load_build_config(),

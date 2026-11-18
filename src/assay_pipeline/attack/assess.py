@@ -382,7 +382,7 @@ def build_assessment(
     *, run_dir: Path, db_path: Path, heldout_dir: Path | None, labels: Path | None,
     max_cost: float | None, create_for: Callable[[str], Create] | None = None,
 ) -> Assessment:  # fmt: skip
-    suite = load_suite(heldout_dir)
+    suite = load_suite(heldout_dir, pinned=True)
     items: dict[str, AttackCase | NormalQuestion] = {c.id: c for c in suite.attacks}
     items.update({q.id: q for q in suite.questions})
     return Assessment(run_dir=run_dir, db=load_agent_db(db_path), views=load_views_config(),

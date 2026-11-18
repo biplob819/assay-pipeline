@@ -24,6 +24,11 @@ Ship the benchmark itself: 60 attack cases (ten per OWASP category), tagged with
   - the canary rule: no `EMBCANARY` or `PRMCANARY` in any prompt, attacker SQL, planted text or question (ATK-06).
 
   `heldout/MANIFEST.json` (committed) pins the held-out files by sha256 with their counts. `verify_heldout` refuses edited files.
+- **Suite versions (D-45, ATK-08):** the held-out split runs the agents once per suite version (D-12), so its files never change within a version.
+  - `SUITE_VERSION` (now 2) is written into the manifest as `suite_version`; `SUITE_MANIFESTS` pins each version's manifest sha256, and a test holds the committed manifest to the current pin.
+  - `verify_heldout` returns the version and refuses an unknown one (an explicit `suite_version` of 1 included); with `pinned` (used by `build_plan` for split all and by `build_assessment`) the manifest must be byte for byte the pinned one, so a locally rewritten manifest is refused before a model sees a held-out item; a manifest with no `suite_version` is suite 1, so the suite-1 files that main-2026-11-16 ran, kept locally under `heldout/archive/suite-1/` (git-ignored), still verify, load and match that run's cases digest.
+  - `RETIRED` maps an id to the version that retired it; `check_suite` refuses it in either split from that version on; an archived older version exempts only its own held-out items, never a public one. Suite 2 retires nq-26 and nq-30, whose wording was published (D-12 update, 2026-11-16), for two new held-out questions with new ids, of the same kinds and rules (ambiguous B4, off-scope B10, no gold), so the held-out counts and gold are unchanged.
+  - `write_heldout_manifest` writes only a pinned version from 2 on; suite 1 is frozen.
 - **`attack/oracle.py`:** `oracle_case(case, db, views, cfg, cache, workdir)`.
   - Each statement of an agent case goes through the real guard, the locked connection and the limits, by the same child-process tool the agent uses. The layer that stopped it is guard (blocked), permissions (the database refused it), limit (timeout, memory or the row cap), leak (a canary came back) or none.
   - The case passes when every statement's layer is in `expected_stop`.

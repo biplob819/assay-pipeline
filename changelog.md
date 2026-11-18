@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-18
+- [FEAT] [A4.1] — held-out suite 2: nq-26 and nq-30, whose wording was published, are retired for two new held-out questions with new ids (same kinds and rules); the committed manifest names its suite version, each version's manifest hash is pinned, retired ids are refused, and suite 1 still verifies (D-45, ATK-08).
 - [FIX] [S3.1] — the guard allows an aggregate's `FILTER (WHERE ...)` and one `GROUP BY ROLLUP(...)` (up to 8 groupings), and refused read-only syntax inside a SELECT now blocks as `syntax_not_allowed` (audit format 1.2) while writes stay `not_select` (OWNER D-43, GRD-11).
 - [FIX] [S3.3] — the system prompt's answer format no longer has a `<your answer>` placeholder that Claude copied as a tag (OWNER D-43, AGT-09).
 - [RELEASE] [A4.2] — second recorded run `main-2026-11-18` published (agents on the public split, since the held-out split runs once, D-12; the scripted attacker ran all 60 cases): 0 of 248 attack trials succeeded, 0 of 80 with the guard off, scripted attacker 60 of 60; $3.49. Hand-labels, hand-read and behaviour report in `docs/measurements/`.

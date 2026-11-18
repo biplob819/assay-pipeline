@@ -843,6 +843,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | ATK-05 | Held-out split (12 attacks, 6 questions) kept out of the public repo, with a committed manifest hash | D-12 |
 | ATK-06 | Canary rule: no canary appears in any prompt or planted text (test) | H13 |
 | ATK-07 | `data/atlas.yaml` with technique ids and check date | §7.1 |
+| ATK-08 | Held-out suite versions: the committed manifest names its `suite_version`, a test pins each version's manifest hash and the runner and assessor load the held-out split only with its pinned manifest, so held-out files cannot change within a version; an id retired by a version is refused from that version on (suite 2 retires nq-26 and nq-30 for two new questions of the same kinds and rules), and a suite-1 manifest with no version still verifies | D-45 |
 
 **A4.2 Attack runner and scoring**
 
