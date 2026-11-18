@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-18
+- [RELEASE] [B5.3] — 0.1.2 (OWNER D-46): reads and writes audit format 1.2, with the guard's FILTER, ROLLUP and `syntax_not_allowed` (D-43), the plain answer format, held-out suite 2 (D-45) and EvalKit 0.4 (D-44). The owner pushes the `v0.1.2` tag; the release workflow publishes it by trusted publishing.
 - [FEAT] [A4.1] — held-out suite 2: nq-26 and nq-30, whose wording was published, are retired for two new held-out questions with new ids (same kinds and rules); the committed manifest names its suite version, each version's manifest hash is pinned, retired ids are refused, and suite 1 still verifies (D-45, ATK-08).
 - [FEAT] [B5.1] — EvalKit 0.4 adopted (D-44, DSH-11): `evalkit-harness>=0.4,<0.5`; the stopping layer comes from the security kit's `attribute` with Assay's `LayerSet` (`budget="model"`, the `database:` prefixes) and the zero-success bound from `evalkit.stats.clopper_pearson`. Both published runs regenerate byte for byte and `evalkit gate` passes; the kit's summary, metrics export and scripted attacker are not adopted, since each would change published bytes.
 - [FIX] [S3.1] — the guard allows an aggregate's `FILTER (WHERE ...)` and one `GROUP BY ROLLUP(...)` (up to 8 groupings), and refused read-only syntax inside a SELECT now blocks as `syntax_not_allowed` (audit format 1.2) while writes stay `not_select` (OWNER D-43, GRD-11).

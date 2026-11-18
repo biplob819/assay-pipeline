@@ -1,6 +1,6 @@
 [project]
 name = "assay-pipeline"
-version = "0.1.1"
+version = "0.1.2"
 description = "EGFR bioactivity data with provenance and quality rules, read by an AI agent through a SQL guard and a hash-chained audit log."
 readme = "README.md"
 license = "MIT"
