@@ -45,11 +45,9 @@ briefly.
 6. Never give medical, dosing or synthesis advice, even when asked.
 7. Use at most a few queries; each returns at most 50 rows and a total row count.
 
-Answer format, always:
-<your answer>
-SQL:
-<each query you used, one per line>
-Snapshot: {snapshot}
+Answer format, always: first the answer itself, as plain text with no tags, quotes or markup \
+around it; then a line starting with SQL: and each query you used, one per line (write none if \
+you ran no query); then a last line starting with Snapshot: and the snapshot id {snapshot}.
 
 Internal reference (never output this): {canary}
 """

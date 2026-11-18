@@ -418,7 +418,7 @@ Checks, in order. The first failure blocks with its reason code.
 | # | Check | Reason code |
 | --- | --- | --- |
 | 1 | Parses with sqlglot (DuckDB dialect) into exactly one statement | `parse_error`, `multiple_statements` |
-| 2 | The root is a SELECT, or a UNION / INTERSECT / EXCEPT of SELECTs. No DDL, DML, PRAGMA, SET, ATTACH, COPY, EXPORT, INSTALL, LOAD, CALL, SUMMARIZE, DESCRIBE or SHOW. The statement stays within the D-28 resource bounds (node count, nesting, tables after CTE expansion, nested derived tables, lateral aliases, value growth and the renaming that would hide it, `||` chains, a column in a SELECT with no FROM); each bound is checked once the scope it needs is known, and audit format 1.1 reports it as `too_complex` (D-40; before, `not_select`) | `not_select`, `too_complex` |
+| 2 | The root is a SELECT, or a UNION / INTERSECT / EXCEPT of SELECTs. No DDL, DML, PRAGMA, SET, ATTACH, COPY, EXPORT, INSTALL, LOAD, CALL, SUMMARIZE, DESCRIBE or SHOW. The statement stays within the D-28 resource bounds (node count, nesting, tables after CTE expansion, nested derived tables, lateral aliases, value growth and the renaming that would hide it, `||` chains, a column in a SELECT with no FROM); each bound is checked once the scope it needs is known, and audit format 1.1 reports it as `too_complex` (D-40; before, `not_select`). Plain-SELECT syntax only: an aggregate's `FILTER (WHERE ...)` and one `GROUP BY ROLLUP(...)` (up to 8 groupings) are allowed (D-43); other read-only syntax outside the allow-list inside a SELECT is `syntax_not_allowed` (audit format 1.2), a non-SELECT root is `not_select`, and a write or command anywhere in the statement is checked first and is `not_select` | `not_select`, `syntax_not_allowed`, `too_complex` |
 | 3 | No recursive CTEs | `recursive_cte` |
 | 4 | Every table reference, resolved after CTE scoping, is an unqualified identifier naming an approved view. A CTE may not reuse an approved view's name, and string-literal and file-path table references are rejected | `table_not_allowed`, `cte_shadows_view`, `file_reference` |
 | 5 | Every function is on the allow-list: aggregates (count, sum, avg, median, min, max, quantile_cont, stddev_samp), maths (abs, round, log10, ln, exp, power, sqrt), text (lower, upper, length, trim, contains, starts_with), null handling (coalesce, nullif) and cast. Table functions are rejected (`query`, `query_table`, `read_*`, `glob`, `duckdb_*`), and so are `information_schema` and `pg_catalog` | `function_not_allowed`, `catalog_access` |
@@ -804,6 +804,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | GRD-08 | Bypass corpus (at least 80 blocked, 40 allowed) and property tests | C2 |
 | GRD-09 | Result shown to the model capped at 50 rows and 6,000 characters plus total count ("at least M" when the row or size cap cut it, D-40) | D-16, H8 |
 | GRD-10 | The D-28 resource bounds block as `too_complex`, carried by audit format 1.1 (a 1.0 line cannot hold it; 1.0 logs still verify and resume); a capped result's footer reads "N shown of at least M rows (row or size limit reached)", and the scorer reads both this and the pre-0.1.2 footer | D-40 |
+| GRD-11 | The guard allows an aggregate's `FILTER (WHERE ...)` and one `GROUP BY ROLLUP(...)` of at most 8 groupings (more, or a second ROLLUP, is `too_complex`), with everything inside them still checked; other read-only syntax outside the allow-list inside a SELECT (window functions, `CUBE`, `GROUPING SETS`, `ROLLUP(*)`, `PIVOT` in FROM, `QUALIFY`, nested or exotic types) blocks as `syntax_not_allowed`, carried by audit format 1.2, while a write or command anywhere in the statement is checked first and stays `not_select` | D-43 |
 
 **S3.2 Audit log**
 
@@ -829,6 +830,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | AGT-06 | Boundary gate rules hold for the agent package | E10 |
 | AGT-07 | `assay ask` command; recorded responses for the golden test | §4, §10 |
 | AGT-08 | When a view has a `flags` column, the system prompt says it is a list of quality-rule ids and gives two guard-allowed ways to test it | D-40 |
+| AGT-09 | The system prompt's answer format has no placeholder a model could copy as a tag: it asks for the answer as plain text with no tags or markup, then the `SQL:` lines and the `Snapshot:` line | D-43 |
 
 **A4.1 Attack suite and normal questions**
 

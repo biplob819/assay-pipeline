@@ -62,6 +62,19 @@ ALLOWED_NODES: tuple[type[Expr], ...] = (
     exp.Add, exp.Sub, exp.Mul, exp.Div, exp.Mod, exp.Is, exp.In, exp.Between, exp.Like,
     exp.ILike, exp.Case, exp.If, exp.DataType, exp.DataTypeParam, exp.Var, exp.Dot,
     exp.NullSafeEQ, exp.NullSafeNEQ, exp.DPipe,
+    # OWNER D-43: an aggregate's FILTER (WHERE ...) and GROUP BY ROLLUP(...), each checked below
+    exp.Filter, exp.Rollup,
+)  # fmt: skip
+# A write or a command anywhere in the statement (a DELETE in a CTE, SELECT ... INTO, FOR
+# UPDATE) stays "not a SELECT", checked before everything else; any other node outside
+# ALLOWED_NODES inside a SELECT is read-only syntax the guard does not allow
+# (`syntax_not_allowed`, D-43), so the audit tells a write attempt from refused syntax.
+STATEMENT_NODES: tuple[type[Expr], ...] = (
+    exp.DDL, exp.Insert, exp.Update, exp.Delete, exp.Merge, exp.Copy, exp.Create,
+    exp.Drop, exp.Alter, exp.Command, exp.Set, exp.Pragma, exp.Attach, exp.Detach, exp.Use,
+    exp.Transaction, exp.Commit, exp.Rollback, exp.Install, exp.Export, exp.Summarize,
+    exp.Describe, exp.Show, exp.Cache, exp.Uncache, exp.Refresh, exp.Analyze, exp.Into,
+    exp.Lock,
 )  # fmt: skip
 # Syntax that sqlglot models as function classes but is plain SELECT grammar, not a call.
 SYNTAX_FUNCS: tuple[type[Expr], ...] = (exp.Case, exp.If, exp.Exists, exp.And, exp.Or)
@@ -81,6 +94,8 @@ MAX_EXPANDED_TABLES = 16
 MAX_DERIVED_DEPTH = 4  # nested subqueries in FROM
 MAX_CONCAT_OPERANDS = 8
 MAX_GROWTH = 64  # how many source values one output value may be built from (D-28)
+MAX_ROLLUP_COLUMNS = 8  # ROLLUP(n columns) aggregates n + 1 times; one ROLLUP per GROUP BY,
+# since several multiply (ROLLUP(a), ROLLUP(b) is CUBE(a, b)) (D-43, verifier)
 SCALAR_TYPES = frozenset(
     {"INT", "BIGINT", "SMALLINT", "TINYINT", "DOUBLE", "FLOAT", "DECIMAL", "VARCHAR", "TEXT",
      "CHAR", "BOOLEAN", "DATE"}
@@ -154,6 +169,10 @@ class SqlGuard:
             return _blocked("multiple_statements")
         ast = parsed[0]
         if not isinstance(ast, exp.Select | exp.Union | exp.Intersect | exp.Except):
+            return _blocked("not_select")
+        # A write or command anywhere (a DML CTE, SELECT ... INTO, FOR UPDATE) is reported as
+        # such before any other check can name it differently (D-43, verifier).
+        if any(isinstance(n, STATEMENT_NODES) for n in ast.walk()):
             return _blocked("not_select")
 
         tables = tuple(sorted({t.name.lower() for t in ast.find_all(exp.Table) if t.name}))
@@ -232,9 +251,29 @@ class SqlGuard:
             if isinstance(node, exp.Func):
                 continue
             if not isinstance(node, ALLOWED_NODES):
-                return _blocked("not_select", tables, funcs)
+                reason = "not_select" if isinstance(node, STATEMENT_NODES) else "syntax_not_allowed"
+                return _blocked(reason, tables, funcs)
             if isinstance(node, exp.DataType) and node.this.value not in SCALAR_TYPES:
-                return _blocked("not_select", tables, funcs)  # nested and exotic types
+                return _blocked("syntax_not_allowed", tables, funcs)  # nested and exotic types
+            # FILTER only as an aggregate's own WHERE; ROLLUP only as a GROUP BY's grouping (D-43)
+            if isinstance(node, exp.Filter) and not (
+                isinstance(node.this, exp.AggFunc) and isinstance(node.expression, exp.Where)
+            ):
+                return _blocked("syntax_not_allowed", tables, funcs)
+            if isinstance(node, exp.Rollup):
+                if (
+                    not isinstance(node.parent, exp.Group)
+                    or not node.expressions
+                    or any(  # DuckDB reads ROLLUP(*) as GROUP BY ALL, not a rollup
+                        isinstance(e, exp.Star)
+                        or (isinstance(e, exp.Column) and isinstance(e.this, exp.Star))
+                        for e in node.expressions
+                    )
+                ):
+                    return _blocked("syntax_not_allowed", tables, funcs)
+                rollups = sum(isinstance(e, exp.Rollup) for e in node.parent.expressions)
+                if len(node.expressions) > MAX_ROLLUP_COLUMNS or rollups > 1:
+                    return _blocked("too_complex", tables, funcs)
             # Renaming outside the select list (column lists, * REPLACE / * RENAME) would hide
             # where an output column comes from; refused so growth tracing stays exact (D-28).
             if isinstance(node, exp.TableAlias) and node.args.get("columns"):

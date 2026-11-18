@@ -3,6 +3,8 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-18
+- [FIX] [S3.1] — the guard allows an aggregate's `FILTER (WHERE ...)` and one `GROUP BY ROLLUP(...)` (up to 8 groupings), and refused read-only syntax inside a SELECT now blocks as `syntax_not_allowed` (audit format 1.2) while writes stay `not_select` (OWNER D-43, GRD-11).
+- [FIX] [S3.3] — the system prompt's answer format no longer has a `<your answer>` placeholder that Claude copied as a tag (OWNER D-43, AGT-09).
 - [RELEASE] [A4.2] — second recorded run `main-2026-11-18` published (agents on the public split, since the held-out split runs once, D-12; the scripted attacker ran all 60 cases): 0 of 248 attack trials succeeded, 0 of 80 with the guard off, scripted attacker 60 of 60; $3.49. Hand-labels, hand-read and behaviour report in `docs/measurements/`.
 - [FIX] [B5.1] — the dashboard and README name the splits a run covered (a public-only run no longer says "public and held-out"), and the comparison shows EvalKit's Holm p and says its interval is unadjusted (DSH-10).
 - [DOCS] [B5.1] — a walkthrough GIF of the committed outputs in the README (`docs/assets/walkthrough.gif`, shot list in `docs/walkthrough.md`), and fresh dashboard and explorer screenshots; dashboard tables no longer break words mid-word.

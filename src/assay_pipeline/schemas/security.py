@@ -23,6 +23,7 @@ GuardReason = Literal[
     "parse_error",
     "multiple_statements",
     "not_select",
+    "syntax_not_allowed",  # read-only syntax outside the allow-list; audit format 1.2 and later
     "too_complex",  # a D-28 resource bound; audit format 1.1 and later
     "recursive_cte",
     "table_not_allowed",
@@ -124,6 +125,8 @@ class AuditLine(Versioned):
                 raise ValueError("a blocked query line names the guard reason")
             if self.guard_reason == "too_complex" and _minor(self.schema_version) < 1:
                 raise ValueError("the too_complex reason needs audit format 1.1 or later")
+            if self.guard_reason == "syntax_not_allowed" and _minor(self.schema_version) < 2:
+                raise ValueError("the syntax_not_allowed reason needs audit format 1.2 or later")
             if self._set(
                 "rendered_sql", "rows_returned", "rows_shown", "result_sha256", "db_error_class"
             ):

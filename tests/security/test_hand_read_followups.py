@@ -36,11 +36,14 @@ def test_resource_bounds_and_write_attempts_have_different_reasons():
     assert GUARD.check(FAN_OUT).reason == "too_complex"
     assert GUARD.check(deep).reason in ("too_complex", "parse_error")  # sqlglot may refuse first
     assert GUARD.check("DELETE FROM activities").reason == "not_select"
-    assert GUARD.check("SELECT * FROM v_activities QUALIFY true").reason == "not_select"
+    # refused read-only syntax has its own reason since OWNER D-43 (audit format 1.2)
+    assert GUARD.check("SELECT * FROM v_activities QUALIFY true").reason == "syntax_not_allowed"
 
 
 def test_audit_format_1_1_carries_too_complex_and_1_0_refuses_it():
-    assert AUDIT_SCHEMA_VERSION == "1.1" and SCHEMA_VERSION == "1.0"  # snapshots stay 1.0
+    assert (
+        int(AUDIT_SCHEMA_VERSION.split(".")[1]) >= 1 and SCHEMA_VERSION == "1.0"
+    )  # snapshots stay 1.0
     blocked = {"guard_decision": "blocked", "guard_reason": "too_complex", "rendered_sql": None,
                "rows_returned": None, "rows_shown": None, "result_sha256": None}  # fmt: skip
     assert AuditLine.model_validate(f.audit("query", schema_version="1.1", **blocked))
@@ -50,7 +53,7 @@ def test_audit_format_1_1_carries_too_complex_and_1_0_refuses_it():
         AuditLine.model_validate(f.audit("query", schema_version="2.0", **blocked))
 
 
-def test_a_1_0_log_still_verifies_and_resumes_with_1_1_lines(tmp_path):
+def test_a_1_0_log_still_verifies_and_resumes_with_newer_lines(tmp_path):
     path = tmp_path / FIXTURE.name  # anchors name the log file
     shutil.copy(FIXTURE, path)
     shutil.copy(FIXTURE.with_suffix(".anchors.jsonl"), path.with_suffix(".anchors.jsonl"))
@@ -61,8 +64,10 @@ def test_a_1_0_log_still_verifies_and_resumes_with_1_1_lines(tmp_path):
                guard_decision="blocked", guard_reason="too_complex")  # fmt: skip
     log.close()
     rows = [AuditLine.model_validate_json(x) for x in path.read_text(encoding="utf-8").splitlines()]
-    assert {r.schema_version for r in rows} == {"1.0", "1.1"}
-    assert rows[-1].schema_version == "1.1" and rows[-1].guard_reason == "too_complex"
+    assert {r.schema_version for r in rows} == {"1.0", AUDIT_SCHEMA_VERSION}
+    assert (
+        rows[-1].schema_version == AUDIT_SCHEMA_VERSION and rows[-1].guard_reason == "too_complex"
+    )
     assert verify(path, log.anchors_path).ok
 
 
@@ -89,12 +94,12 @@ def test_the_scorer_reads_old_and_new_footers_and_not_forged_cells():
     assert not capped_text("[result] 2 of 2 rows shown")
 
 
-def test_the_console_audit_writes_and_anchors_format_1_1():
+def test_the_console_audit_writes_and_anchors_the_current_format():
     from assay_pipeline.console.audit import MemoryAuditLog
 
     log = MemoryAuditLog("console")
     log.append(event="query", trial_id="t1", case_id="c1", model="m", sql=FAN_OUT,
                guard_decision="blocked", guard_reason="too_complex")  # fmt: skip
-    assert {x["schema_version"] for x in log.lines} == {"1.1"} and log.verify_chain()
+    assert {x["schema_version"] for x in log.lines} == {AUDIT_SCHEMA_VERSION} and log.verify_chain()
     anchor = log.close()  # it built an Anchor without a version before (verifier note)
-    assert anchor.schema_version == "1.1" and anchor.seq == 1
+    assert anchor.schema_version == AUDIT_SCHEMA_VERSION and anchor.seq == 1

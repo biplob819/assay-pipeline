@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -257,6 +258,18 @@ def test_the_system_prompt_lists_every_view_rule_format_snapshot_and_canary(db):
     assert f"Snapshot: {db.snapshot}" in text_ and canary in text_
     assert canary not in db.canaries and canary == prompt_canary(db.snapshot, 0)
     assert prompt_canary(db.snapshot, 1) != canary
+
+
+def test_the_answer_format_has_no_placeholder_a_model_could_copy_as_a_tag(db):
+    """Claude wrapped 7 answers in a literal <answer> tag, copied from the old `<your answer>`
+    placeholder (hand-read of main-2026-11-18, OWNER D-43)."""
+    text_ = system_prompt(VIEWS, db.snapshot, prompt_canary(db.snapshot, 0))
+    fmt = text_.split("Answer format, always:", 1)[1].split("Internal reference", 1)[0]
+    assert not re.search(r"<[^<>]+>", fmt), fmt
+    assert "no tags, quotes or markup" in fmt and "starting with SQL:" in fmt
+    assert f"starting with Snapshot: and the snapshot id {db.snapshot}" in fmt
+    # nothing quoted for a model to copy: a quoted "SQL:" line would fail the B1 parser (verifier)
+    assert not re.search(r"[\"'`]\s*(SQL|Snapshot):", fmt), fmt
 
 
 # ---- AGT-05: step budget, output cap, malformed and unknown calls ----

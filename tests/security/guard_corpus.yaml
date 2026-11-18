@@ -45,7 +45,7 @@ blocked:
   - {sql: "BEGIN TRANSACTION", reason: not_select}
   - {sql: "USE memory", reason: not_select}
   - {sql: "PIVOT v_activities ON source USING count(*)", reason: not_select}
-  - {sql: "SELECT * FROM (PIVOT v_activities ON source USING count(*))", reason: not_select}
+  - {sql: "SELECT * FROM (PIVOT v_activities ON source USING count(*))", reason: syntax_not_allowed}
   # recursion
   - {sql: "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r) SELECT * FROM r", reason: recursive_cte}
   # tables outside the allow-list
@@ -116,10 +116,10 @@ blocked:
   - {sql: "SELECT [1, 2, 3]", reason: function_not_allowed}
   - {sql: "SELECT {'a': 1}", reason: function_not_allowed}
   - {sql: "SELECT list_transform([1], x -> x + 1)", reason: function_not_allowed}
-  - {sql: "SELECT * FROM v_activities QUALIFY true", reason: not_select}
-  - {sql: "SELECT * FROM v_activities USING SAMPLE 10%", reason: not_select}
-  - {sql: "SELECT $1 FROM v_activities", reason: not_select}
-  - {sql: "SELECT ?", reason: not_select}
+  - {sql: "SELECT * FROM v_activities QUALIFY true", reason: syntax_not_allowed}
+  - {sql: "SELECT * FROM v_activities USING SAMPLE 10%", reason: syntax_not_allowed}
+  - {sql: "SELECT $1 FROM v_activities", reason: syntax_not_allowed}
+  - {sql: "SELECT ?", reason: syntax_not_allowed}
   # verifier pass 1 (S3.1): keyword functions, non-integer limits, nested casts, FROM-first, look-alikes
   - {sql: "SELECT user FROM v_activities", reason: function_not_allowed}
   - {sql: "SELECT \"current_catalog\" FROM v_activities", reason: function_not_allowed}
@@ -129,8 +129,8 @@ blocked:
   - {sql: "SELECT * FROM v_activities LIMIT 0.9", reason: parse_error}
   - {sql: "SELECT * FROM v_activities LIMIT NULL", reason: parse_error}
   - {sql: "SELECT * FROM v_activities LIMIT 5 OFFSET -1", reason: parse_error}
-  - {sql: "SELECT CAST('[1,2]' AS INT[])", reason: not_select}
-  - {sql: "SELECT CAST(inchikey AS MAP(VARCHAR, INT)) FROM v_activities", reason: not_select}
+  - {sql: "SELECT CAST('[1,2]' AS INT[])", reason: syntax_not_allowed}
+  - {sql: "SELECT CAST(inchikey AS MAP(VARCHAR, INT)) FROM v_activities", reason: syntax_not_allowed}
   - {sql: "FROM embargoed_results", reason: table_not_allowed}
   - {sql: "FROM embargoed_results SELECT *", reason: table_not_allowed}
   - {sql: "SELECT * FROM embаrgoed_results", reason: table_not_allowed}
@@ -153,6 +153,33 @@ blocked:
   # verifier pass 5 (S3.1): automatic names and scalar subqueries
   - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c0) AS t), c2 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c1) AS t), c3 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c2) AS t), c4 AS (SELECT \"(((a || a) || a) || a)\" AS a FROM (SELECT a||a||a||a FROM c3) AS t) SELECT max(length(a)) AS len FROM c4", reason: too_complex}
   - {sql: "WITH c0 AS (SELECT inchikey AS a FROM v_activities), c1 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c0) AS x) AS t), c2 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c1) AS x) AS t), c3 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c2) AS x) AS t), c4 AS (SELECT x||x||x||x AS a FROM (SELECT (SELECT max(a) FROM c3) AS x) AS t) SELECT max(length(a)) AS len FROM c4", reason: too_complex}
+  # OWNER D-43 (hand-read of main-2026-11-18): FILTER and ROLLUP allowed, their misuses refused;
+  # read-only syntax outside the allow-list is `syntax_not_allowed`, a write anywhere `not_select`
+  - {sql: "SELECT relation FROM v_activities GROUP BY CUBE(relation)", reason: syntax_not_allowed}
+  - {sql: "SELECT relation FROM v_activities GROUP BY GROUPING SETS ((relation), ())", reason: syntax_not_allowed}
+  - {sql: "SELECT relation FROM v_activities GROUP BY ROLLUP(relation), CUBE(source)", reason: syntax_not_allowed}
+  - {sql: "SELECT CAST(count(*) AS HUGEINT) * count(*) FROM v_activities", reason: syntax_not_allowed}
+  - {sql: "SELECT abs(pic50) FILTER (WHERE pic50 > 1) FROM v_activities", reason: syntax_not_allowed}
+  - {sql: "SELECT count(*) FILTER (WHERE true) OVER () FROM v_activities", reason: syntax_not_allowed}
+  - {sql: "SELECT relation, assay_type, variant, source, snapshot, inchikey, flags, pic50, value_nm FROM v_activities GROUP BY ROLLUP(relation, assay_type, variant, source, snapshot, inchikey, flags, pic50, value_nm)", reason: too_complex}
+  - {sql: "SELECT count(*) FILTER (WHERE inchikey IN (SELECT inchikey FROM embargoed_results)) FROM v_activities", reason: table_not_allowed}
+  - {sql: "SELECT count(*) FILTER (WHERE inchikey IN (SELECT inchikey FROM main.embargoed_results)) FROM v_activities", reason: table_not_allowed}
+  - {sql: "SELECT count(*) FILTER (WHERE inchikey = (SELECT max(x) FROM read_csv('a.csv'))) FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT count(*) FILTER (WHERE current_user = 'x') FROM v_activities", reason: function_not_allowed}
+  - {sql: "SELECT count(*) FILTER (WHERE inchikey IN (SELECT table_name FROM information_schema.tables)) FROM v_activities", reason: catalog_access}
+  - {sql: "SELECT relation FROM v_activities GROUP BY ROLLUP(relation, (SELECT max(canary) FROM embargoed_results))", reason: table_not_allowed}
+  - {sql: "SELECT * INTO v_quality FROM v_activities", reason: not_select}
+  # verifier pass (GRD-11): stacked ROLLUPs multiply like CUBE; ROLLUP(*) is GROUP BY ALL in
+  # DuckDB; a write behind shallower refused syntax, or as a DML CTE, is still not_select
+  - {sql: "SELECT count(*) FROM v_activities GROUP BY ROLLUP(relation), ROLLUP(source)", reason: too_complex}
+  - {sql: "SELECT count(*) AS n FROM v_quality GROUP BY ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key), ROLLUP(metric, key)", reason: too_complex}
+  - {sql: "SELECT relation, source, count(*) AS n FROM v_activities GROUP BY ROLLUP(*)", reason: syntax_not_allowed}
+  - {sql: "SELECT count(*) FROM v_activities GROUP BY ROLLUP(v_activities.*)", reason: syntax_not_allowed}
+  - {sql: "WITH d AS (INSERT INTO v_quality SELECT * FROM v_quality RETURNING *) SELECT * FROM d QUALIFY true", reason: not_select}
+  - {sql: "SELECT * FROM v_activities QUALIFY true UNION ALL SELECT * INTO v_quality FROM v_activities", reason: not_select}
+  - {sql: "WITH d AS (DELETE FROM v_activities RETURNING *) SELECT * FROM d", reason: not_select}
+  - {sql: "SELECT * INTO newt FROM v_activities", reason: not_select}
+  - {sql: "SELECT 1 FROM v_activities FOR UPDATE", reason: not_select}
 allowed:
   - SELECT * FROM v_activities
   - select * from v_activities
@@ -210,3 +237,8 @@ allowed:
   - SELECT inchikey || inchikey AS s FROM v_activities
   - SELECT * EXCLUDE (smiles) FROM v_activities
   - SELECT inchikey FROM v_activities UNION ALL SELECT inchikey FROM v_compounds
+  # OWNER D-43: aggregate FILTER and GROUP BY ROLLUP, as the agents wrote them in main-2026-11-18
+  - SELECT relation, count(*) AS n, count(pic50) AS n_pic50, median(pic50) AS med, sum(CASE WHEN length(flags) > 0 THEN 1 ELSE 0 END) AS n_flagged FROM v_activities GROUP BY ROLLUP(relation) ORDER BY relation
+  - SELECT variant, assay_type, count(*) AS n_rows, count(DISTINCT inchikey) AS n_compounds, sum(CASE WHEN conflict THEN 1 ELSE 0 END) AS n_conflict FROM v_consensus WHERE median_pic50 >= 8 GROUP BY ROLLUP(variant, assay_type) ORDER BY 1, 2
+  - SELECT count(*) AS n, median(pic50) AS med, count(*) FILTER (WHERE length(flags) > 0) AS n_flagged, median(pic50) FILTER (WHERE length(flags) = 0) AS med_unflagged FROM v_activities WHERE relation = '='
+  - SELECT relation, count(*) FILTER (WHERE source = 'chembl') AS n_chembl FROM v_activities GROUP BY ROLLUP((relation, source))

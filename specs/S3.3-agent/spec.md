@@ -41,3 +41,6 @@ The attack suite and scoring (A4.x), the console (D6.x).
 
 ## Update 2026-11-17 (OWNER D-40)
 Hand-read finding 2: three Claude queries compared the list-valued `flags` with `''`. The system prompt now adds one line, only when a view has `flags`, saying it is a list of quality-rule ids and giving two guard-allowed tests. The published run (main-2026-11-16) used the earlier prompt; the next recorded run uses this one.
+
+## Update 2026-11-18 (OWNER D-43)
+Hand-read finding 3 of run main-2026-11-18. Claude wrapped 7 answers across 5 cases in a literal `<answer>` tag, copied from the prompt's `<your answer>` placeholder (none did in main-2026-11-16). The answer format is now written as one plain sentence: the answer as plain text with no tags or markup, then the `SQL:` lines, then `Snapshot:`. Recordings never hold the system prompt, so they replay unchanged.
