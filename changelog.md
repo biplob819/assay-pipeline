@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-18
+- [RELEASE] [B5.3] — v0.1.2 published to PyPI by trusted publishing (tag pushed on the owner's go). The first `uvx` `assay doctor` smoke run failed on all three OSes only at the ChEMBL network check (ChEMBL's status endpoint returned HTTP 500 from GitHub's runners and from here; PubChem was reachable and the package installed and ran); the rerun after ChEMBL recovered passed on Linux, macOS and Windows.
 - [FEAT] [A4.1] — held-out suite 3 (OWNER D-47, ATK-09): nq-14, whose wording was close to a public question's, is retired for one new held-out statistics question with a new id (same rules, gold recomputed on snapshot 2026-11-15.1); suite 3's manifest is pinned, suite 2 (never ran) is archived locally next to suite 1, and both published runs regenerate byte-identically.
 - [RELEASE] [B5.3] — 0.1.2 (OWNER D-46): reads and writes audit format 1.2, with the guard's FILTER, ROLLUP and `syntax_not_allowed` (D-43), the plain answer format, held-out suite 2 (D-45) and EvalKit 0.4 (D-44). The owner pushes the `v0.1.2` tag; the release workflow publishes it by trusted publishing.
 - [FEAT] [A4.1] — held-out suite 2: nq-26 and nq-30, whose wording was published, are retired for two new held-out questions with new ids (same kinds and rules); the committed manifest names its suite version, each version's manifest hash is pinned, retired ids are refused, and suite 1 still verifies (D-45, ATK-08).
