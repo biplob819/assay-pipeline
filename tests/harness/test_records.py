@@ -189,8 +189,13 @@ def test_hooks_check_staged_content_and_messages_where_words_exist():
 
     if not leak_guard.load_terms():
         pytest.skip("no .leakguard here (CI)")
-    pre = ROOT / ".git" / "hooks" / "pre-commit"
-    msg = ROOT / ".git" / "hooks" / "commit-msg"
+    import subprocess
+
+    # a linked worktree's `.git` is a file; its hooks live in the shared git dir
+    hooks = subprocess.run(["git", "rev-parse", "--git-path", "hooks"], cwd=ROOT,
+                           capture_output=True, text=True, check=True).stdout.strip()  # fmt: skip
+    pre = (ROOT / hooks) / "pre-commit"
+    msg = (ROOT / hooks) / "commit-msg"
     assert pre.is_file() and msg.is_file(), "run `python scripts/install_hooks.py`"
     assert "leak_guard.py --staged" in pre.read_text(encoding="utf-8")
     assert "secret_scan.py --staged" in pre.read_text(encoding="utf-8")

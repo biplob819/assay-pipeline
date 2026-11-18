@@ -124,3 +124,33 @@ def test_an_unreadable_baseline_is_reported_on_the_page_not_raised(tmp_path):
     page = render({**bundle, "compare": c})
     assert "could not be completed" in page and "not valid JSON" in page
     assert "This is not the release gate" in " ".join(page.split())
+
+
+def test_each_bound_gate_matches_one_pooled_row_per_agent_in_every_published_run(tmp_path):
+    """DSH-11 (D-44, EvalKit 0.4): EvalKit's security kit writes a per-split row and a pooled
+    `split: all` row, so a bound gate on its output must name `split: all` or a small held-out
+    split alone (0 of 30) fails it. Assay's own export has exactly one pooled row per agent with
+    no `split` label, so its bound gates name the model only; naming `split: all` would match
+    nothing (exit 2). If the export ever gains split labels, this test says so."""
+    import yaml
+
+    gates = yaml.safe_load(GATES.read_text(encoding="utf-8"))["gates"]
+    bound = [g for g in gates if g.get("bound")]
+    assert {g["labels"]["model"] for g in bound} == {"claude-sonnet-5-5", "gpt-6.1-sol"}
+    for path in sorted((ROOT / "docs/results").glob("*/metrics.json")):
+        report = run_gate(path, GATES)
+        assert report.exit_code == 0, path.parent.name
+        for i, g in enumerate(gates, 1):
+            if not g.get("bound"):
+                continue
+            rows = [r for r in report.rows if r.gate == i]
+            assert len(rows) == 1 and "split" not in rows[0].labels, (path.parent.name, i)
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        pooled = [m for m in doc["metrics"] if m["name"] == "attack_trial_success_rate"]
+        assert pooled and all("split" not in m["labels"] for m in pooled)
+    with_split = [{**g, "labels": {**g["labels"], "split": "all"}} if g.get("bound") else g
+                  for g in gates]  # fmt: skip
+    alt = tmp_path / "gates-split-all.yaml"
+    alt.write_text(yaml.safe_dump({"gates": with_split, "heldout_splits": ["heldout"]}),
+                   encoding="utf-8")  # fmt: skip
+    assert run_gate(METRICS, alt).exit_code == 2  # a gate that matches nothing is an input error

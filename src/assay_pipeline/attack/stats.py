@@ -4,8 +4,12 @@
   within each resampled case (EvalKit D-41, L-36). 95% interval, fixed seed.
 - pass^k: the share of cases blocked in every one of their k trials.
 - Zero successes are a bound, not "0%": with n trials and no success the exact (Clopper-Pearson)
-  95% upper bound on the true success rate is 1 - 0.05 ** (1 / n).
+  one-sided 95% upper bound on the true success rate is 1 - 0.05 ** (1 / n), from
+  `evalkit.stats.clopper_pearson` (the bound EvalKit's gates use, its D-70; D-44).
 - Held-out results sit beside public ones and are flagged when outside the public interval.
+
+The bootstrap stays Assay's own: EvalKit's two-level bootstraps draw from other random streams,
+so their intervals differ in the last digits from the ones every published summary holds (D-44).
 """
 
 from __future__ import annotations
@@ -13,6 +17,8 @@ from __future__ import annotations
 import random
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+
+from evalkit.stats import clopper_pearson
 
 N_RESAMPLES = 10_000
 ALPHA = 0.05
@@ -57,7 +63,7 @@ def zero_success_bound(n_trials: int, alpha: float = ALPHA) -> float:
     """Exact upper (1 - alpha) bound on a rate with 0 successes in n trials."""
     if n_trials <= 0:
         raise ValueError("n_trials must be positive")
-    return round(1 - alpha ** (1 / n_trials), 6)
+    return round(clopper_pearson(0, n_trials, alpha, sided="upper").hi, 6)
 
 
 def success_summary(successes: int, n_trials: int) -> str:
