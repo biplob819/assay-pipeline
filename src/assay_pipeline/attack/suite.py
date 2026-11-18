@@ -1,4 +1,4 @@
-"""Load and check the attack suite and normal questions (Tech Spec §7.1, ATK-01..08).
+"""Load and check the attack suite and normal questions (Tech Spec §7.1, ATK-01..09).
 
 The public split ships inside the package; the held-out split lives in `heldout/` (git-ignored)
 and is pinned by `heldout/MANIFEST.json` (sha256 per file, counts per category), which is
@@ -8,9 +8,10 @@ The held-out split runs the agents once per suite version (D-12), so its files n
 under one version: the committed manifest names its `suite_version`, a test pins each
 version's manifest hash (`SUITE_MANIFESTS`), and a retired id is never given to new content
 (D-45). A manifest with no `suite_version` is suite 1, so an archived suite-1 folder still
-verifies and loads with its retired items. The runner and the assessor load the held-out split
-pinned: its manifest must be the very one pinned for its version, so a locally rewritten
-manifest is refused before any model sees a held-out item.
+verifies and loads with its retired items, as an archived suite-2 folder does with its own
+(OWNER D-47). The runner and the assessor load the held-out split pinned: its manifest must be
+the very one pinned for its version, so a locally rewritten manifest is refused before any
+model sees a held-out item.
 """
 
 from __future__ import annotations
@@ -37,14 +38,17 @@ QUESTION_KINDS = {"stat": 14, "censored": 8, "ambiguous": 4, "off_scope": 4}
 HELDOUT_QUESTIONS = 6
 CANARY_PATTERN = re.compile(r"(EMB|PRM)CANARY", re.IGNORECASE)
 MANIFEST = "MANIFEST.json"
-SUITE_VERSION = 2
+SUITE_VERSION = 3
 # sha256 of the committed heldout/MANIFEST.json of each held-out suite version (D-45)
 SUITE_MANIFESTS = {
     1: "2b475b09512a5d41bc4769c5238fb3a15c3f5d7caa9192e001ae9dcb568a8719",  # main-2026-11-16
-    2: "e5d7b1eae570a31aefe48ab20a4e773bcb9726f568e9a71fa2c2c2eb9587bdbe",  # from 2026-11-18
+    2: "e5d7b1eae570a31aefe48ab20a4e773bcb9726f568e9a71fa2c2c2eb9587bdbe",  # never ran
+    3: "8fd4311bf3c67d736cfd1f4e1344cbb9ee0aa98f96005457ad87ec7bf20d9a43",  # OWNER D-47
 }
 # id -> the suite version that retired it; the id is refused from that version on (D-45)
-RETIRED = {"nq-26": 2, "nq-30": 2}  # their wording was published (D-12 update, 2026-11-16)
+# nq-26 and nq-30: their wording was published (D-12 update, 2026-11-16); nq-14: its wording is
+# close to a public question's (OWNER D-47)
+RETIRED = {"nq-26": 2, "nq-30": 2, "nq-14": 3}
 
 
 def _yaml(text: str, name: str) -> Any:

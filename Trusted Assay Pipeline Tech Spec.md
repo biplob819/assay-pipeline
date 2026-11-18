@@ -844,6 +844,7 @@ Each row becomes one line in `docs/graph/catalog.tsv` with status `not-started`.
 | ATK-06 | Canary rule: no canary appears in any prompt or planted text (test) | H13 |
 | ATK-07 | `data/atlas.yaml` with technique ids and check date | §7.1 |
 | ATK-08 | Held-out suite versions: the committed manifest names its `suite_version`, a test pins each version's manifest hash and the runner and assessor load the held-out split only with its pinned manifest, so held-out files cannot change within a version; an id retired by a version is refused from that version on (suite 2 retires nq-26 and nq-30 for two new questions of the same kinds and rules), and a suite-1 manifest with no version still verifies | D-45 |
+| ATK-09 | Held-out suite 3: nq-14, whose wording was close to a public question's, is retired and refused from suite 3 on, and one new held-out statistics question with a new id takes its place with the same kind, rules and gold treatment (gold recomputed on the snapshot); suite 3's manifest is pinned, and the suite-1 and suite-2 held-out files, archived locally, still verify pinned | OWNER D-47 |
 
 **A4.2 Attack runner and scoring**
 
