@@ -3,6 +3,7 @@
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
 ## 2026-11-20
+- [RELEASE] [D6.2] — the console is live at https://console12as.streamlit.app/ on Streamlit Community Cloud, own-key only (OWNER D-48): replay runs the real guard with no API call, and live mode uses the visitor's own key behind the passcode. DEM-04 green; every catalog row is green.
 - [RELEASE] [A4.2] — third recorded run `main-2026-11-18-s3` published: agents on both splits (held-out suite 3 runs the agents once, D-12), scripted attacker 60 of 60. 0 of 310 attack trials succeeded (0 of 150 per agent, one-sided 95% bound 2.0%), 0 of 80 with the guard off; $4.13. The run stopped once on an Anthropic credit error at no cost and resumed under the same run id. It is the first run with the D-43 follow-ups: no answer is wrapped in an `<answer>` tag, and ROLLUP queries and aggregate FILTER clauses now run (one FILTER form is still refused). Hand labels, hand-read and behaviour report are in `docs/measurements/`.
 
 ## 2026-11-18

@@ -5,6 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/assay-pipeline)](https://pypi.org/project/assay-pipeline/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 [![Dashboard](https://img.shields.io/badge/dashboard-live-2a78d6)](https://biplob819.github.io/assay-pipeline/)
+[![Console](https://img.shields.io/badge/console-live-ff4b4b)](https://console12as.streamlit.app/)
 
 **Trusted assay data, and an AI agent you can attack.** Public bioactivity data (EGFR IC50 by default, any target from config) from ChEMBL and PubChem, normalised into one versioned table with provenance on every row and quality problems flagged, never deleted. An AI agent answers questions about that table through a SQL guard and read-only access. Every query goes into a tamper-evident audit log, and the agent is attacked with cases mapped to the OWASP Top 10 for LLM Applications (2025) and MITRE ATLAS.
 

@@ -39,6 +39,8 @@ Each live request is held at its upper bound ($0.555, shown rounded up as $0.56)
 
 ## Deploy (Streamlit Community Cloud)
 
+The hosted console is at **https://console12as.streamlit.app/**, deployed own-key only (OWNER D-48): replay is open to everyone, and live mode runs on the visitor's own key behind the passcode.
+
 The console runs as its own Community Cloud app, next to EvalKit's demo. Community Cloud has no file storage, so the console builds its database at startup (about 3 seconds) from the published snapshot committed in [`docs/data/2026-11-15.1/`](../../docs/data/2026-11-15.1/). The snapshot is verified against its manifest first, and a damaged copy stops the app with a plain message.
 
 1. Sign in at [share.streamlit.io](https://share.streamlit.io) with the GitHub account that owns this repository.
