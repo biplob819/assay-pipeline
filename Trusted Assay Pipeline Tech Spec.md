@@ -32,7 +32,7 @@ Each decision below seeds `docs/decisions.md` as D-1 to D-28. `OWNER D-n` marks 
 | D-16 | A query result shown to the model is capped at 50 rows and 6,000 characters, plus the total row count. The full result (up to 1,000 rows) is hashed into the audit line and kept for scoring | Return all 1,000 rows (PRD reading) | 1,000 rows × ~15 columns is tens of thousands of tokens per call, which is itself unbounded consumption (LLM10). Same cap as EvalKit D-49 |
 | D-17 | Behaviour rules B3, B4 and B10 are scored by two blinded judges, Claude Opus 5.5 and GPT-6.1 Sol, against a 24-answer hand-labelled set. Every other rule is checked deterministically | One judge; judge everything | The agents are Sonnet and Sol, so a single judge from one family would grade its own family. Deterministic checks are cheaper and exact wherever the rule allows (§7.5) |
 | OWNER D-18 | Job-search content stays out of the public repo: the PRD in the repo is product-only, and portfolio framing moves to `Portfolio notes.md`, as in EvalKit | Keep the PRD as written | The repo is public. EvalKit enforces this with a test (`test_portfolio_notes_stay_out_of_public_repo`) |
-| D-19 | Build status comes from `scripts/status.py` in this repo, not from the statusnow skill | A plan file for statusnow | statusnow is wired to the Kova and VoC checkouts (EvalKit D-13) |
+| D-19 | Build status comes from `scripts/status.py` in this repo, not from the statusnow skill | A plan file for statusnow | statusnow is wired to other projects' private checkouts (EvalKit D-13) |
 | OWNER D-20 | Open source: published on PyPI as `assay-pipeline` by GitHub Actions trusted publishing on a version tag; the GitHub repo is the source | GitHub-only install | `pip install assay-pipeline` or `uvx --from assay-pipeline assay …` lets anyone run it with their own keys; the name was free on PyPI (checked 15 Nov 2026) |
 | OWNER D-21 | Import package `assay_pipeline`; CLI command `assay` | Import `assay` | `assay` on PyPI is an unrelated package, so `import assay` could clash when both are installed |
 | OWNER D-22 | Any target: the ChEMBL target id, UniProt accession, PubChem gene symbol and activity type come from `config/build.yaml`. EGFR IC50 (CHEMBL203, P00533) is the bundled default and the published benchmark. The attack suite and normal questions stay EGFR benchmark cases | EGFR hard-wired | Other teams can reuse the pipeline, not just reproduce it; ingest and tests take the target as a parameter |
@@ -1076,7 +1076,7 @@ All ten are applied to the PRD (15 Nov 2026):
 ## Sources
 
 - EvalKit build harness: `~/EvalKit/EvalKit Tech Spec.md` §11, `~/EvalKit/scripts/`, `~/EvalKit/docs/decisions.md`, `~/EvalKit/docs/lessons.md`
-- Kova harness: `~/kova-hrtech/docs/sdd/kova-graph/NODE-RUNBOOK.md`
+- Kova's build harness (private): its node runbook, which EvalKit's harness was ported from
 - [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/)
 - [MITRE ATLAS](https://atlas.mitre.org/)
 - [ChEMBL web services](https://www.ebi.ac.uk/chembl/api/data/docs) and [licence (FAQ)](https://chembl.gitbook.io/chembl-interface-documentation/frequently-asked-questions/general-questions)
