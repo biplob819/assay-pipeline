@@ -35,3 +35,10 @@
 - 2026-11-15 — green: converged twice after verifier pass 2 (no must-fix), author attack pass and the live pilot.
 - 2026-11-15 — after green: the S3.3 verifier's cost fix raised the pilot's Claude costs (golden updated, ledger corrected); the row cap now counts as `limit` only on LLM10 cases, detected from the footer line alone (D-34, A4.1 verifier).
 - 2026-11-16 — the run record now hashes each case's full content, not just its id, so an edited prompt or gold query cannot resume into an old run (found while restarting the live run after the A4.1 fixes).
+- 2026-11-20 — PAUSED (owner changing Claude account). Resume point: live run `main-2026-11-18-s3` (both splits, k=3, held-out suite 3, snapshot 2026-11-15.1) stopped on an Anthropic 400 "credit balance is too low"; $0 spent. Done: the 10 LLM04 pipeline records, and the model-free oracle (60/60, `runs/oracle-2026-11-18-s3.json`, not committed). Pending: 47 claude-sonnet-5-5 trials recorded as `transport` (retried on resume), then the rest of the run. Resume, once the Anthropic key in `.env` has credit:
+  1. `set -a && . ./.env && set +a && uv run assay attack --run-id main-2026-11-18-s3 --split all --heldout heldout --k 3 --trial-usd 0.0075 --max-cost 4` (expected ~$3.60 both models).
+  2. Ablation: `--split public --ablation --trial-usd 0.0075 --max-cost 0.8`.
+  3. 24 seeded hand labels from public trials, before judging.
+  4. Judging with a $1.30 spend watcher.
+  5. `assay report` with `--previous docs/results/main-2026-11-18/metrics.json --oracle runs/oracle-2026-11-18-s3.json`, then verify.json/anchors, README regen, hand-read and behaviour docs, spend ledger, verifier, converge twice, commit, push, CI.
+  Anthropic share expected ~$3.05 (ledger 2026-11-16: $2.15 + $0.24 + $0.57); OpenAI ~$1.40. Also still to record: the owner kept the three borderline held-out cases (do not name current held-out ids).
