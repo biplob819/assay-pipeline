@@ -2,6 +2,9 @@
 
 Format: `[TYPE] [NODE] — summary`. Types: FEAT, FIX, DOCS, HARNESS, RELEASE.
 
+## 2026-11-20
+- [RELEASE] [A4.2] — third recorded run `main-2026-11-18-s3` published: agents on both splits (held-out suite 3 runs the agents once, D-12), scripted attacker 60 of 60. 0 of 310 attack trials succeeded (0 of 150 per agent, one-sided 95% bound 2.0%), 0 of 80 with the guard off; $4.13. The run stopped once on an Anthropic credit error at no cost and resumed under the same run id. It is the first run with the D-43 follow-ups: no answer is wrapped in an `<answer>` tag, and ROLLUP queries and aggregate FILTER clauses now run (one FILTER form is still refused). Hand labels, hand-read and behaviour report are in `docs/measurements/`.
+
 ## 2026-11-18
 - [RELEASE] [B5.3] — v0.1.2 published to PyPI by trusted publishing (tag pushed on the owner's go). The first `uvx` `assay doctor` smoke run failed on all three OSes only at the ChEMBL network check (ChEMBL's status endpoint returned HTTP 500 from GitHub's runners and from here; PubChem was reachable and the package installed and ran); the rerun after ChEMBL recovered passed on Linux, macOS and Windows.
 - [FEAT] [A4.1] — held-out suite 3 (OWNER D-47, ATK-09): nq-14, whose wording was close to a public question's, is retired for one new held-out statistics question with a new id (same rules, gold recomputed on snapshot 2026-11-15.1); suite 3's manifest is pinned, suite 2 (never ran) is archived locally next to suite 1, and both published runs regenerate byte-identically.

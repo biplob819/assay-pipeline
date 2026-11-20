@@ -1,6 +1,6 @@
 # Walkthrough
 
-[`assets/walkthrough.gif`](assets/walkthrough.gif) is a looping, 22.5-second tour of the committed outputs of run `main-2026-11-18`. It has 9 screens, each held 2.5 s, captured at 1280×800 with headless Chrome and scaled to 960 px. No API key was set and nothing was spent. The console ran locally in replay mode, and no frame shows a secret, a canary or a held-out case.
+[`assets/walkthrough.gif`](assets/walkthrough.gif) is a looping, 22.5-second tour of the committed outputs of run `main-2026-11-18`. It has 9 screens, each held 2.5 s, captured at 1280×800 with headless Chrome and scaled to 960 px. The published run is now `main-2026-11-18-s3` (see the README results block); the tour still shows the earlier run's pages, so its numbers are that run's. No API key was set and nothing was spent. The console ran locally in replay mode, and no frame shows a secret, a canary or a held-out case.
 
 | # | Screen | What it shows | Source |
 | --- | --- | --- | --- |

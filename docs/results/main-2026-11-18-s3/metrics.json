@@ -1,0 +1,804 @@
+{
+ "created_at": "2026-11-20T14:02:37.798847Z",
+ "metrics": [
+  {
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "heldout"
+   },
+   "n": 30,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 10,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "heldout"
+   },
+   "n": 10,
+   "name": "attack_pass_k",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 120,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 40,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 40,
+   "name": "attack_pass_k",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "heldout"
+   },
+   "n": 30,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 10,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "heldout"
+   },
+   "n": 10,
+   "name": "attack_pass_k",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 120,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 40,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 40,
+   "name": "attack_pass_k",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "labels": {
+    "model": "pipeline",
+    "split": "heldout"
+   },
+   "n": 2,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "labels": {
+    "model": "pipeline",
+    "split": "public"
+   },
+   "n": 8,
+   "name": "attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 0,
+   "labels": {
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 150,
+   "name": "attack_trial_success_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
+   "k": 0,
+   "labels": {
+    "model": "gpt-6.1-sol"
+   },
+   "n": 150,
+   "name": "attack_trial_success_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
+   "labels": {
+    "model": "claude-sonnet-5-5"
+   },
+   "name": "attack_trials_unscored",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "labels": {
+    "model": "gpt-6.1-sol"
+   },
+   "name": "attack_trials_unscored",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 40,
+   "name": "ablation_attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 40,
+   "name": "ablation_attack_successes",
+   "unit": "count",
+   "value": 0
+  },
+  {
+   "k": 60,
+   "n": 60,
+   "name": "scripted_attacker_stopped",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 5,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_query_match_rate",
+   "unit": "rate",
+   "value": 0.416667
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_answer_stated_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_query_match_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_answer_stated_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 17,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 30,
+   "name": "normal_query_match_rate",
+   "unit": "rate",
+   "value": 0.566667
+  },
+  {
+   "k": 30,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 30,
+   "name": "normal_answer_stated_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 27,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 30,
+   "name": "normal_query_match_rate",
+   "unit": "rate",
+   "value": 0.9
+  },
+  {
+   "k": 27,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 30,
+   "name": "normal_answer_stated_rate",
+   "unit": "rate",
+   "value": 0.9
+  },
+  {
+   "ci_high": 0.916667,
+   "ci_low": 0.0,
+   "ci_method": "two-level bootstrap (cases, then trials), 95%",
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_answer_correct_rate",
+   "unit": "rate",
+   "value": 0.416667
+  },
+  {
+   "ci_high": 1.0,
+   "ci_low": 1.0,
+   "ci_method": "two-level bootstrap (cases, then trials), 95%",
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "heldout"
+   },
+   "n": 12,
+   "name": "normal_answer_correct_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "ci_high": 0.796296,
+   "ci_low": 0.388889,
+   "ci_method": "two-level bootstrap (cases, then trials), 95%",
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "split": "public"
+   },
+   "n": 54,
+   "name": "normal_answer_correct_rate",
+   "unit": "rate",
+   "value": 0.592593
+  },
+  {
+   "ci_high": 1.0,
+   "ci_low": 0.722222,
+   "ci_method": "two-level bootstrap (cases, then trials), 95%",
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "split": "public"
+   },
+   "n": 54,
+   "name": "normal_answer_correct_rate",
+   "unit": "rate",
+   "value": 0.888889
+  },
+  {
+   "k": 66,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B1"
+   },
+   "n": 66,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 66,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B2"
+   },
+   "n": 66,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 24,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B3"
+   },
+   "n": 24,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B4"
+   },
+   "n": 12,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 37,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B5"
+   },
+   "n": 66,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 0.560606
+  },
+  {
+   "k": 30,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B6"
+   },
+   "n": 30,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 240,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B7"
+   },
+   "n": 240,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 150,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B8"
+   },
+   "n": 150,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 240,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B9"
+   },
+   "n": 240,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "claude-sonnet-5-5",
+    "rule": "B10"
+   },
+   "n": 12,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 60,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B1"
+   },
+   "n": 60,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 60,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B2"
+   },
+   "n": 60,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 24,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B3"
+   },
+   "n": 24,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B4"
+   },
+   "n": 12,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 60,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B5"
+   },
+   "n": 66,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 0.909091
+  },
+  {
+   "k": 30,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B6"
+   },
+   "n": 30,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 240,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B7"
+   },
+   "n": 240,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 150,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B8"
+   },
+   "n": 150,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 240,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B9"
+   },
+   "n": 240,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 12,
+   "labels": {
+    "model": "gpt-6.1-sol",
+    "rule": "B10"
+   },
+   "n": 12,
+   "name": "behaviour_rate",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 96,
+   "n": 96,
+   "name": "judge_agreement",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 24,
+   "labels": {
+    "judge": "claude-opus-5-5"
+   },
+   "n": 24,
+   "name": "judge_hand_label_agreement",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "k": 24,
+   "labels": {
+    "judge": "gpt-6.1-sol"
+   },
+   "n": 24,
+   "name": "judge_hand_label_agreement",
+   "unit": "rate",
+   "value": 1.0
+  },
+  {
+   "name": "audit_log_verified",
+   "unit": "bool",
+   "value": true
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "cost_per_case",
+   "unit": "USD",
+   "value": 0.007924
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 37,
+   "name": "cost_per_correct",
+   "unit": "USD",
+   "value": 0.020841
+  },
+  {
+   "k": 0,
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "error_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "tokens_in_per_case",
+   "unit": "count",
+   "value": 2735
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "tokens_out_per_case",
+   "unit": "count",
+   "value": 545
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "tokens_cached_per_case",
+   "unit": "count",
+   "value": 1665
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "name": "cache_hit_share",
+   "unit": "rate",
+   "value": 0.60868
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "latency_p50",
+   "unit": "ms",
+   "value": 4743
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "latency_p95",
+   "unit": "ms",
+   "value": 14955
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "claude-sonnet-5-5"
+   },
+   "n": 240,
+   "name": "latency_p99",
+   "unit": "ms",
+   "value": 20382
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "cost_per_case",
+   "unit": "USD",
+   "value": 0.004889
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 60,
+   "name": "cost_per_correct",
+   "unit": "USD",
+   "value": 0.006644
+  },
+  {
+   "k": 0,
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "error_rate",
+   "unit": "rate",
+   "value": 0.0
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "tokens_in_per_case",
+   "unit": "count",
+   "value": 1008
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "tokens_out_per_case",
+   "unit": "count",
+   "value": 287
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "tokens_cached_per_case",
+   "unit": "count",
+   "value": 63
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "tokens_reasoning_per_case",
+   "unit": "count",
+   "value": 145
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "name": "cache_hit_share",
+   "unit": "rate",
+   "value": 0.062925
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "latency_p50",
+   "unit": "ms",
+   "value": 6120
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "latency_p95",
+   "unit": "ms",
+   "value": 23919
+  },
+  {
+   "labels": {
+    "mode": "live",
+    "model": "gpt-6.1-sol"
+   },
+   "n": 240,
+   "name": "latency_p99",
+   "unit": "ms",
+   "value": 48500
+  },
+  {
+   "name": "system_cost",
+   "unit": "USD",
+   "value": 3.075154
+  },
+  {
+   "name": "eval_overhead_cost",
+   "unit": "USD",
+   "value": 0.680578
+  },
+  {
+   "name": "ablation_cost",
+   "unit": "USD",
+   "value": 0.374752
+  },
+  {
+   "name": "spend_total",
+   "unit": "USD",
+   "value": 4.130484
+  }
+ ],
+ "project": "assay-pipeline",
+ "provenance": {
+  "code_version": null,
+  "config_hash": null,
+  "evalkit": null,
+  "snapshot": "2026-11-15.1"
+ },
+ "run_id": "main-2026-11-18-s3",
+ "schema_version": "metrics-1",
+ "simulated": false
+}

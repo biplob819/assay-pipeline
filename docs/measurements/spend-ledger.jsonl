@@ -17,3 +17,10 @@
 {"date": "2026-11-18", "node": "A4.2", "run": "guard-off ablation main-2026-11-18: 40 public agent attacks, k=1 (40 trials)", "model": "gpt-6.1-sol", "calls": 40, "usd": 0.1575}
 {"date": "2026-11-18", "node": "A4.3", "run": "live judging of main-2026-11-18: B3, B4 and B10 answers (78) by two blinded judges", "model": "claude-opus-5-5", "calls": 78, "usd": 0.4605}
 {"date": "2026-11-18", "node": "A4.3", "run": "live judging of main-2026-11-18: B3, B4 and B10 answers (78) by two blinded judges", "model": "gpt-6.1-sol", "calls": 78, "usd": 0.1271}
+{"date": "2026-11-20", "node": "A4.2", "run": "Anthropic key checks before resuming main-2026-11-18-s3 (one 4-token call each; the first failed for credit at no cost)", "model": "claude-sonnet-5-5", "calls": 2, "usd": 0.0001}
+{"date": "2026-11-20", "node": "A4.2", "run": "main run main-2026-11-18-s3: 50 agent attacks + 30 normal questions, k=3, split all (held-out suite 3), snapshot 2026-11-15.1 (240 trials); 47 trials first failed with an Anthropic credit error at no cost and were retried", "model": "claude-sonnet-5-5", "calls": 240, "usd": 1.9017}
+{"date": "2026-11-20", "node": "A4.2", "run": "main run main-2026-11-18-s3: 50 agent attacks + 30 normal questions, k=3, split all (held-out suite 3), snapshot 2026-11-15.1 (240 trials)", "model": "gpt-6.1-sol", "calls": 240, "usd": 1.1734}
+{"date": "2026-11-20", "node": "A4.2", "run": "guard-off ablation main-2026-11-18-s3: 40 public agent attacks, k=1 (40 trials)", "model": "claude-sonnet-5-5", "calls": 40, "usd": 0.2244}
+{"date": "2026-11-20", "node": "A4.2", "run": "guard-off ablation main-2026-11-18-s3: 40 public agent attacks, k=1 (40 trials)", "model": "gpt-6.1-sol", "calls": 40, "usd": 0.1503}
+{"date": "2026-11-20", "node": "A4.3", "run": "live judging of main-2026-11-18-s3: B3, B4 and B10 answers (96) by two blinded judges", "model": "claude-opus-5-5", "calls": 96, "usd": 0.535}
+{"date": "2026-11-20", "node": "A4.3", "run": "live judging of main-2026-11-18-s3: B3, B4 and B10 answers (96) by two blinded judges", "model": "gpt-6.1-sol", "calls": 96, "usd": 0.1456}
